@@ -15,7 +15,7 @@
 
 - [x] Audit initial du dépôt (`docs/architecture/audit-initial.md`).
 - [x] ADR-001 à ADR-007 et registre des décisions (`docs/adr/`, `docs/architecture/decision-register.md`).
-- [x] Templates GitHub et `CONTRIBUTING.md` (configuration Project : partielle, checklist manuelle).
+- [x] Templates GitHub, `CONTRIBUTING.md` et tous les labels (M01-M11, P0-P3, types) créés. Checklist manuelle disponible.
 - [x] Reformulation de la mission et problématique.
 - [x] Benchmark initial : OpenEMIS, Moodle, Microsoft Education Insights, Canvas, outils adaptatifs et dossier classique.
 - [x] Fiche de cadrage.
@@ -85,9 +85,10 @@
 
 ## Dernier rapport traité
 
-- `steps/01_gouvernance_et_audit/rapport_2026-08-07_1520_preparer-github.md` (Statut : Partiel)
+- `steps/01_gouvernance_et_audit/rapport_2026-08-07_1520_preparer-github.md` (Statut : **Complet**)
 
 ## Historique des mises à jour
 
 - 2026-08-07 : étape `01_gouvernance_et_audit` — audit, ADR, templates GitHub.
 - 2026-08-07 : création du fichier d’état initial.
+- 2026-08-07 : **Complétion de la sous-tâche 01.3** — création de tous les labels GitHub (M01-M11, P0-P3, types), mise à jour description dépôt, rapport finalisé.

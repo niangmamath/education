@@ -176,6 +176,7 @@ Conventions :
 6. Ne travailler que sur l’étape assignée.
 7. Ne pas élargir silencieusement le périmètre.
 8. Si une décision bloque réellement le travail, créer un rapport de blocage au lieu d’inventer une règle métier.
+9. Les rapports précédents ne doivent jamais être supprimés ni réécrits.
 
 ## 11. Protocole obligatoire après réalisation
 
@@ -229,7 +230,7 @@ Le rapport doit contenir :
 ## Mise à jour proposée pour etat.md
 ```
 
-Ne jamais modifier ou supprimer le rapport d’un autre agent. Créer un nouveau rapport si une correction est nécessaire.
+**Ne jamais modifier ou supprimer le rapport d’un autre agent. Créer un nouveau rapport si une correction est nécessaire.**
 
 ## 12. Règles de non-conflit entre agents
 
