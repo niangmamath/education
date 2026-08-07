@@ -13,6 +13,9 @@
 
 ## Terminé
 
+- [x] Audit initial du dépôt (`docs/architecture/audit-initial.md`).
+- [x] ADR-001 à ADR-007 et registre des décisions (`docs/adr/`, `docs/architecture/decision-register.md`).
+- [x] Templates GitHub et `CONTRIBUTING.md` (configuration Project : partielle, checklist manuelle).
 - [x] Reformulation de la mission et problématique.
 - [x] Benchmark initial : OpenEMIS, Moodle, Microsoft Education Insights, Canvas, outils adaptatifs et dossier classique.
 - [x] Fiche de cadrage.
@@ -32,20 +35,20 @@
 ## En cours
 
 - [ ] Validation finale du périmètre technique V0.1.
-- [ ] Complétion des champs, itérations, Epics et issues dans GitHub Project.
+- [ ] Complétion des champs, itérations, Epics et issues dans GitHub Project (checklist manuelle : `docs/architecture/github-checklist-manuelle.md`).
 - [ ] Choix définitif du programme scolaire, de la classe pilote et des trois matières.
-- [ ] Choix du mode précis d’hébergement H5P.
-- [ ] Vérification de l’état réel du dépôt et de sa structure initiale.
+- [ ] Choix du mode précis d’hébergement H5P (ADR-004 Proposed).
 
 ## À faire en priorité
 
-1. Exécuter `01_gouvernance_et_audit`.
-2. Exécuter `02_socle_technique`.
-3. Définir le référentiel pilote dans `03_referentiel_et_donnees`.
-4. Cataloguer 20 ressources dans `04_catalogue_et_integrations`.
-5. Concevoir les maquettes Bootstrap dans `05_ux_et_parcours`.
-6. Développer le flux vertical via les étapes 06 à 10.
-7. Tester, déployer et documenter via les étapes 11 à 13.
+1. ~~Exécuter `01_gouvernance_et_audit`.~~ **Terminé** (2026-08-07) — voir rapports dans `steps/01_gouvernance_et_audit/`.
+2. Exécuter la checklist GitHub manuelle (`docs/architecture/github-checklist-manuelle.md`).
+3. Exécuter `02_socle_technique`.
+4. Définir le référentiel pilote dans `03_referentiel_et_donnees`.
+5. Cataloguer 20 ressources dans `04_catalogue_et_integrations`.
+6. Concevoir les maquettes Bootstrap dans `05_ux_et_parcours`.
+7. Développer le flux vertical via les étapes 06 à 10.
+8. Tester, déployer et documenter via les étapes 11 à 13.
 
 ## Décisions validées
 
@@ -82,8 +85,9 @@
 
 ## Dernier rapport traité
 
-Aucun rapport d’agent dans cette archive au moment de sa création.
+- `steps/01_gouvernance_et_audit/rapport_2026-08-07_1520_preparer-github.md` (Statut : Partiel)
 
 ## Historique des mises à jour
 
+- 2026-08-07 : étape `01_gouvernance_et_audit` — audit, ADR, templates GitHub.
 - 2026-08-07 : création du fichier d’état initial.
