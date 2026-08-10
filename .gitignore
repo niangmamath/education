@@ -1,0 +1,465 @@
+# =============================================================================
+# StudentConnect - .gitignore
+# =============================================================================
+# Généré le 10 août 2026 pour Next.js 16, FastAPI, Python, Docker
+# =============================================================================
+
+# =============================================================================
+# Système et OS
+# =============================================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.Trash
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.tmp
+*.temp
+$RECYCLE.BIN/
+
+# Linux
+*~
+.nfs*
+
+# =============================================================================
+# Environnement et Secrets
+# =============================================================================
+
+# Fichiers d'environnement - NE JAMAIS COMMITER
+.env
+.env.*
+!.env.example
+!.env.test
+!.env.development
+!.env.staging
+!.env.production
+
+# Clés et secrets
+*.pem
+*.key
+*.crt
+*.cert
+*.pfx
+*.p12
+*.jks
+*.keystore
+*_key.json
+*_secret.json
+service-account*.json
+
+# Variables d'environnement locales
+.env.local
+.env.*.local
+
+# =============================================================================
+# Node.js et npm/yarn/pnpm
+# =============================================================================
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# Build outputs
+.next/
+out/
+dist/
+build/
+
+# Cache
+.cache/
+# next.js
+.cache/nextjs/
+
+# npm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# IDE et Editeurs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+.buildpath
+
+# Testing
+.coverage/
+.nyc_output/
+
+# Misc
+*.log
+*.lcov
+.lintcache
+.eslintcache
+
+# =============================================================================
+# Next.js spécifique
+# =============================================================================
+
+# Next.js build output
+.next
+out
+
+# Next.js cache
+.cache/nextjs
+
+# Automatic type acquisition (when using `npx create-next-app`)
+.next/cache
+
+# =============================================================================
+# Python
+# =============================================================================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE Python
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# =============================================================================
+# FastAPI et UVicorn
+# =============================================================================
+
+# FastAPI
+__pycache__/
+*.py[cod]
+
+# UVicorn logs
+uvicorn.log
+
+# =============================================================================
+# PostgreSQL et Base de données
+# =============================================================================
+
+# Dump files
+*.sql
+*.sql.gz
+*.backup
+*.bak
+
+# Local PostgreSQL data
+pgdata/
+data/
+
+# =============================================================================
+# Redis
+# =============================================================================
+
+# Local Redis data
+dump.rdb
+dump.rdb.bak
+*.rdb
+
+# =============================================================================
+# Docker
+# =============================================================================
+
+# Docker images et conteneurs - NE JAMAIS COMMITER
+docker-compose.override.yml
+.docker/
+
+# Local Docker volumes
+*.vol
+volumes/
+
+# =============================================================================
+# Docker Compose
+# =============================================================================
+
+docker-compose.log
+
+# =============================================================================
+# Logs
+# =============================================================================
+
+# Logs généraux
+*.log
+logs/
+.logs/
+
+# Application logs
+app.log
+api.log
+web.log
+error.log
+access.log
+
+# Structured logs
+*.json.log
+*.log.json
+
+# =============================================================================
+# Coverage et Tests
+# =============================================================================
+
+# Coverage reports
+coverage/
+.nyc_output/
+.lcov
+*.lcov
+
+# Test results
+.test.cache
+.jest/
+
+# Playwright
+playwright-report/
+test-results/
+
+# =============================================================================
+# Build et Artefacts
+# =============================================================================
+
+# Build outputs
+build/
+dist/
+output/
+
+# Packaged files
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
+# =============================================================================
+# Cache
+# =============================================================================
+
+# General cache
+.cache/
+.cache/*
+
+# Specific caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.lint/
+
+# =============================================================================
+# IDE spécifique
+# =============================================================================
+
+# VS Code
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+# IntelliJ / WebStorm / PyCharm
+.idea/
+*.iml
+*.ipr
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Atom
+*.atom
+.apm
+
+# Eclipse
+.metadata/
+.bundle/
+
+# NetBeans
+nbproject/
+
+# =============================================================================
+# macOS et iOS
+# =============================================================================
+
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.Trash
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# =============================================================================
+# Windows
+# =============================================================================
+
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.tmp
+*.temp
+$RECYCLE.BIN/
+
+# =============================================================================
+# Linux
+# =============================================================================
+
+*~
+.nfs*
+
+# =============================================================================
+# H5P - Stockage local et temporaire
+# =============================================================================
+
+# H5P packages temporaires
+h5p-temp/
+temp-h5p/
+.h5p-temp/
+
+# H5P uploads en quarantaine
+h5p-quarantine/
+quarantine/
+.h5p-uploads/
+
+# H5P extraits
+.h5p-extracted/
+extracted-h5p/
+
+# H5P cache
+h5p-cache/
+.h5p-cache/
+
+# Fichiers H5P téléchargés (versionnés via S3)
+*.h5p
+
+# =============================================================================
+# PhET
+# =============================================================================
+
+# Cache PhET local
+phet-cache/
+.phet-cache/
+
+# =============================================================================
+# Stockage local temporaire
+# =============================================================================
+
+# Uploads temporaires
+temp/
+tmp/
+.uploads/
+
+# Fichiers temporaires
+*.temp
+*.tmp
+
+# =============================================================================
+# CI/CD
+# =============================================================================
+
+# GitHub Actions
+.github/
+!/.github/workflows/
+
+# =============================================================================
+# Documentation
+# =============================================================================
+
+# Markdown temporary files
+*.md.swp
+*.md.bak
+
+# =============================================================================
+# Fichiers générés automatiquement
+# =============================================================================
+
+# Migration files (kept in version control)
+# alembic/versions/*.py - NE PAS IGNORER
+
+# IDE workspace files
+*.workspace
+*.suo
+*.user
+
+# =============================================================================
+# FIN
+# =============================================================================
+# Ce fichier doit être régulierement revu et mis à jour
+# =============================================================================
