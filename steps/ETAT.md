@@ -1,4 +1,4 @@
-# État initial du projet
+# État du projet
 
 ## Métadonnées
 
@@ -65,6 +65,7 @@ steps/03_infrastructure_locale_ci/01_configurer_docker.md
 - 2026-08-10 13:47 : rapport_2026-08-10_1347_initialiser_workspace.md (P0-04)
 - 2026-08-10 14:41 : rapport_2026-08-10_1441_initialiser_nextjs.md (S1-01)
 - 2026-08-10 14:54 : rapport_2026-08-10_1454_initialiser_fastapi.md (S1-02)
+- 2026-08-10 15:15 : rapport_2026-08-10_1515_etape_complete.md (Clôture étape 02)
 
 ## Historique
 
@@ -75,3 +76,5 @@ steps/03_infrastructure_locale_ci/01_configurer_docker.md
 - 2026-08-10 13:47 : monorepo initialisé (P0-04).
 - 2026-08-10 14:41 : Next.js frontend initialisé (S1-01).
 - 2026-08-10 14:54 : FastAPI backend initialisé (S1-02).
+- 2026-08-10 15:05 : .venv créé pour FastAPI.
+- 2026-08-10 15:15 : Étape 02_initialisation_monorepo clôturée.
