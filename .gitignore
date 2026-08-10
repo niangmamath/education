@@ -191,7 +191,7 @@ coverage.xml
 *.mo
 *.pot
 
-# Environments
+# Environmentsls
 .env
 .venv
 env/
