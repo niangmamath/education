@@ -26,6 +26,8 @@
 - [x] `.gitignore` recréé.
 - [x] ADR initiaux créés.
 - [x] Monorepo initialisé.
+- [x] Next.js Frontend initialisé.
+- [x] FastAPI Backend initialisé.
 - [ ] Infrastructure locale opérationnelle.
 - [ ] Spike H5P validé.
 - [ ] Sprint 1 terminé.
@@ -39,7 +41,7 @@
 Exécuter :
 
 ```text
-steps/02_initialisation_monorepo/02_initialiser_nextjs.md
+steps/03_infrastructure_locale_ci/01_configurer_docker.md
 ```
 
 ## Décisions ouvertes à contrôler
@@ -61,6 +63,8 @@ steps/02_initialisation_monorepo/02_initialiser_nextjs.md
 
 - 2026-08-10 12:00 : rapport_2026-08-10_1200_creer-adr-initiaux.md (P0-03)
 - 2026-08-10 13:47 : rapport_2026-08-10_1347_initialiser_workspace.md (P0-04)
+- 2026-08-10 14:41 : rapport_2026-08-10_1441_initialiser_nextjs.md (S1-01)
+- 2026-08-10 14:54 : rapport_2026-08-10_1454_initialiser_fastapi.md (S1-02)
 
 ## Historique
 
@@ -69,3 +73,5 @@ steps/02_initialisation_monorepo/02_initialiser_nextjs.md
 - 2026-08-10 11:00 : fichiers racine créés (P0-02).
 - 2026-08-10 12:00 : ADR initiaux créés (P0-03).
 - 2026-08-10 13:47 : monorepo initialisé (P0-04).
+- 2026-08-10 14:41 : Next.js frontend initialisé (S1-01).
+- 2026-08-10 14:54 : FastAPI backend initialisé (S1-02).

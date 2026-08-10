@@ -23,8 +23,8 @@
 
 | ID | Travail | Dépendance | Statut | Livrable |
 |---|---|---|---|---|
-| S1-01 | Initialiser Next.js et Tailwind | P0-03 | À faire | Frontend |
-| S1-02 | Initialiser FastAPI | P0-03 | À faire | Backend |
+| S1-01 | Initialiser Next.js et Tailwind | P0-03 | Terminé | Frontend |
+| S1-02 | Initialiser FastAPI | P0-03 | Terminé | Backend |
 | S1-03 | Configurer SQLAlchemy et Alembic | S1-02 | À faire | Base |
 | S1-04 | Créer auth Parent | S1-03 | À faire | Session parent |
 | S1-05 | Créer profils Élève et PIN | S1-04 | À faire | Accès enfant |

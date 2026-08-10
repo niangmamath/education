@@ -1,0 +1,50 @@
+# FastAPI Core
+fastapi==0.115.0
+uvicorn[standard]==0.31.0
+python-multipart==0.0.9
+
+# Pydantic & Settings
+pydantic==2.9.0
+pydantic-settings==2.7.1
+python-dotenv==1.0.1
+
+# SQLAlchemy 2 & PostgreSQL
+sqlalchemy==2.0.41
+alembic==1.14.0
+psycopg2-binary==2.9.9
+
+# Redis & Celery
+redis==5.2.0
+celery==5.4.0
+flower==2.0.1
+
+# Async Support
+anyio==4.6.0
+httpx==0.27.2
+
+# Logging & Tracing
+structlog==24.4.0
+python-json-logger==2.0.7
+opentelemetry-api==1.27.0
+opentelemetry-sdk==1.27.0
+opentelemetry-exporter-otlp==1.27.0
+
+# Validation & Utilities
+email-validator==2.2.0
+python-dateutil==2.9.0.post0
+
+# Testing
+pytest==8.3.5
+pytest-asyncio==0.24.0
+pytest-cov==4.1.0
+httpx==0.27.2
+hypothesis==6.125.0
+
+# Type checking
+mypy==1.15.0
+
+# Development
+autoflake==2.3.1
+black==24.8.0
+isort==5.13.2
+ruff==0.6.9
