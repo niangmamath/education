@@ -14,7 +14,7 @@
 | P0-01 | Vérifier le dépôt vidé | Aucune | Terminé | Rapport d’audit |
 | P0-02 | Recréer les fichiers racine | P0-01 | Terminé | README, gitignore, env example |
 | P0-03 | Créer les ADR initiaux | P0-02 | Terminé | ADR 000-010, registre |
-| P0-04 | Initialiser le monorepo | P0-03 | À faire | Apps et packages |
+| P0-04 | Initialiser le monorepo | P0-03 | Terminé | Apps et packages |
 | P0-05 | Configurer Docker local | P0-04 | À faire | PostgreSQL, Redis, stockage |
 | P0-06 | Réaliser le spike H5P | P0-05 | À faire | Preuve lecture + xAPI |
 | P0-07 | Geler les types H5P autorisés | P0-06 | À faire | ADR H5P |

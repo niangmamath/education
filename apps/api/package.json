@@ -1,0 +1,24 @@
+{
+  "name": "@studentconnect/api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "StudentConnect Backend - FastAPI",
+  "type": "module",
+  "scripts": {
+    "dev": "uvicorn main:app --reload --port 8000",
+    "build": "echo 'No build step for FastAPI'",
+    "start": "uvicorn main:app --port 8000",
+    "lint": "ruff check .",
+    "typecheck": "mypy .",
+    "test": "pytest",
+    "format": "ruff format .",
+    "clean": "rm -rf __pycache__ *.pyc",
+    "db:upgrade": "alembic upgrade head",
+    "db:migrate": "alembic revision --autogenerate -m"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "engines": {
+    "python": ">=3.11.0"
+  }
+}

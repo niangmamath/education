@@ -1,0 +1,21 @@
+{
+  "name": "@studentconnect/config",
+  "version": "0.1.0",
+  "private": true,
+  "description": "StudentConnect Shared Configuration",
+  "type": "module",
+  "scripts": {
+    "build": "echo 'No build step'",
+    "lint": "echo 'No lint step'",
+    "typecheck": "echo 'No typecheck step'",
+    "test": "echo 'No test step'",
+    "format": "echo 'No format step'",
+    "clean": "echo 'No clean step'"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=11.0.0"
+  }
+}

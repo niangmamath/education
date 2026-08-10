@@ -1,0 +1,55 @@
+{
+  "name": "studentconnect",
+  "version": "0.1.0",
+  "description": "StudentConnect - Plateforme EdTech B2C pour élèves de 6 à 11 ans et leurs parents",
+  "private": true,
+  "packageManager": "pnpm@11.21.0",
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "dev:web": "pnpm --filter apps/web dev",
+    "dev:api": "pnpm --filter apps/api dev",
+    "build": "turbo run build",
+    "build:web": "pnpm --filter apps/web build",
+    "build:api": "pnpm --filter apps/api build",
+    "lint": "turbo run lint",
+    "lint:web": "pnpm --filter apps/web lint",
+    "lint:api": "pnpm --filter apps/api lint",
+    "typecheck": "turbo run typecheck",
+    "typecheck:web": "pnpm --filter apps/web typecheck",
+    "test": "turbo run test",
+    "test:web": "pnpm --filter apps/web test",
+    "test:api": "pnpm --filter apps/api test",
+    "format": "turbo run format",
+    "format:web": "pnpm --filter apps/web format",
+    "format:api": "pnpm --filter apps/api format",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "install:all": "pnpm install --recursive",
+    "db:migrate": "pnpm --filter apps/api db:migrate",
+    "db:upgrade": "pnpm --filter apps/api db:upgrade",
+    "docker:up": "docker-compose -f infrastructure/docker/docker-compose.yml up -d",
+    "docker:down": "docker-compose -f infrastructure/docker/docker-compose.yml down",
+    "docker:build": "docker-compose -f infrastructure/docker/docker-compose.yml build"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.0",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0",
+    "pnpm": ">=11.0.0"
+  },
+  "keywords": [
+    "edtech",
+    "education",
+    "student",
+    "parent",
+    "h5p",
+    "phet",
+    "nextjs",
+    "fastapi",
+    "monorepo"
+  ],
+  "author": "tidianesarrndiaye-org",
+  "license": "UNLICENSED"
+}

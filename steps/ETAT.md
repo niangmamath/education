@@ -25,7 +25,7 @@
 - [x] README recréé.
 - [x] `.gitignore` recréé.
 - [x] ADR initiaux créés.
-- [ ] Monorepo initialisé.
+- [x] Monorepo initialisé.
 - [ ] Infrastructure locale opérationnelle.
 - [ ] Spike H5P validé.
 - [ ] Sprint 1 terminé.
@@ -39,7 +39,7 @@
 Exécuter :
 
 ```text
-steps/02_initialisation_monorepo/01_initialiser_workspace.md
+steps/02_initialisation_monorepo/02_initialiser_nextjs.md
 ```
 
 ## Décisions ouvertes à contrôler
@@ -60,6 +60,7 @@ steps/02_initialisation_monorepo/01_initialiser_workspace.md
 ## Dernier rapport appliqué
 
 - 2026-08-10 12:00 : rapport_2026-08-10_1200_creer-adr-initiaux.md (P0-03)
+- 2026-08-10 13:47 : rapport_2026-08-10_1347_initialiser_workspace.md (P0-04)
 
 ## Historique
 
@@ -67,3 +68,4 @@ steps/02_initialisation_monorepo/01_initialiser_workspace.md
 - 2026-08-10 10:00 : dépôt vérifié vide (P0-01).
 - 2026-08-10 11:00 : fichiers racine créés (P0-02).
 - 2026-08-10 12:00 : ADR initiaux créés (P0-03).
+- 2026-08-10 13:47 : monorepo initialisé (P0-04).

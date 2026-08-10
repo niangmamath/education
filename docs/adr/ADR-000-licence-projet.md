@@ -206,11 +206,11 @@ Une alternative serait d'utiliser une **double licence** :
 ## Prochaines étapes
 
 1. ✅ **Créer cet ADR** en status Proposed
-2. ⏳ **Discuter avec l'équipe** et les parties prenantes
-3. ⏳ **Consulter un expert juridique** si nécessaire
-4. ⏳ **Décider** de la licence finale
-5. ⏳ **Créer le fichier LICENSE** avec la licence choisie
-6. ⏳ **Mettre à jour** ce document avec la décision finale
+2. ⏳ **Discuter avec l'équipe** et les parties prenantes: suis le seul developpeur, mais pour les decisions importantes, je peux demander l'avis de mon tuteur de stage et éventuellement d'autres experts en open source.
+3. ⏳ **Consulter un expert juridique** si nécessaire: pas pour ce projet en tout cas pas dans la premiere version, mais si le projet evolue et devient plus important, je pourrais envisager de consulter un expert juridique.
+4. ⏳ **Décider** de la licence finale: c'est pas important pour le moment puisque on ne commercialise pas le projet, mais si le projet evolue et devient plus important, je pourrais envisager de consulter un expert juridique.
+5. ⏳ **Créer le fichier LICENSE** avec la licence choisie: pas necesaire à ce stade.
+6. ⏳ **Mettre à jour** ce document avec la décision finale: je crois j'ai tout fournis pour la mise `a jour.
 
 ---
 

@@ -1,0 +1,22 @@
+{
+  "name": "@studentconnect/schemas",
+  "version": "0.1.0",
+  "private": true,
+  "description": "StudentConnect Shared Schemas (Pydantic/Zod)",
+  "type": "module",
+  "scripts": {
+    "build": "echo 'No build step'",
+    "lint": "echo 'No lint step'",
+    "typecheck": "echo 'No typecheck step'",
+    "test": "echo 'No test step'",
+    "format": "echo 'No format step'",
+    "clean": "echo 'No clean step'"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "engines": {
+    "node": ">=20.0.0",
+    "python": ">=3.11.0",
+    "pnpm": ">=11.0.0"
+  }
+}

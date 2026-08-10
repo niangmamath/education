@@ -1,0 +1,32 @@
+{
+  "name": "@studentconnect/web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "StudentConnect Frontend - Next.js 16",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest",
+    "format": "prettier --write .",
+    "clean": "rm -rf .next"
+  },
+  "dependencies": {
+    "next": "^16.0.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=11.0.0"
+  }
+}
