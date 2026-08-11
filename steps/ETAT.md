@@ -4,8 +4,8 @@
 
 - Projet : StudentConnect
 - Date : 11 août 2026
-- Dépôt : `tidianesarrndiaye-org/StudentConnect`
-- Branche attendue : `main`
+- Dépôt : `Tidianesarrndiaye-org/StudentConnect`
+- Branche : `main`
 - Version cible : `V0.1`
 
 ## Terminé
@@ -15,20 +15,27 @@
 - [x] Monorepo pnpm/Turborepo.
 - [x] Frontend Next.js et Tailwind initialisé.
 - [x] Backend FastAPI initialisé.
-- [x] Environnement Python Linux `.venv` opérationnel à la racine.
+- [x] Environnement Python Linux `.venv` opérationnel.
 - [x] Node.js et pnpm natifs Linux dans WSL.
 
 ## Étape 03, infrastructure locale et CI
 
-- [x] 03.1 Docker Compose validé de bout en bout.
-- [x] 03.2 SQLAlchemy async et Alembic validés.
-- [x] 03.3 Contrôles locaux frontend et backend validés.
-- [x] Workflows GitHub Actions présents et syntaxiquement valides.
+- [x] Docker Compose validé de bout en bout.
+- [x] PostgreSQL, Redis et MinIO opérationnels.
+- [x] Les cinq buckets MinIO sont privés.
+- [x] FastAPI et CORS validés.
+- [x] Celery et la tâche de santé validés.
+- [x] SQLAlchemy async et Alembic validés.
+- [x] Ruff, Mypy et Pytest validés.
+- [x] TypeScript, ESLint et build Next.js validés.
 - [x] Script global `check_step03.sh` terminé avec le code `0`.
 - [x] Rapports de l’étape 03 produits.
-- [ ] Commit de clôture créé.
-- [ ] Push vers `origin/main` réalisé.
-- [ ] Exécution distante des workflows GitHub Actions confirmée.
+- [x] Commit principal créé et poussé : `d7a7262`.
+- [x] Correctif Secret Scan créé et poussé : `6bcf765`.
+- [x] API CI distante réussie.
+- [x] Web CI distante réussie.
+- [x] Secret Scan distant réussi après remplacement de l’action sous licence.
+- [x] Étape 03 clôturée.
 
 ## Résultats techniques de référence
 
@@ -37,47 +44,33 @@ PostgreSQL : healthy, base et rôle studentconnect
 Redis      : healthy, PONG
 MinIO      : healthy, cinq buckets privés
 FastAPI    : healthy, /health/live → live
-Celery     : pong, tâche de santé réussie
+Celery     : pong, tâche studentconnect.health.ping réussie
 Alembic    : 0001_infrastructure_baseline (head)
-Ruff       : vert
+Ruff       : vert, format inclus
 Mypy       : vert sur 11 fichiers
 Pytest     : 12 tests réussis
 TypeScript : vert
 ESLint     : vert
 Next.js    : build de production réussi
+API CI     : succès
+Web CI     : succès
+Secret Scan: succès
 ```
 
-## Corrections d’état
+## Historique de clôture
 
-Les anciens rapports du 11 août 2026 annonçant 03.1, 03.2 et 03.3 comme terminés avant la résolution des erreurs ont été retirés et remplacés par les rapports horodatés `2026-08-11_1709`.
+- `d7a7262` : infrastructure locale, migrations, contrôles qualité et workflows CI.
+- `6bcf765` : remplacement de `gitleaks/gitleaks-action` par le scanner Gitleaks exécuté directement, sans dépendance à une licence d’organisation.
+- La première exécution du Secret Scan sur `d7a7262` a échoué pour absence de licence Gitleaks d’organisation. Cet échec était un problème de configuration du workflow et non une détection de secret.
+- L’exécution suivante du Secret Scan sur `6bcf765` a réussi.
 
 ## Organisation des étapes
 
-Les dossiers futurs `steps/04_*` à `steps/16_*` sont temporairement retirés du dépôt. Chaque dossier sera régénéré proprement au démarrage de l’étape correspondante.
-
-## Décisions ouvertes
-
-- Hébergeur Next.js.
-- Hébergeur FastAPI.
-- PostgreSQL managé.
-- Redis managé.
-- Stockage S3 et CDN de production.
-- Domaine et sous-domaines.
-- Région des données.
-- Budget mensuel.
-- Types H5P autorisés dans le MVP.
-- Licence des paquets H5P pilotes.
-- Modèle économique et licence PhET.
-- Programme scolaire et compétences pilotes.
+Les dossiers détaillés des étapes 04 à 16 sont temporairement retirés du dépôt. Chaque dossier sera régénéré proprement au démarrage de l’étape correspondante.
 
 ## Prochaine action
 
-1. Vérifier le diff indexé et l’absence de secrets.
-2. Créer le commit de clôture de l’étape 03.
-3. Pousser vers `origin/main`.
-4. Vérifier l’exécution distante de GitHub Actions.
-5. Passer `P0-05` à Terminé après validation distante.
-6. Préparer l’étape 04 H5P.
+Préparer l’étape `04_spike_h5p_critique`, puis exécuter en premier la collecte et la validation des paquets H5P de test.
 
 ## Derniers rapports appliqués
 
@@ -85,3 +78,4 @@ Les dossiers futurs `steps/04_*` à `steps/16_*` sont temporairement retirés du
 - `rapport_2026-08-11_1709_base_migrations.md`
 - `rapport_2026-08-11_1709_ci.md`
 - `rapport_2026-08-11_1709_etape_complete.md`
+- `rapport_2026-08-11_2025_validation_distante.md`

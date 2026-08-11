@@ -85,3 +85,12 @@ Après commit, push et validation distante de la CI, préparer l’étape 04 con
 - [ ] Commit créé.
 - [ ] Push réalisé.
 - [ ] GitHub Actions distantes validées.
+
+## Validation distante finale
+
+- Commit principal poussé : `d7a7262`.
+- Correctif Secret Scan poussé : `6bcf765`.
+- API CI : succès.
+- Web CI : succès.
+- Secret Scan : succès après remplacement de l’action nécessitant une licence d’organisation.
+- Statut final de l’étape 03 : **Terminé**.
