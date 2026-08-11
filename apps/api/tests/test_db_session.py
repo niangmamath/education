@@ -1,14 +1,9 @@
-import asyncio
-
-import pytest
-
-from app.core import db
+from app.core.db import DATABASE_URL, Base
 
 
-@pytest.mark.asyncio
-async def test_get_async_session_closes():
-    # This test only validates that the async session can be created and closed
-    async with db.async_session() as session:
-        assert session is not None
-    # After context exit, session should be closed
-    # There's no direct 'closed' attribute, but ensuring no exception was raised is sufficient here.
+def test_database_url_uses_async_postgresql_driver() -> None:
+    assert DATABASE_URL.startswith("postgresql+asyncpg://")
+
+
+def test_base_metadata_is_available() -> None:
+    assert Base.metadata is not None

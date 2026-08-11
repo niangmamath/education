@@ -14,7 +14,7 @@ export default function ConstructionPage() {
     {
       icon: BarChart3,
       title: 'Score de santé académique',
-      description: 'Indicateur explicable basé sur les résultats et l\'engagement',
+      description: 'Indicateur explicable basé sur les résultats et l’engagement',
       status: 'En développement',
     },
     {
@@ -74,7 +74,7 @@ export default function ConstructionPage() {
             href="/health"
             className="inline-flex items-center px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors duration-200 font-medium"
           >
-            Vérifier l\'état
+            Vérifier l’état
             <ArrowRight className="ml-2 w-4 h-4" />
           </Link>
         </div>

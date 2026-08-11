@@ -1,46 +1,28 @@
-# Étape 03.3, configurer la CI
-
-## Prérequis
-
-Lire les fichiers racine et le dernier rapport disponible.
+# 03.3 - Integration continue
 
 ## Objectif
 
-Créer des pipelines frontend, backend et sécurité de base.
+Valider frontend, backend, migrations et secrets dans GitHub Actions.
 
-## Travaux obligatoires
+## Controles locaux avant push
 
+```bash
+pnpm --filter @studentconnect/web run typecheck
+pnpm --filter @studentconnect/web run lint
+pnpm --filter @studentconnect/web run build
+docker compose exec -T api ruff check .
+docker compose exec -T api mypy app --ignore-missing-imports
+docker compose exec -T api pytest -q
+```
 
-Créer GitHub Actions pour :
+## Point bloquant connu a corriger
 
-- lint et type-check frontend ;
-- tests et build Next.js ;
-- lint, type-check et tests backend ;
-- migration check ;
-- détection de secrets ;
-- cache des dépendances ;
-- artefacts de tests utiles.
+Le rapport 02 indique que le lint Next.js et un test CORS n'etaient pas verts. Ne marquer la CI terminee qu'apres correction ou apres un rapport Bloque explicite. Un critere ne peut pas etre coche si la commande echoue.
 
-Les workflows ne doivent pas nécessiter de secrets pour les pull requests de test.
+## Acceptation
 
-
-## Critères d’acceptation
-
-
-- [ ] Les workflows sont syntaxiquement valides.
-- [ ] Les échecs ne sont pas masqués.
-- [ ] Les permissions GitHub Actions sont minimales.
-- [ ] Aucun déploiement automatique n’est activé avant décision d’hébergement.
-
-
-## Livrables
-
-Workflows CI et rapport.
-
-## Clôture obligatoire
-
-- Exécuter les tests pertinents.
-- Créer un rapport selon `MODELE_RAPPORT.md` dans ce dossier.
-- Mettre à jour `ETAT.md`.
-- Mettre à jour la ligne correspondante de `PLANNING.md`.
-- Ne pas passer à la sous-étape suivante si le statut est `Bloqué`.
+- `api-ci.yml`, `web-ci.yml` et `secret-scan.yml` sont valides.
+- Les workflows utilisent les versions verrouillees du projet.
+- Aucun deploiement n'est active.
+- Les permissions GitHub sont minimales.
+- Tous les checks obligatoires sont verts.

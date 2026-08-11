@@ -1,42 +1,28 @@
-# Étape 03.2, configurer SQLAlchemy et Alembic
-
-## Prérequis
-
-Lire les fichiers racine et le dernier rapport disponible.
+# 03.2 - SQLAlchemy async et Alembic
 
 ## Objectif
 
-Connecter FastAPI à PostgreSQL et établir la politique de migrations.
+Valider la connexion asynchrone PostgreSQL et une baseline Alembic propre.
 
-## Travaux obligatoires
+## Procedure
 
+```bash
+docker compose exec -T api alembic upgrade head
+docker compose exec -T api alembic current
+docker compose exec -T api python -m pytest tests/test_db_session.py -q
+```
 
-1. Configurer engine, sessions et transactions.
-2. Choisir sync ou async et consigner la décision.
-3. Initialiser Alembic.
-4. Créer une migration technique minimale si nécessaire.
-5. Ajouter un check empêchant les migrations divergentes.
-6. Documenter création, upgrade, downgrade et vérification.
-7. Ajouter tests de transaction et connexion.
+Dans une base locale jetable, verifier aussi:
 
+```bash
+docker compose exec -T api alembic downgrade base
+docker compose exec -T api alembic upgrade head
+```
 
-## Critères d’acceptation
+## Acceptation
 
-
-- [ ] Alembic applique les migrations sur une base vide.
-- [ ] Le downgrade de la migration initiale est testé.
-- [ ] La session est fermée correctement.
-- [ ] La décision sync/async est documentée.
-
-
-## Livrables
-
-Configuration DB, ADR si nécessaire et rapport.
-
-## Clôture obligatoire
-
-- Exécuter les tests pertinents.
-- Créer un rapport selon `MODELE_RAPPORT.md` dans ce dossier.
-- Mettre à jour `ETAT.md`.
-- Mettre à jour la ligne correspondante de `PLANNING.md`.
-- Ne pas passer à la sous-étape suivante si le statut est `Bloqué`.
+- `DATABASE_URL` utilise `postgresql+asyncpg` et `postgres:5432`.
+- La baseline s'applique sur base vide.
+- Downgrade et upgrade sont reproductibles.
+- Aucune migration metier n'est inventee pendant cette etape.
+- Aucun mot de passe n'est code dans `alembic.ini`.

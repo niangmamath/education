@@ -2,69 +2,37 @@
 
 ## Principes
 
-- Le planning est la source de pilotage principale.
-- Chaque ligne passe par : À faire, En cours, Bloqué, En revue, Terminé.
+- Statuts : À faire, En cours, Bloqué, En revue, Terminé.
+- Une tâche terminée doit disposer d’une preuve reproductible.
 - Une tâche bloquée doit référencer un rapport.
-- Les dates sont ajustables, mais les dépendances ne doivent pas être ignorées.
+- Le commit et le push font partie de la clôture d’une étape.
 
-## Phase 0, préparation et spike critique
+## Phase 0, préparation et infrastructure
 
-| ID | Travail | Dépendance | Statut | Livrable |
+| ID | Travail | Dépendances | Statut | Preuve attendue |
 |---|---|---|---|---|
-| P0-01 | Vérifier le dépôt vidé | Aucune | Terminé | Rapport d’audit |
+| P0-01 | Vérifier le dépôt vidé | Aucune | Terminé | Rapport étape 01 |
 | P0-02 | Recréer les fichiers racine | P0-01 | Terminé | README, gitignore, env example |
-| P0-03 | Créer les ADR initiaux | P0-02 | Terminé | ADR 000-010, registre |
-| P0-04 | Initialiser le monorepo | P0-03 | Terminé | Apps et packages |
-| P0-05 | Configurer Docker local | P0-04 | En cours | PostgreSQL, Redis, stockage |
-| P0-06 | Réaliser le spike H5P | P0-05 | À faire | Preuve lecture + xAPI |
-| P0-07 | Geler les types H5P autorisés | P0-06 | À faire | ADR H5P |
+| P0-03 | Créer les ADR initiaux | P0-02 | Terminé | ADR et registre |
+| P0-04 | Initialiser le monorepo | P0-03 | Terminé | Rapports étape 02 |
+| S1-01 | Initialiser Next.js et Tailwind | P0-03 | Terminé | TypeScript, ESLint et build verts |
+| S1-02 | Initialiser FastAPI | P0-03 | Terminé | API, CORS et tests verts |
+| P0-05A | Configurer Docker Compose | P0-04, S1-02 | Terminé | Services healthy, Celery et buckets |
+| S1-03 | Configurer SQLAlchemy et Alembic | S1-02, P0-05A | Terminé | Upgrade, downgrade et head |
+| S1-07 | Configurer la CI | S1-01, S1-02, S1-03 | Terminé localement | Contrôles locaux et YAML valides |
+| P0-05 | Clôturer l’infrastructure locale | P0-05A, S1-03, S1-07 | En revue | Rapports, commit, push et CI distante |
+| P0-06 | Réaliser le spike H5P | P0-05 | À faire | Lecture Standalone et événement xAPI |
+| P0-07 | Geler les types H5P autorisés | P0-06 | À faire | ADR H5P mis à jour |
 
-## Sprint 1, fondations et identité familiale
+## Conditions pour passer P0-05 à Terminé
 
-| ID | Travail | Dépendance | Statut | Livrable |
-|---|---|---|---|---|
-| S1-01 | Initialiser Next.js et Tailwind | P0-03 | Terminé | Frontend |
-| S1-02 | Initialiser FastAPI | P0-03 | Terminé | Backend |
-| S1-03 | Configurer SQLAlchemy et Alembic | S1-02 | En cours | Base |
-| S1-04 | Créer auth Parent | S1-03 | À faire | Session parent |
-| S1-05 | Créer profils Élève et PIN | S1-04 | À faire | Accès enfant |
-| S1-06 | Créer layouts Parent et Élève | S1-01 | À faire | Dashboards vides |
-| S1-07 | Configurer CI | S1-01,S1-02 | En cours | Workflows |
+- [x] Script global local terminé avec code `0`.
+- [x] Quatre rapports de l’étape 03 produits.
+- [x] `ETAT.md` et `PLANNING.md` mis à jour.
+- [ ] Commit créé.
+- [ ] Push vers `origin/main` réalisé.
+- [ ] GitHub Actions distantes contrôlées.
 
-## Sprint 2, compétences, évaluations et lacunes
+## Étapes futures
 
-| ID | Travail | Dépendance | Statut | Livrable |
-|---|---|---|---|---|
-| S2-01 | Définir référentiel pilote | S1 | À faire | Compétences |
-| S2-02 | Implémenter arbre de compétences | S2-01 | À faire | Relations |
-| S2-03 | Implémenter diagnostic interne | S2-02 | À faire | Évaluation |
-| S2-04 | Calculer résultats par compétence | S2-03 | À faire | Résultats |
-| S2-05 | Détecter les lacunes | S2-04 | À faire | Gaps |
-| S2-06 | Calculer score de santé initial | S2-05 | À faire | Score |
-| S2-07 | Afficher alerte Parent | S2-06 | À faire | UI Parent |
-
-## Sprint 3, contenus et Quick Repairs
-
-| ID | Travail | Dépendance | Statut | Livrable |
-|---|---|---|---|---|
-| S3-01 | Content Studio minimal | P0-05 | À faire | Import H5P |
-| S3-02 | Pipeline de quarantaine | S3-01 | À faire | Worker sécurisé |
-| S3-03 | Publication H5P versionnée | S3-02 | À faire | Runtime |
-| S3-04 | Lecteur et bridge xAPI | S3-03 | À faire | Lecture native |
-| S3-05 | Intégration PhET | S2-02 | À faire | Module PhET |
-| S3-06 | Association gap-contenu | S2-05,S3-03 | À faire | Mapping |
-| S3-07 | Générer Quick Repair | S3-06 | À faire | Parcours court |
-| S3-08 | Réévaluer et mettre à jour | S3-07 | À faire | Progression |
-
-## Sprint 4, dashboards et release
-
-| ID | Travail | Dépendance | Statut | Livrable |
-|---|---|---|---|---|
-| S4-01 | Finaliser dashboard Élève | S3 | À faire | UI Élève |
-| S4-02 | Finaliser dashboard Parent | S3 | À faire | UI Parent |
-| S4-03 | Notifications | S4-02 | À faire | Alertes |
-| S4-04 | Sécurité et upload hostile | S3-02 | À faire | Rapport sécurité |
-| S4-05 | Performance et Lighthouse | S4-01,S4-02 | À faire | Rapport performance |
-| S4-06 | Tests E2E et acceptation | S4 | À faire | Matrice CA |
-| S4-07 | Déploiement | S4-06 | À faire | Environnement démo |
-| S4-08 | Documentation et release | S4-07 | À faire | V0.1 |
+Les dossiers détaillés des étapes 04 à 16 seront régénérés au démarrage de chaque étape. Le prochain dossier à créer sera `steps/04_spike_h5p_critique` après la clôture effective de P0-05.

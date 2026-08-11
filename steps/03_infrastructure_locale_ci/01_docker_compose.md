@@ -1,43 +1,45 @@
-# Étape 03.1, créer l’infrastructure locale
-
-## Prérequis
-
-Lire les fichiers racine et le dernier rapport disponible.
+# 03.1 - Docker Compose propre
 
 ## Objectif
 
-Fournir PostgreSQL, Redis et stockage objet de développement.
+Demarrer PostgreSQL, Redis, MinIO local, l'API FastAPI et le worker Celery dans le meme reseau Docker.
 
-## Travaux obligatoires
+## Procedure
 
+1. Copier `.env.example` vers `.env` et conserver des valeurs locales uniquement.
+2. Si un ancien volume PostgreSQL existe avec un autre role, executer volontairement `infrastructure/scripts/reset_step03.ps1`.
+3. Executer:
 
-1. Créer `docker-compose.yml`.
-2. Ajouter PostgreSQL avec health check et volume nommé.
-3. Ajouter Redis avec health check.
-4. Ajouter un stockage S3 compatible de développement. Ne pas figer ce choix comme production sans ADR.
-5. Ajouter scripts de création des buckets locaux.
-6. Créer un réseau dédié.
-7. Documenter commandes démarrage, arrêt, reset et logs.
-8. Ne pas exposer inutilement les services.
+```bash
+docker compose config --quiet
+docker compose build api worker
+docker compose up -d
+docker compose ps
+```
 
+4. Verifier:
 
-## Critères d’acceptation
+```bash
+docker compose exec -T postgres pg_isready -U studentconnect -d studentconnect
+docker compose exec -T postgres psql -U studentconnect -d studentconnect -c 'SELECT current_database(), current_user;'
+docker compose exec -T redis redis-cli ping
+docker compose logs --tail=100 storage-init
+docker compose logs --tail=100 api
+docker compose logs --tail=100 worker
+curl --fail http://localhost:8000/health/live
+```
 
+## Decisions
 
-- [ ] Tous les services deviennent healthy.
-- [ ] Les volumes persistent après redémarrage.
-- [ ] Le reset est explicite et non exécuté silencieusement.
-- [ ] Aucun mot de passe réel n’est commité.
+- PostgreSQL n'est pas publie sur l'hote. L'API utilise `postgres:5432`.
+- MinIO est un outil local seulement.
+- L'API tourne dans Docker via Uvicorn.
+- Le worker tourne dans Docker via Celery.
 
+## Acceptation
 
-## Livrables
-
-Infrastructure locale et rapport.
-
-## Clôture obligatoire
-
-- Exécuter les tests pertinents.
-- Créer un rapport selon `MODELE_RAPPORT.md` dans ce dossier.
-- Mettre à jour `ETAT.md`.
-- Mettre à jour la ligne correspondante de `PLANNING.md`.
-- Ne pas passer à la sous-étape suivante si le statut est `Bloqué`.
+- PostgreSQL, Redis, storage et API sont healthy.
+- `storage-init` termine avec code 0.
+- Le worker reste running.
+- L'identite PostgreSQL est `studentconnect/studentconnect`.
+- Les cinq buckets existent et restent prives.

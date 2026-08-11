@@ -444,9 +444,7 @@ tmp/
 # CI/CD
 # =============================================================================
 
-# GitHub Actions
-.github/
-!/.github/workflows/
+
 
 # =============================================================================
 # Documentation
@@ -473,3 +471,17 @@ tmp/
 # =============================================================================
 # Ce fichier doit être régulierement revu et mis à jour
 # =============================================================================
+# Step 03 generated artifacts
+**/__pycache__/
+**/*.py[cod]
+**/*.tsbuildinfo
+apps/api/.venv/
+local-data/
+*.h5p.tmp
+_step03/
+_backup_step03_*/
+studentconnect_step03_*.zip
+**/node_modules/
+**/.next/
+_reports_step03/
+studentconnect_step03_reports_*.zip

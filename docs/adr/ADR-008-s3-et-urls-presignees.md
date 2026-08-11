@@ -188,8 +188,8 @@ services:
     volumes:
       - minio_data:/data
     environment:
-      - MINIO_ROOT_USER=minioadmin
-      - MINIO_ROOT_PASSWORD=minioadmin
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
     command: server /data --console-address ":9001"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
@@ -210,8 +210,8 @@ from typing import Optional
 
 class S3Config:
     S3_ENDPOINT: str = os.getenv("S3_ENDPOINT", "http://localhost:9000")
-    S3_ACCESS_KEY: str = os.getenv("S3_ACCESS_KEY", "minioadmin")
-    S3_SECRET_KEY: str = os.getenv("S3_SECRET_KEY", "minioadmin")
+    S3_ACCESS_KEY: str = os.environ["S3_ACCESS_KEY"]
+    S3_SECRET_KEY: str = os.environ["S3_SECRET_KEY"]
     S3_BUCKET: str = os.getenv("S3_BUCKET", "studentconnect")
     S3_REGION: str = os.getenv("S3_REGION", "us-east-1")
     S3_PUBLIC_URL: str = os.getenv("S3_PUBLIC_URL", "http://localhost:9000")

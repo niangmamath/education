@@ -1,36 +1,34 @@
-from typing import AsyncGenerator
+from __future__ import annotations
 
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
+import os
+from collections.abc import AsyncIterator
 
-from .config import settings
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import DeclarativeBase
 
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql+asyncpg://localhost/studentconnect",
+)
 
-# Decision: use SQLAlchemy AsyncEngine for non-blocking DB I/O in FastAPI endpoints.
-DATABASE_URL = settings.DATABASE_URL
-
-
-def _create_engine() -> AsyncEngine:
-    # Use asyncpg dialect; settings.DATABASE_URL should be an async URL (postgresql+asyncpg://...)
-    return create_async_engine(
-        DATABASE_URL,
-        echo=False,
-        future=True,
-    )
-
-
-engine: AsyncEngine = _create_engine()
-
-# async_sessionmaker factory
-async_session: async_sessionmaker[AsyncSession] = async_sessionmaker(
-    bind=engine,
-    expire_on_commit=False,
-    class_=AsyncSession,
+engine = create_async_engine(DATABASE_URL, pool_pre_ping=True)
+AsyncSessionFactory = async_sessionmaker(
+    engine, expire_on_commit=False, class_=AsyncSession
 )
 
 
-async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
-    async with async_session() as session:
+class Base(DeclarativeBase):
+    pass
+
+
+async def get_db_session() -> AsyncIterator[AsyncSession]:
+    async with AsyncSessionFactory() as session:
         try:
             yield session
-        finally:
-            await session.close()
+        except Exception:
+            await session.rollback()
+            raise
+
+
+async def dispose_engine() -> None:
+    await engine.dispose()

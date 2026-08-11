@@ -1,83 +1,87 @@
 # État du projet
 
-## Métadonnées
+## Référence
 
 - Projet : StudentConnect
-- Date de référence : 10 août 2026
+- Date : 11 août 2026
 - Dépôt : `tidianesarrndiaye-org/StudentConnect`
-- État du dépôt prévu : totalement vidé avant reconstruction
-- Version cible : V0.1
-- Planning : `PLANNING.md`
+- Branche attendue : `main`
+- Version cible : `V0.1`
 
-## Terminé avant reconstruction
+## Terminé
 
-- [x] Cahier des charges fonctionnel initial.
-- [x] Benchmark général.
-- [x] Extension du benchmark EdTech.
-- [x] Analyse du positionnement différenciant.
-- [x] Cahier des charges technique définitif V2.0.
-- [x] Décisions finales de stack.
-- [x] Abandon du GitHub Project.
+- [x] Dépôt reconstruit depuis zéro.
+- [x] Fichiers racine et ADR initiaux.
+- [x] Monorepo pnpm/Turborepo.
+- [x] Frontend Next.js et Tailwind initialisé.
+- [x] Backend FastAPI initialisé.
+- [x] Environnement Python Linux `.venv` opérationnel à la racine.
+- [x] Node.js et pnpm natifs Linux dans WSL.
 
-## État du code
+## Étape 03, infrastructure locale et CI
 
-- [x] Dépôt vidé.
-- [x] README recréé.
-- [x] `.gitignore` recréé.
-- [x] ADR initiaux créés.
-- [x] Monorepo initialisé.
-- [x] Next.js Frontend initialisé.
-- [x] FastAPI Backend initialisé.
-- [x] Infrastructure locale opérationnelle.
-- [ ] Spike H5P validé.
-- [ ] Sprint 1 terminé.
-- [ ] Sprint 2 terminé.
-- [ ] Sprint 3 terminé.
-- [ ] Sprint 4 terminé.
-- [ ] Release V0.1 publiée.
+- [x] 03.1 Docker Compose validé de bout en bout.
+- [x] 03.2 SQLAlchemy async et Alembic validés.
+- [x] 03.3 Contrôles locaux frontend et backend validés.
+- [x] Workflows GitHub Actions présents et syntaxiquement valides.
+- [x] Script global `check_step03.sh` terminé avec le code `0`.
+- [x] Rapports de l’étape 03 produits.
+- [ ] Commit de clôture créé.
+- [ ] Push vers `origin/main` réalisé.
+- [ ] Exécution distante des workflows GitHub Actions confirmée.
 
-## Prochaine action
-
-Exécuter :
+## Résultats techniques de référence
 
 ```text
-steps/03_infrastructure_locale_ci/02_configurer_base_migrations.md
+PostgreSQL : healthy, base et rôle studentconnect
+Redis      : healthy, PONG
+MinIO      : healthy, cinq buckets privés
+FastAPI    : healthy, /health/live → live
+Celery     : pong, tâche de santé réussie
+Alembic    : 0001_infrastructure_baseline (head)
+Ruff       : vert
+Mypy       : vert sur 11 fichiers
+Pytest     : 12 tests réussis
+TypeScript : vert
+ESLint     : vert
+Next.js    : build de production réussi
 ```
 
-## Décisions ouvertes à contrôler
+## Corrections d’état
+
+Les anciens rapports du 11 août 2026 annonçant 03.1, 03.2 et 03.3 comme terminés avant la résolution des erreurs ont été retirés et remplacés par les rapports horodatés `2026-08-11_1709`.
+
+## Organisation des étapes
+
+Les dossiers futurs `steps/04_*` à `steps/16_*` sont temporairement retirés du dépôt. Chaque dossier sera régénéré proprement au démarrage de l’étape correspondante.
+
+## Décisions ouvertes
 
 - Hébergeur Next.js.
 - Hébergeur FastAPI.
 - PostgreSQL managé.
 - Redis managé.
-- Stockage S3 et CDN.
+- Stockage S3 et CDN de production.
 - Domaine et sous-domaines.
 - Région des données.
 - Budget mensuel.
 - Types H5P autorisés dans le MVP.
-- Licence de chaque paquet H5P pilote.
-- Modèle économique et licence PhET en cas de commercialisation.
-- Programme scolaire, classe et compétences pilotes.
+- Licence des paquets H5P pilotes.
+- Modèle économique et licence PhET.
+- Programme scolaire et compétences pilotes.
 
-## Dernier rapport appliqué
+## Prochaine action
 
-- 2026-08-10 12:00 : rapport_2026-08-10_1200_creer-adr-initiaux.md (P0-03)
-- 2026-08-10 13:47 : rapport_2026-08-10_1347_initialiser_workspace.md (P0-04)
-- 2026-08-10 14:41 : rapport_2026-08-10_1441_initialiser_nextjs.md (S1-01)
-- 2026-08-10 14:54 : rapport_2026-08-10_1454_initialiser_fastapi.md (S1-02)
-- 2026-08-10 15:15 : rapport_2026-08-10_1515_etape_complete.md (Clôture étape 02)
- - 2026-08-11 10:00 : rapport_2026-08-11_1000_docker_compose.md (03.1)
- - 2026-08-11 10:45 : rapport_2026-08-11_1045_configurer_base_migrations.md (03.2)
- - 2026-08-11 11:15 : rapport_2026-08-11_1115_configurer_ci.md (03.3)
+1. Vérifier le diff indexé et l’absence de secrets.
+2. Créer le commit de clôture de l’étape 03.
+3. Pousser vers `origin/main`.
+4. Vérifier l’exécution distante de GitHub Actions.
+5. Passer `P0-05` à Terminé après validation distante.
+6. Préparer l’étape 04 H5P.
 
-## Historique
+## Derniers rapports appliqués
 
-- 2026-08-10 : état initial de la reconstruction depuis zéro.
-- 2026-08-10 10:00 : dépôt vérifié vide (P0-01).
-- 2026-08-10 11:00 : fichiers racine créés (P0-02).
-- 2026-08-10 12:00 : ADR initiaux créés (P0-03).
-- 2026-08-10 13:47 : monorepo initialisé (P0-04).
-- 2026-08-10 14:41 : Next.js frontend initialisé (S1-01).
-- 2026-08-10 14:54 : FastAPI backend initialisé (S1-02).
-- 2026-08-10 15:05 : .venv créé pour FastAPI.
-- 2026-08-10 15:15 : Étape 02_initialisation_monorepo clôturée.
+- `rapport_2026-08-11_1709_docker_compose.md`
+- `rapport_2026-08-11_1709_base_migrations.md`
+- `rapport_2026-08-11_1709_ci.md`
+- `rapport_2026-08-11_1709_etape_complete.md`
