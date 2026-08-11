@@ -1,0 +1,21 @@
+# Step 03 generated artifacts
+**/__pycache__/
+**/*.py[cod]
+**/*.tsbuildinfo
+apps/api/.venv/
+.env
+.env.*
+!.env.example
+.coverage
+coverage.xml
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.turbo/
+node_modules/
+.next/
+playwright-report/
+test-results/
+local-data/
+*.h5p.tmp

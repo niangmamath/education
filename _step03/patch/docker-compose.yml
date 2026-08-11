@@ -3,7 +3,6 @@ name: studentconnect
 services:
   postgres:
     image: postgres:17-alpine
-    container_name: studentconnect-postgres
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
@@ -12,42 +11,30 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test:
-        - CMD-SHELL
-        - pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
       timeout: 5s
-      retries: 10
+      retries: 20
       start_period: 10s
-    networks:
-      - studentconnect_network
+    networks: [studentconnect_network]
 
   redis:
     image: redis:7-alpine
-    container_name: studentconnect-redis
     restart: unless-stopped
-    command:
-      - redis-server
-      - --appendonly
-      - "yes"
+    command: ["redis-server", "--appendonly", "yes"]
     ports:
-      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
-      test:
-        - CMD
-        - redis-cli
-        - ping
+      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
-      retries: 10
-    networks:
-      - studentconnect_network
+      retries: 20
+    networks: [studentconnect_network]
 
   storage:
     image: minio/minio:latest
-    container_name: studentconnect-storage
     restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
@@ -59,25 +46,38 @@ services:
     volumes:
       - storage_data:/data
     healthcheck:
-      test:
-        - CMD
-        - curl
-        - -f
-        - http://localhost:9000/minio/health/live
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 10s
       timeout: 5s
-      retries: 10
-    networks:
-      - studentconnect_network
+      retries: 20
+      start_period: 10s
+    networks: [studentconnect_network]
+
+  storage-init:
+    image: minio/mc:latest
+    restart: "no"
+    depends_on:
+      storage:
+        condition: service_healthy
+    environment:
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${S3_SECRET_KEY}
+      S3_BUCKET_H5P_PACKAGES: ${S3_BUCKET_H5P_PACKAGES}
+      S3_BUCKET_H5P_RUNTIME: ${S3_BUCKET_H5P_RUNTIME}
+      S3_BUCKET_MEDIA: ${S3_BUCKET_MEDIA}
+      S3_BUCKET_PRIVATE_EVIDENCE: ${S3_BUCKET_PRIVATE_EVIDENCE}
+      S3_BUCKET_THUMBNAILS: ${S3_BUCKET_THUMBNAILS}
+    entrypoint: ["/bin/sh", "/scripts/create_minio_buckets.sh"]
+    volumes:
+      - ./infrastructure/scripts/create_minio_buckets.sh:/scripts/create_minio_buckets.sh:ro
+    networks: [studentconnect_network]
 
   api:
     build:
       context: ./apps/api
       dockerfile: Dockerfile.dev
-    container_name: studentconnect-api
     restart: unless-stopped
-    env_file:
-      - .env
+    env_file: [.env]
     ports:
       - "127.0.0.1:${API_PORT:-8000}:8000"
     volumes:
@@ -87,37 +87,23 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      storage:
-        condition: service_healthy
-    command:
-      - uvicorn
-      - app.main:app
-      - --host
-      - 0.0.0.0
-      - --port
-      - "8000"
-      - --reload
+      storage-init:
+        condition: service_completed_successfully
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     healthcheck:
-      test:
-        - CMD
-        - curl
-        - -f
-        - http://localhost:8000/health/live
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/live"]
       interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 20
       start_period: 20s
-    networks:
-      - studentconnect_network
+    networks: [studentconnect_network]
 
   worker:
     build:
       context: ./apps/api
       dockerfile: Dockerfile.worker
-    container_name: studentconnect-worker
     restart: unless-stopped
-    env_file:
-      - .env
+    env_file: [.env]
     volumes:
       - ./apps/api:/app
     depends_on:
@@ -125,16 +111,10 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      storage:
-        condition: service_healthy
-    command:
-      - celery
-      - -A
-      - app.workers.celery_app
-      - worker
-      - --loglevel=INFO
-    networks:
-      - studentconnect_network
+      storage-init:
+        condition: service_completed_successfully
+    command: ["celery", "-A", "app.workers.celery_app:celery_app", "worker", "--loglevel=INFO"]
+    networks: [studentconnect_network]
 
 networks:
   studentconnect_network:

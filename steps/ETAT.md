@@ -28,7 +28,7 @@
 - [x] Monorepo initialisé.
 - [x] Next.js Frontend initialisé.
 - [x] FastAPI Backend initialisé.
-- [ ] Infrastructure locale opérationnelle.
+- [x] Infrastructure locale opérationnelle.
 - [ ] Spike H5P validé.
 - [ ] Sprint 1 terminé.
 - [ ] Sprint 2 terminé.
@@ -41,7 +41,7 @@
 Exécuter :
 
 ```text
-steps/03_infrastructure_locale_ci/01_configurer_docker.md
+steps/03_infrastructure_locale_ci/02_configurer_base_migrations.md
 ```
 
 ## Décisions ouvertes à contrôler
@@ -66,6 +66,9 @@ steps/03_infrastructure_locale_ci/01_configurer_docker.md
 - 2026-08-10 14:41 : rapport_2026-08-10_1441_initialiser_nextjs.md (S1-01)
 - 2026-08-10 14:54 : rapport_2026-08-10_1454_initialiser_fastapi.md (S1-02)
 - 2026-08-10 15:15 : rapport_2026-08-10_1515_etape_complete.md (Clôture étape 02)
+ - 2026-08-11 10:00 : rapport_2026-08-11_1000_docker_compose.md (03.1)
+ - 2026-08-11 10:45 : rapport_2026-08-11_1045_configurer_base_migrations.md (03.2)
+ - 2026-08-11 11:15 : rapport_2026-08-11_1115_configurer_ci.md (03.3)
 
 ## Historique
 

@@ -15,7 +15,7 @@
 | P0-02 | Recréer les fichiers racine | P0-01 | Terminé | README, gitignore, env example |
 | P0-03 | Créer les ADR initiaux | P0-02 | Terminé | ADR 000-010, registre |
 | P0-04 | Initialiser le monorepo | P0-03 | Terminé | Apps et packages |
-| P0-05 | Configurer Docker local | P0-04 | À faire | PostgreSQL, Redis, stockage |
+| P0-05 | Configurer Docker local | P0-04 | En cours | PostgreSQL, Redis, stockage |
 | P0-06 | Réaliser le spike H5P | P0-05 | À faire | Preuve lecture + xAPI |
 | P0-07 | Geler les types H5P autorisés | P0-06 | À faire | ADR H5P |
 
@@ -25,11 +25,11 @@
 |---|---|---|---|---|
 | S1-01 | Initialiser Next.js et Tailwind | P0-03 | Terminé | Frontend |
 | S1-02 | Initialiser FastAPI | P0-03 | Terminé | Backend |
-| S1-03 | Configurer SQLAlchemy et Alembic | S1-02 | À faire | Base |
+| S1-03 | Configurer SQLAlchemy et Alembic | S1-02 | En cours | Base |
 | S1-04 | Créer auth Parent | S1-03 | À faire | Session parent |
 | S1-05 | Créer profils Élève et PIN | S1-04 | À faire | Accès enfant |
 | S1-06 | Créer layouts Parent et Élève | S1-01 | À faire | Dashboards vides |
-| S1-07 | Configurer CI | S1-01,S1-02 | À faire | Workflows |
+| S1-07 | Configurer CI | S1-01,S1-02 | En cours | Workflows |
 
 ## Sprint 2, compétences, évaluations et lacunes
 
