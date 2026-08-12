@@ -1,0 +1,53 @@
+{
+  "actor": {
+    "account": {
+      "name": "2f71d47e-0ad7-4fd9-931a-a7b524a38a1c"
+    },
+    "objectType": "Agent"
+  },
+  "verb": {
+    "id": "http://adlnet.gov/expapi/verbs/answered",
+    "display": {
+      "en-US": "answered"
+    }
+  },
+  "object": {
+    "id": "https://studentconnect.local/h5p/truefalse-oslo-001",
+    "objectType": "Activity",
+    "definition": {
+      "extensions": {
+        "http://h5p.org/x-api/h5p-local-content-id": "5x072oa"
+      },
+      "description": {
+        "en-US": "Oslo is the capital of Norway.\n"
+      },
+      "type": "http://adlnet.gov/expapi/activities/cmi.interaction",
+      "interactionType": "true-false",
+      "correctResponsesPattern": [
+        "true"
+      ]
+    }
+  },
+  "context": {
+    "contextActivities": {
+      "category": [
+        {
+          "id": "http://h5p.org/libraries/H5P.TrueFalse-1.8",
+          "objectType": "Activity"
+        }
+      ]
+    }
+  },
+  "result": {
+    "score": {
+      "min": 0,
+      "max": 1,
+      "raw": 1,
+      "scaled": 1
+    },
+    "completion": true,
+    "success": true,
+    "duration": "PT227.97S",
+    "response": "true"
+  }
+}

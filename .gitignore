@@ -512,3 +512,10 @@ _step04_standalone_validation/
 studentconnect_step04_standalone_validation.zip
 experiments/h5p-spike/player/node_modules/
 experiments/h5p-spike/player/runtime/
+_step04_xapi/
+studentconnect_step04_xapi_capture.zip
+experiments/h5p-spike/player/*.pre-xapi.bak
+_step04_xapi_validator_fix/
+studentconnect_step04_xapi_validator_fix.zip
+_step04_xapi_validation/
+studentconnect_step04_xapi_validation.zip

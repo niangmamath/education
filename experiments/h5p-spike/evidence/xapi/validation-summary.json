@@ -1,0 +1,19 @@
+{
+  "validated": true,
+  "evidenceType": "real-h5p-xapi-event",
+  "verbId": "http://adlnet.gov/expapi/verbs/answered",
+  "objectId": "https://studentconnect.local/h5p/truefalse-oslo-001",
+  "interactionType": "true-false",
+  "libraryCategory": "http://h5p.org/libraries/H5P.TrueFalse-1.8",
+  "scoreRaw": 1,
+  "scoreMax": 1,
+  "success": true,
+  "completion": true,
+  "response": "true",
+  "duration": "PT227.97S",
+  "actorIdentifierType": "pseudonymous-uuid",
+  "sourceTimestamp": null,
+  "sourceTimestampPresent": false,
+  "validatedAtUtc": "2026-08-12T16:47:25.954447+00:00",
+  "note": "Le statement H5P capturé ne contient pas timestamp. Le statement original est conservé sans modification; validatedAtUtc date uniquement la validation de la preuve."
+}

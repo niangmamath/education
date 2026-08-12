@@ -3,25 +3,38 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>StudentConnect - Spike H5P True/False</title>
+  <title>StudentConnect - Spike H5P True/False xAPI</title>
   <link rel="stylesheet" href="/runtime/player/styles/h5p.css">
   <style>
     body { font-family: system-ui, sans-serif; margin: 0; background: #f4f6f8; color: #17202a; }
     main { max-width: 1100px; margin: 0 auto; padding: 24px; }
-    .notice { background: white; border: 1px solid #d8dee4; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+    .panel { background: white; border: 1px solid #d8dee4; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
     #h5p-container { background: white; min-height: 320px; }
     #status[data-state="error"] { color: #a40000; }
     #status[data-state="ready"] { color: #087a31; }
+    #xapi-output { max-height: 340px; overflow: auto; padding: 12px; background: #111827; color: #e5e7eb; border-radius: 6px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    #xapi-summary { overflow-wrap: anywhere; }
+    button { padding: 10px 14px; border: 0; border-radius: 6px; background: #0f6cbd; color: white; cursor: pointer; }
+    button:disabled { background: #8a94a0; cursor: not-allowed; }
   </style>
 </head>
 <body>
   <main>
-    <h1>Spike H5P True/False</h1>
-    <div class="notice">
+    <h1>Spike H5P True/False et xAPI</h1>
+    <section class="panel">
       <strong>Statut :</strong> <span id="status">Initialisation...</span>
-      <p>Cette page est une preuve technique locale. Le paquet H5P n’est pas redistribué dans Git.</p>
-    </div>
+      <p>Preuve technique locale. Le paquet H5P n’est pas redistribué dans Git.</p>
+    </section>
     <div id="h5p-container"></div>
+    <section class="panel" aria-labelledby="xapi-title">
+      <h2 id="xapi-title">Événements xAPI réels</h2>
+      <p><strong>Nombre reçu :</strong> <span id="xapi-event-count">0</span></p>
+      <p id="xapi-status">Écouteur non initialisé.</p>
+      <p id="xapi-summary">Aucun statement reçu.</p>
+      <button id="xapi-download" type="button" disabled>Télécharger le dernier statement</button>
+      <h3>Dernier statement brut</h3>
+      <pre id="xapi-output">Aucun statement reçu.</pre>
+    </section>
   </main>
   <script src="/runtime/player/main.bundle.js"></script>
   <script src="/app.js"></script>
