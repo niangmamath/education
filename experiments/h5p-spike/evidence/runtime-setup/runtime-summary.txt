@@ -1,0 +1,12 @@
+RUNTIME H5P STANDALONE PRÉPARÉ
+
+Version h5p-standalone : 3.8.2
+Version h5p-cli : 1.1.4
+Paquet : true-false-question-34806.h5p
+Bibliothèque principale : H5P.TrueFalse 1.8
+Chemin du lecteur : experiments/h5p-spike/player
+URL attendue : http://127.0.0.1:4174/
+
+Le paquet et les ressources runtime restent hors de Git.
+Les assets dist proviennent directement du paquet npm publié et ont été vérifiés après installation avec scripts désactivés.
+Le rendu visuel, la console et les requêtes réseau doivent encore être vérifiés manuellement.

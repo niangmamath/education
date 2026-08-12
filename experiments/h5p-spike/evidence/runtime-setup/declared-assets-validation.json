@@ -1,0 +1,320 @@
+[
+  {
+    "library": "FontAwesome-4.5",
+    "category": "preloadedCss",
+    "path": "h5p-font-awesome.min.css",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.Audio-1.5",
+    "category": "preloadedJs",
+    "path": "scripts/audio.js",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.Audio-1.5",
+    "category": "preloadedCss",
+    "path": "styles/audio.css",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.Components-1.0",
+    "category": "preloadedJs",
+    "path": "dist/h5p-components.js",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.Components-1.0",
+    "category": "preloadedCss",
+    "path": "dist/h5p-components.css",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.FontIcons-1.0",
+    "category": "preloadedCss",
+    "path": "styles/h5p-font-icons.css",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.Image-1.1",
+    "category": "preloadedJs",
+    "path": "image.js",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.Image-1.1",
+    "category": "preloadedCss",
+    "path": "image.css",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.JoubelUI-1.3",
+    "category": "preloadedJs",
+    "path": "js/joubel-help-dialog.js",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.JoubelUI-1.3",
+    "category": "preloadedJs",
+    "path": "js/joubel-message-dialog.js",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.JoubelUI-1.3",
+    "category": "preloadedJs",
+    "path": "js/joubel-progress-circle.js",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.JoubelUI-1.3",
+    "category": "preloadedJs",
+    "path": "js/joubel-simple-rounded-button.js",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.JoubelUI-1.3",
+    "category": "preloadedJs",
+    "path": "js/joubel-speech-bubble.js",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.JoubelUI-1.3",
+    "category": "preloadedJs",
+    "path": "js/joubel-throbber.js",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.JoubelUI-1.3",
+    "category": "preloadedJs",
+    "path": "js/joubel-tip.js",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.JoubelUI-1.3",
+    "category": "preloadedJs",
+    "path": "js/joubel-slider.js",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.JoubelUI-1.3",
+    "category": "preloadedJs",
+    "path": "js/joubel-score-bar.js",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.JoubelUI-1.3",
+    "category": "preloadedJs",
+    "path": "js/joubel-progressbar.js",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.JoubelUI-1.3",
+    "category": "preloadedJs",
+    "path": "js/joubel-ui.js",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.JoubelUI-1.3",
+    "category": "preloadedCss",
+    "path": "css/joubel-help-dialog.css",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.JoubelUI-1.3",
+    "category": "preloadedCss",
+    "path": "css/joubel-message-dialog.css",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.JoubelUI-1.3",
+    "category": "preloadedCss",
+    "path": "css/joubel-progress-circle.css",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.JoubelUI-1.3",
+    "category": "preloadedCss",
+    "path": "css/joubel-simple-rounded-button.css",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.JoubelUI-1.3",
+    "category": "preloadedCss",
+    "path": "css/joubel-speech-bubble.css",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.JoubelUI-1.3",
+    "category": "preloadedCss",
+    "path": "css/joubel-tip.css",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.JoubelUI-1.3",
+    "category": "preloadedCss",
+    "path": "css/joubel-slider.css",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.JoubelUI-1.3",
+    "category": "preloadedCss",
+    "path": "css/joubel-score-bar.css",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.JoubelUI-1.3",
+    "category": "preloadedCss",
+    "path": "css/joubel-progressbar.css",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.JoubelUI-1.3",
+    "category": "preloadedCss",
+    "path": "css/joubel-ui.css",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.JoubelUI-1.3",
+    "category": "preloadedCss",
+    "path": "css/joubel-icon.css",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.Question-1.5",
+    "category": "preloadedJs",
+    "path": "scripts/question.js",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.Question-1.5",
+    "category": "preloadedJs",
+    "path": "scripts/explainer.js",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.Question-1.5",
+    "category": "preloadedJs",
+    "path": "scripts/score-points.js",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.Question-1.5",
+    "category": "preloadedCss",
+    "path": "styles/question.css",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.Question-1.5",
+    "category": "preloadedCss",
+    "path": "styles/explainer.css",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.Transition-1.0",
+    "category": "preloadedJs",
+    "path": "transition.js",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.TrueFalse-1.8",
+    "category": "preloadedJs",
+    "path": "scripts/h5p-true-false.js",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.TrueFalse-1.8",
+    "category": "preloadedJs",
+    "path": "scripts/h5p-true-false-answer-group.js",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.TrueFalse-1.8",
+    "category": "preloadedJs",
+    "path": "scripts/h5p-true-false-answer.js",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.TrueFalse-1.8",
+    "category": "preloadedCss",
+    "path": "styles/h5p-true-false.css",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.Video-1.6",
+    "category": "preloadedJs",
+    "path": "scripts/vimeo.js",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.Video-1.6",
+    "category": "preloadedJs",
+    "path": "scripts/youtube.js",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.Video-1.6",
+    "category": "preloadedJs",
+    "path": "scripts/panopto.js",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.Video-1.6",
+    "category": "preloadedJs",
+    "path": "scripts/echo360.js",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.Video-1.6",
+    "category": "preloadedJs",
+    "path": "scripts/html5.js",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.Video-1.6",
+    "category": "preloadedJs",
+    "path": "scripts/video.js",
+    "exists": "true"
+  },
+  {
+    "library": "H5P.Video-1.6",
+    "category": "preloadedCss",
+    "path": "styles/video.css",
+    "exists": "true"
+  },
+  {
+    "library": "H5PEditor.RadioGroup-1.1",
+    "category": "preloadedJs",
+    "path": "radio-group.js",
+    "exists": "true"
+  },
+  {
+    "library": "H5PEditor.RadioGroup-1.1",
+    "category": "preloadedCss",
+    "path": "radio-group.css",
+    "exists": "true"
+  },
+  {
+    "library": "H5PEditor.ShowWhen-1.0",
+    "category": "preloadedJs",
+    "path": "h5p-show-when.js",
+    "exists": "true"
+  },
+  {
+    "library": "H5PEditor.ShowWhen-1.0",
+    "category": "preloadedCss",
+    "path": "h5p-show-when.css",
+    "exists": "true"
+  },
+  {
+    "library": "jQuery.ui-1.10",
+    "category": "preloadedJs",
+    "path": "h5p-jquery-ui.js",
+    "exists": "true"
+  },
+  {
+    "library": "jQuery.ui-1.10",
+    "category": "preloadedCss",
+    "path": "h5p-jquery-ui.css",
+    "exists": "true"
+  }
+]

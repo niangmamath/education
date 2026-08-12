@@ -34,4 +34,17 @@ Aucun paquet `.h5p` n’est encore accepté ou téléchargé.
 
 ## Premier paquet pilote
 
-Non sélectionné. Ne renseigner cette section qu’après vérification de l’URL exacte du fichier `.h5p` et de sa licence de contenu.
+- Identifiant interne : `truefalse-oslo-001`
+- Nom du fichier : `true-false-question-34806.h5p`
+- Type : `H5P.TrueFalse`
+- Version : `1.8`
+- Page de provenance : `https://h5p.org/true-false`
+- Auteur de l’image : Rafał Konieczny
+- Licence de l’image : Public Domain
+- Source de l’image : `https://en.wikipedia.org/wiki/Oslo_Opera_House#/media/File:Full_Opera_by_night.jpg`
+- Taille : `1056130` octets
+- SHA-256 : `9914c27552f00aa91d4a29e85f6a299b11f984030c3451658fb0246f84b07f3c`
+- Résultat ZIP : valide
+- Licence globale du manifest : `U` (non divulguée)
+- Décision : accepté uniquement pour le spike local, paquet hors Git
+- Incertitude : redistribution du paquet complet non validée
