@@ -489,3 +489,8 @@ _final_step03/
 studentconnect_step03_final_closure.zip
 _step04_setup/
 studentconnect_step04_spike_h5p.zip
+experiments/h5p-spike/packages/*.h5p
+experiments/h5p-spike/extracted/
+experiments/h5p-spike/evidence/runtime/
+_step04_protocol/
+studentconnect_step04_protocol_and_candidates.zip
