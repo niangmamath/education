@@ -12,6 +12,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
+from app.core.db import dispose_engine
 from app.core.exceptions import setup_exception_handlers
 from app.core.logging import setup_logging
 from app.core.middleware import setup_middleware
@@ -31,7 +32,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     yield
 
-    # Shutdown
+    # Shutdown. Returning the pooled connections while the loop is still running
+    # is what keeps asyncpg from being left with sockets bound to a dead loop.
+    await dispose_engine()
     logger.info("Shutting down StudentConnect API")
 
 

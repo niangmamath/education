@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from functools import lru_cache
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -50,6 +50,12 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
+    # Sessions (ADR-005: opaque identifiers held in Redis, never in PostgreSQL)
+    SESSION_COOKIE_NAME: str = "studentconnect_session"
+    SESSION_COOKIE_SAMESITE: Literal["lax", "strict", "none"] = "lax"
+    SESSION_TTL_SECONDS: int = 7 * 24 * 60 * 60
+    SESSION_COOKIE_SECURE: bool | None = None
+
     # S3-compatible storage
     S3_ENDPOINT_URL: str = "http://storage:9000"
     S3_PUBLIC_ENDPOINT_URL: str = "http://localhost:9000"
@@ -77,6 +83,18 @@ class Settings(BaseSettings):
         extra="ignore",
         case_sensitive=False,
     )
+
+    @property
+    def session_cookie_secure(self) -> bool:
+        """Whether the session cookie is restricted to HTTPS.
+
+        Left unset, the flag is on everywhere except local development, so a
+        forgotten environment variable fails closed rather than shipping a
+        cookie a proxy could read in clear.
+        """
+        if self.SESSION_COOKIE_SECURE is not None:
+            return self.SESSION_COOKIE_SECURE
+        return self.ENVIRONMENT != "development"
 
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod

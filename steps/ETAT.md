@@ -93,6 +93,54 @@ Les dossiers détaillés des étapes 04 à 16 sont temporairement retirés du d�
 - [x] Validation GitHub Actions et fusion vers `main`.
 - [x] Étape 05 clôturée.
 
+## Étape 06, backend identité et famille, en cours
+
+Travaux menés sur la branche `feat/backend-identity-family`, non fusionnée.
+
+### 06.1, modèles Parent et Enfant, en revue
+
+- [x] Modèles SQLAlchemy `Parent` et `Child`, relation familiale en cascade.
+- [x] Migration `0002_identity_family_models`, réversible jusqu’à `base`.
+- [x] Dérive entre modèles et migration corrigée sur `auth_parents.email` :
+      l’unicité vient d’une `UniqueConstraint` nommée, l’index redondant a été
+      retiré et `alembic check` est vert.
+- [x] `alembic check` et le cycle downgrade puis upgrade ajoutés à l’API CI.
+- [ ] Validation indépendante et clôture distante.
+
+### 06.2, authentification Parent et sessions, en revue
+
+- [x] Routes `POST /api/v1/auth/parent/register`, `POST /api/v1/auth/parent/login`,
+      `DELETE /api/v1/auth/logout` et `GET /api/v1/auth/me`.
+- [x] Mots de passe hachés en Argon2id, réponses identiques pour un mot de passe
+      erroné et une adresse inconnue.
+- [x] Sessions opaques en Redis, indexées par l’empreinte du jeton, cookie
+      `HttpOnly` et `SameSite=lax`, révocation immédiate à la déconnexion.
+- [x] Aucune table SQL de session, conformément à ADR-005.
+- [ ] Validation indépendante et clôture distante.
+
+### Points ouverts
+
+- ADR-005 cite bcrypt dans un extrait illustratif alors que l’implémentation
+  retient Argon2id ; l’ADR reste à amender ou la décision à revoir.
+- La vérification d’adresse email prévue par ADR-005 n’est pas implémentée faute
+  de service d’envoi ; `is_verified` reste à `false` et la connexion ne l’exige pas.
+- Aucune limitation de débit sur la connexion, à traiter en étape 15.
+- `argon2-cffi` est une nouvelle dépendance : les images `api` et `worker` doivent
+  être reconstruites.
+- `steps/MANIFESTE.md` décrit pour les étapes 07 à 16 une arborescence qui ne
+  correspond plus aux dossiers présents.
+
+## Résultats techniques de l’étape 06
+
+```text
+Alembic    : 0002_identity_family_models (head), downgrade base puis upgrade head validés
+Alembic    : check vert, aucune dérive entre modèles et base
+Ruff       : vert, format inclus, 45 fichiers
+Mypy       : vert sur 20 fichiers
+Pytest     : 51 tests réussis
+API vivante: register 201, login 200 avec cookie durci, me 200, logout 204, me 401
+```
+
 ## Prochaine action
 
-Préparer l’étape 06 selon le planning produit.
+Valider 06.1 et 06.2 de manière indépendante, puis engager `03_acces_enfant.md`.
