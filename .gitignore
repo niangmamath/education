@@ -545,3 +545,5 @@ studentconnect_step05_03d_remove_tailwind.zip
 _step05_03d_backup/
 _step05_04a/
 studentconnect_step05_04a_parent_layout.zip
+apps/web/next-env.d.ts
+apps/web/tsconfig.tsbuildinfo

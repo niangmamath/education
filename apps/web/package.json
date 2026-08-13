@@ -8,11 +8,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "tsc --noEmit && eslint .",
-    "typecheck": "tsc --noEmit",
+    "lint": "next typegen && tsc --noEmit && eslint .",
+    "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest",
     "format": "prettier --write .",
-    "clean": "rm -rf .next"
+    "clean": "rm -rf .next",
+    "typegen": "next typegen"
   },
   "dependencies": {
     "bootstrap": "5.3.8",
