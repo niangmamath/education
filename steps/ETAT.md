@@ -90,8 +90,9 @@ Les dossiers détaillés des étapes 04 à 16 sont temporairement retirés du d�
 - [x] TypeScript, ESLint et build Next.js validés.
 - [x] Ruff, Mypy et 12 tests Pytest validés.
 - [x] Rapport de validation de l’étape 05 produit.
-- [ ] Validation GitHub Actions et fusion vers `main`.
+- [x] Validation GitHub Actions et fusion vers `main`.
+- [x] Étape 05 clôturée.
 
 ## Prochaine action
 
-Pousser le commit de clôture de l’étape 05, vérifier GitHub Actions puis fusionner vers `main`.
+Préparer l’étape 06 selon le planning produit.

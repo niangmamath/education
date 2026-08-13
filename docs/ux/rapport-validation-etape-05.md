@@ -10,7 +10,7 @@
 
 ## Décision
 
-L'étape 05 est validée localement. La clôture définitive reste conditionnée au push du commit de clôture, à la réussite des contrôles GitHub Actions et à la fusion contrôlée vers `main`.
+L’étape 05 est clôturée. La validation locale, la Pull Request, la fusion contrôlée vers `main`, Web CI et Secret Scan ont réussi. API CI n’a pas été déclenchée car aucun fichier de l’API n’a été modifié.
 
 ## Livrables réalisés
 
@@ -162,3 +162,17 @@ Cette étape n'implémente pas :
 4. vérifier GitHub Actions ;
 5. fusionner la branche vers `main` ;
 6. vérifier `main` et supprimer la branche de travail.
+
+
+## Validation distante
+
+- Pull Request : fusionnée vers `main`.
+- Commit de fusion : `8046d64`.
+- Web CI : réussi.
+- Secret Scan : réussi.
+- API CI : non déclenché, car aucun chemin `apps/api/**` ni workflow API n’a été modifié.
+- Contrôles API locaux : Ruff, Mypy et 12 tests Pytest réussis.
+
+## Statut final
+
+Étape 05 clôturée.
