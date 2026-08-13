@@ -223,7 +223,7 @@ export default function HealthCheckPage() {
 
         {/* Footer */}
         <div className="mt-12 text-center text-sm text-gray-500">
-          <p>Dernière vérification : {new Date().toLocaleTimeString('fr-FR')}</p>
+          <p>Dernière vérification : session actuelle</p>
           <p>Environment : Development</p>
         </div>
       </main>
