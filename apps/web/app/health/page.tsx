@@ -1,231 +1,121 @@
-'use client';
-
-import { useState, useEffect } from 'react';
-import { CheckCircle2, XCircle, AlertCircle, Clock } from 'lucide-react';
+import Link from 'next/link';
+import { AlertCircle, CheckCircle2, Clock, XCircle } from 'lucide-react';
 
 type CheckStatus = 'passed' | 'failed' | 'warning';
 type OverallStatus = 'loading' | 'healthy' | 'degraded' | 'unhealthy';
+type HealthCheck = { name: string; status: CheckStatus; message: string };
+
+const simulatedChecks: HealthCheck[] = [
+  { name: 'Frontend Build', status: 'passed', message: 'Application Next.js compilée avec succès' },
+  { name: 'Compilation TypeScript', status: 'passed', message: 'Aucune erreur de type détectée' },
+  { name: 'Styles du frontend', status: 'passed', message: 'Bootstrap et les styles temporaires sont traités correctement' },
+  { name: 'Configuration de l’environnement', status: 'passed', message: 'Configuration de développement chargée' },
+  { name: 'Installation des dépendances', status: 'passed', message: 'Dépendances du frontend installées' },
+];
+
+const checkPresentation: Record<CheckStatus, { row: string; badge: string; label: string }> = {
+  passed: { row: 'border-success-subtle bg-success-subtle', badge: 'text-bg-success', label: 'Réussi' },
+  warning: { row: 'border-warning-subtle bg-warning-subtle', badge: 'text-bg-warning', label: 'Avertissement' },
+  failed: { row: 'border-danger-subtle bg-danger-subtle', badge: 'text-bg-danger', label: 'Échec' },
+};
+
+function CheckIcon({ status }: { status: CheckStatus }) {
+  if (status === 'passed') return <CheckCircle2 size={22} className="text-success" aria-hidden="true" />;
+  if (status === 'warning') return <AlertCircle size={22} className="text-warning-emphasis" aria-hidden="true" />;
+  return <XCircle size={22} className="text-danger" aria-hidden="true" />;
+}
+
+function getOverallStatus(checks: HealthCheck[]): OverallStatus {
+  if (checks.some((check) => check.status === 'failed')) {
+    return 'unhealthy';
+  }
+
+  if (checks.some((check) => check.status === 'warning')) {
+    return 'degraded';
+  }
+
+  return 'healthy';
+}
 
 export default function HealthCheckPage() {
-  const [status, setStatus] = useState<OverallStatus>('loading');
-  const [checks, setChecks] = useState<{
-    name: string;
-    status: CheckStatus;
-    message: string;
-  }[]>([]);
+  const checks = simulatedChecks;
+  const status = getOverallStatus(checks);
 
-  useEffect(() => {
-    // Simulate health checks
-    const performChecks = async () => {
-      const results = [
-        {
-          name: 'Frontend Build',
-          status: 'passed' as const,
-          message: 'Next.js application built successfully',
-        },
-        {
-          name: 'TypeScript Compilation',
-          status: 'passed' as const,
-          message: 'No type errors detected',
-        },
-        {
-          name: 'Tailwind CSS',
-          status: 'passed' as const,
-          message: 'Styles processed correctly',
-        },
-        {
-          name: 'Environment Configuration',
-          status: 'passed' as const,
-          message: 'Environment variables loaded',
-        },
-        {
-          name: 'Dependency Installation',
-          status: 'passed' as const,
-          message: 'All dependencies installed',
-        },
-      ];
+  const overall = {
+    loading: { title: 'Chargement des vérifications', description: 'Veuillez patienter.', panel: 'border-secondary-subtle', icon: <Clock size={30} className="text-secondary" aria-hidden="true" /> },
+    healthy: { title: 'Tous les services sont opérationnels', description: 'Le frontend StudentConnect fonctionne normalement.', panel: 'border-success', icon: <CheckCircle2 size={30} className="text-success" aria-hidden="true" /> },
+    degraded: { title: 'Certains services sont dégradés', description: 'Le frontend fonctionne avec des avertissements.', panel: 'border-warning', icon: <AlertCircle size={30} className="text-warning-emphasis" aria-hidden="true" /> },
+    unhealthy: { title: 'Services non disponibles', description: 'Le frontend rencontre un problème critique.', panel: 'border-danger', icon: <XCircle size={30} className="text-danger" aria-hidden="true" /> },
+  }[status];
 
-      setChecks(results);
-      
-      const allPassed = results.every((check) => check.status === 'passed');
-      // @ts-expect-error - TypeScript incorrectly flags this as unreachable
-      const hasFailures = results.some((check) => check.status === 'failed');
-      
-      if (allPassed) {
-        setStatus('healthy');
-      } else if (hasFailures) {
-        setStatus('unhealthy');
-      } else {
-        setStatus('degraded');
-      }
-    };
-
-    performChecks();
-  }, []);
-
-  const getStatusColor = (status: 'passed' | 'failed' | 'warning') => {
-    switch (status) {
-      case 'passed':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'failed':
-        return 'bg-red-100 text-red-800 border-red-200';
-      case 'warning':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
+  const counts = {
+    passed: checks.filter((check) => check.status === 'passed').length,
+    warning: checks.filter((check) => check.status === 'warning').length,
+    failed: checks.filter((check) => check.status === 'failed').length,
   };
-
-  const getStatusIcon = (status: 'passed' | 'failed' | 'warning') => {
-    switch (status) {
-      case 'passed':
-        return <CheckCircle2 className="w-4 h-4" />;
-      case 'failed':
-        return <XCircle className="w-4 h-4" />;
-      case 'warning':
-        return <AlertCircle className="w-4 h-4" />;
-      default:
-        return <Clock className="w-4 h-4" />;
-    }
-  };
-
-  const getOverallStatusInfo = () => {
-    switch (status) {
-      case 'healthy':
-        return {
-          title: 'Tous les services sont opérationnels',
-          description: 'L\'application StudentConnect Frontend est en bonne santé.',
-          color: 'green',
-        };
-      case 'degraded':
-        return {
-          title: 'Certains services sont dégradés',
-          description: 'L\'application fonctionne mais avec des avertissements.',
-          color: 'yellow',
-        };
-      case 'unhealthy':
-        return {
-          title: 'Services non disponibles',
-          description: 'L\'application rencontre des problèmes critiques.',
-          color: 'red',
-        };
-      default:
-        return {
-          title: 'Chargement des vérifications...',
-          description: 'Veuillez patienter pendant que nous vérifions l\'état de l\'application.',
-          color: 'gray',
-        };
-    }
-  };
-
-  const statusInfo = getOverallStatusInfo();
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">SC</span>
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">StudentConnect</h1>
-              <p className="text-sm text-gray-500">Vérification de santé</p>
-            </div>
-          </div>
+    <div className="d-flex min-vh-100 flex-column bg-body-tertiary">
+      <header className="border-bottom bg-white">
+        <div className="container py-3 d-flex align-items-center justify-content-between gap-3">
+          <Link href="/" className="d-inline-flex align-items-center gap-3 text-decoration-none">
+            <span className="sc-brand-mark" aria-hidden="true">SC</span>
+            <span><span className="d-block fw-bold text-dark">StudentConnect</span><span className="d-block small text-secondary">Vérification technique</span></span>
+          </Link>
+          <span className="badge text-bg-secondary">Prototype</span>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">État de santé</h1>
-          <p className="text-lg text-gray-600">
-            {status === 'loading' ? 'Chargement...' : 'StudentConnect Frontend'}
-          </p>
+      <main className="container flex-grow-1 py-5">
+        <div className="text-center mb-5">
+          <p className="text-uppercase fw-semibold text-primary small mb-2">Diagnostic local</p>
+          <h1 className="display-5 fw-bold">État de santé</h1>
+          <p className="lead text-secondary mb-0">{status === 'loading' ? 'Chargement…' : 'StudentConnect Frontend'}</p>
         </div>
 
-        {/* Overall Status */}
-        <div className="mb-12">
-          <div className={`card border-l-4 ${status === 'healthy' ? 'border-green-500' : status === 'degraded' ? 'border-yellow-500' : status === 'unhealthy' ? 'border-red-500' : 'border-gray-500'}`}>
-            <div className="flex items-center">
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center mr-4 ${status === 'healthy' ? 'bg-green-100' : status === 'degraded' ? 'bg-yellow-100' : status === 'unhealthy' ? 'bg-red-100' : 'bg-gray-100'}`}>
-                {status === 'healthy' && <CheckCircle2 className="w-6 h-6 text-green-600" />}
-                {status === 'degraded' && <AlertCircle className="w-6 h-6 text-yellow-600" />}
-                {status === 'unhealthy' && <XCircle className="w-6 h-6 text-red-600" />}
-                {status === 'loading' && <Clock className="w-6 h-6 text-gray-600" />}
-              </div>
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900">{statusInfo.title}</h2>
-                <p className="text-gray-600">{statusInfo.description}</p>
-              </div>
-            </div>
+        <section className={`card border-start border-4 shadow-sm mb-4 ${overall.panel}`} aria-live="polite" aria-busy={status === 'loading'}>
+          <div className="card-body p-4 d-flex align-items-start gap-3">
+            <span className="sc-health-icon" aria-hidden="true">{overall.icon}</span>
+            <div><h2 className="h4 mb-1">{overall.title}</h2><p className="text-secondary mb-0">{overall.description}</p></div>
           </div>
-        </div>
+        </section>
 
-        {/* Health Checks List */}
-        <div className="card">
-          <h2 className="text-lg font-semibold text-gray-900 mb-6">Vérifications détaillées</h2>
-          <div className="space-y-4">
-            {checks.map((check, index) => (
-              <div
-                key={index}
-                className={`flex items-center p-4 rounded-lg border ${getStatusColor(check.status)}`}
-              >
-                <div className="mr-4">
-                  {getStatusIcon(check.status)}
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-medium text-gray-900">{check.name}</h3>
-                  <p className="text-sm text-gray-600">{check.message}</p>
-                </div>
-                <div className="ml-4">
-                  <span className={`px-2 py-1 text-xs rounded-full ${
-                    check.status === 'passed' ? 'bg-green-100 text-green-800' :
-                    check.status === 'failed' ? 'bg-red-100 text-red-800' :
-                    'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {check.status}
-                  </span>
-                </div>
+        <section className="card border-0 shadow-sm mb-4" aria-labelledby="checks-title">
+          <div className="card-body p-4">
+            <h2 id="checks-title" className="h4 mb-4">Vérifications détaillées</h2>
+            {status === 'loading' ? (
+              <div className="d-flex align-items-center gap-3" role="status"><span className="spinner-border text-primary" aria-hidden="true" /><span>Vérification en cours…</span></div>
+            ) : (
+              <div className="vstack gap-3">
+                {checks.map((check) => {
+                  const presentation = checkPresentation[check.status];
+                  return (
+                    <article key={check.name} className={`border rounded-3 p-3 d-flex flex-column flex-sm-row align-items-sm-center gap-3 ${presentation.row}`}>
+                      <CheckIcon status={check.status} />
+                      <div className="flex-grow-1"><h3 className="h6 mb-1">{check.name}</h3><p className="small text-secondary mb-0">{check.message}</p></div>
+                      <span className={`badge ${presentation.badge}`}>{presentation.label}</span>
+                    </article>
+                  );
+                })}
               </div>
-            ))}
+            )}
           </div>
-        </div>
+        </section>
 
-        {/* Summary */}
         {status !== 'loading' && (
-          <div className="card mt-8">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Résumé</h2>
-            <div className="grid grid-cols-3 gap-6">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-green-600">
-                  {checks.filter(c => c.status === 'passed').length}
-                </div>
-                <div className="text-sm text-gray-500">Réussis</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-yellow-600">
-                  {checks.filter(c => c.status === 'warning').length}
-                </div>
-                <div className="text-sm text-gray-500">Avertissements</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-red-600">
-                  {checks.filter(c => c.status === 'failed').length}
-                </div>
-                <div className="text-sm text-gray-500">Échecs</div>
+          <section className="card border-0 shadow-sm" aria-labelledby="summary-title">
+            <div className="card-body p-4">
+              <h2 id="summary-title" className="h4 mb-4">Résumé</h2>
+              <div className="row g-3 text-center">
+                <div className="col-12 col-sm-4"><div className="border rounded-3 p-3"><strong className="d-block display-6 text-success">{counts.passed}</strong><span>Réussis</span></div></div>
+                <div className="col-12 col-sm-4"><div className="border rounded-3 p-3"><strong className="d-block display-6 text-warning-emphasis">{counts.warning}</strong><span>Avertissements</span></div></div>
+                <div className="col-12 col-sm-4"><div className="border rounded-3 p-3"><strong className="d-block display-6 text-danger">{counts.failed}</strong><span>Échecs</span></div></div>
               </div>
             </div>
-          </div>
+          </section>
         )}
 
-        {/* Footer */}
-        <div className="mt-12 text-center text-sm text-gray-500">
-          <p>Dernière vérification : {new Date().toLocaleTimeString('fr-FR')}</p>
-          <p>Environment : Development</p>
-        </div>
+        <div className="text-center small text-secondary mt-5"><p className="mb-1">Dernière vérification : session actuelle</p><p className="mb-0">Environnement : développement</p></div>
       </main>
     </div>
   );
