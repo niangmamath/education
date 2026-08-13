@@ -44,8 +44,8 @@
 | UX-04 | Concevoir l’espace Parent | UX-03 | Terminé | Layout et routes Parent validés |
 | UX-05 | Concevoir l’espace Élève | UX-03 | Terminé | Layout et routes Élève validés |
 | UX-06 | Valider les états et l’accessibilité | UX-04, UX-05 | Terminé | Validation manuelle et page accessibilité |
-| UX-07 | Clôturer l’étape 05 | UX-06 | En revue | Rapport de validation et contrôles locaux verts |
+| UX-07 | Clôturer l’étape 05 | UX-06 | Terminé | Rapport, fusion et contrôles distants verts |
 
 ### Prochaine tâche
 
-Valider GitHub Actions pour l’étape 05, fusionner vers `main`, puis préparer l’étape 06 selon le planning produit.
+Préparer l’étape 06 selon le planning produit.
