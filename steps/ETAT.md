@@ -3,7 +3,7 @@
 ## Référence
 
 - Projet : StudentConnect
-- Date : 11 août 2026
+- Date : 13 août 2026
 - Dépôt : `Tidianesarrndiaye-org/StudentConnect`
 - Branche : `main`
 - Version cible : `V0.1`
@@ -77,6 +77,21 @@ Les dossiers détaillés des étapes 04 à 16 sont temporairement retirés du d�
 - [x] ADR-012 acceptée sous conditions.
 - [x] Étape 04 clôturée.
 
+## Étape 05, UX design et navigation
+
+- [x] Parcours Visiteur, Parent et Élève documentés.
+- [x] Routes et règles de navigation documentées.
+- [x] Bootstrap 5.3.8 adopté et Tailwind retiré.
+- [x] Pages publiques et technique validées.
+- [x] Layout et parcours Parent validés.
+- [x] Layout et parcours Élève validés.
+- [x] États transversaux et page introuvable validés.
+- [x] Accessibilité et responsive validés manuellement.
+- [x] TypeScript, ESLint et build Next.js validés.
+- [x] Ruff, Mypy et 12 tests Pytest validés.
+- [x] Rapport de validation de l’étape 05 produit.
+- [ ] Validation GitHub Actions et fusion vers `main`.
+
 ## Prochaine action
 
-Préparer `05_ux_design_navigation` après fusion de la branche du spike.
+Pousser le commit de clôture de l’étape 05, vérifier GitHub Actions puis fusionner vers `main`.

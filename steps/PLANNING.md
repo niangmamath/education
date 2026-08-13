@@ -34,8 +34,18 @@
 - [x] Web CI distante réussie.
 - [x] Secret Scan distant réussi.
 
-## Prochaine tâche
+### Phase 1, UX design et navigation
 
-`P0-06`, réaliser le spike H5P critique.
+| ID | Travail | Dépendances | Statut | Preuve |
+|---|---|---|---|---|
+| UX-01 | Définir les parcours utilisateurs | P0-07 | Terminé | Personas, parcours et matrice besoins-écrans |
+| UX-02 | Définir les routes et la navigation | UX-01 | Terminé | Routes MVP et règles d’accès |
+| UX-03 | Migrer le design system vers Bootstrap | UX-02 | Terminé | Bootstrap 5.3.8, Tailwind retiré, build vert |
+| UX-04 | Concevoir l’espace Parent | UX-03 | Terminé | Layout et routes Parent validés |
+| UX-05 | Concevoir l’espace Élève | UX-03 | Terminé | Layout et routes Élève validés |
+| UX-06 | Valider les états et l’accessibilité | UX-04, UX-05 | Terminé | Validation manuelle et page accessibilité |
+| UX-07 | Clôturer l’étape 05 | UX-06 | En revue | Rapport de validation et contrôles locaux verts |
 
-Le dossier `steps/04_spike_h5p_critique` doit être régénéré proprement au démarrage de cette tâche.
+### Prochaine tâche
+
+Valider GitHub Actions pour l’étape 05, fusionner vers `main`, puis préparer l’étape 06 selon le planning produit.
