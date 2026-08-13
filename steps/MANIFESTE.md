@@ -1,6 +1,19 @@
 # Manifeste
 
-Nombre de fichiers : 72
+Inventaire des fiches d'étape et des documents de pilotage, avec les douze
+premiers caractères de leur empreinte SHA-256. Les rapports de validation
+`rapport_*.md` en sont exclus : ils s'ajoutent au fil des clôtures et les
+inventorier condamnerait ce fichier à être périmé en permanence. `MANIFESTE.md`
+ne peut pas figurer dans sa propre liste.
+
+Régénérer après toute création, suppression ou renommage de fiche :
+
+```
+cd steps && find . -type f -name '*.md' ! -name 'MANIFESTE.md' ! -name 'rapport_*.md' -printf '%P\n' | LC_ALL=C sort | while read -r f; do printf -- '- `%s`  `%s`\n' "$f" "$(sha256sum "$f" | cut -c1-12)"; done
+```
+
+Nombre de fiches : 91
+Nombre de fiches : 91
 
 - `01_gouvernance_et_audit/01_verifier_depot_vide.md`  `0397b9fe23e4`
 - `01_gouvernance_et_audit/02_creer_fichiers_racine.md`  `e0bae8ab81a1`
@@ -10,67 +23,86 @@ Nombre de fichiers : 72
 - `02_initialisation_monorepo/02_initialiser_nextjs.md`  `6cf2ae1db0e2`
 - `02_initialisation_monorepo/03_initialiser_fastapi.md`  `68afd7110f7e`
 - `02_initialisation_monorepo/README.md`  `77b87adcf85d`
-- `03_infrastructure_locale_ci/01_docker_compose.md`  `d5ad1903bd9b`
-- `03_infrastructure_locale_ci/02_configurer_base_migrations.md`  `46406b2a6bb9`
-- `03_infrastructure_locale_ci/03_configurer_ci.md`  `c337c5665eeb`
-- `03_infrastructure_locale_ci/README.md`  `2cec8b45cdda`
-- `04_spike_h5p_critique/01_collecter_paquets_test.md`  `73193b20f8b1`
-- `04_spike_h5p_critique/02_lecture_standalone.md`  `4cbc0ca630fe`
-- `04_spike_h5p_critique/03_capture_xapi.md`  `1e76e29844e4`
-- `04_spike_h5p_critique/04_geler_perimetre_h5p.md`  `a9ea6c170b04`
-- `04_spike_h5p_critique/README.md`  `cb181f4ac92e`
-- `05_ux_design_navigation/01_design_system.md`  `e21f2c3c746b`
-- `05_ux_design_navigation/02_layouts_routes.md`  `6914860c2c6b`
-- `05_ux_design_navigation/README.md`  `8d48c34569ad`
-- `06_backend_identite_famille/01_modeles_users.md`  `425990175cc2`
-- `06_backend_identite_famille/02_auth_parent_sessions.md`  `f870ec7fa5c4`
-- `06_backend_identite_famille/03_acces_enfant.md`  `b8f7e8af90ee`
-- `06_backend_identite_famille/README.md`  `47c9ae238704`
-- `07_referentiel_competences/01_definir_referentiel.md`  `027866b6749c`
-- `07_referentiel_competences/02_modeles_arbre.md`  `6e1eeba90af9`
-- `07_referentiel_competences/README.md`  `248be357d71c`
-- `08_evaluations_resultats_lacunes/01_diagnostic_interne.md`  `a74fdad85fac`
-- `08_evaluations_resultats_lacunes/02_detection_gaps.md`  `10e9ea4108e2`
-- `08_evaluations_resultats_lacunes/03_score_sante.md`  `994931e986ba`
-- `08_evaluations_resultats_lacunes/README.md`  `90ba592bd83f`
-- `09_content_studio_stockage/01_modeles_contenus.md`  `85ccd3241e95`
-- `09_content_studio_stockage/02_upload_presigne.md`  `3978c34f67ac`
-- `09_content_studio_stockage/03_pipeline_quarantaine.md`  `d4c61b8734e3`
-- `09_content_studio_stockage/04_review_publication.md`  `adaec98afba0`
-- `09_content_studio_stockage/README.md`  `1d8eaf836ace`
-- `10_lecteur_h5p_xapi/01_lecteur_production.md`  `710cc1166857`
-- `10_lecteur_h5p_xapi/02_endpoint_xapi.md`  `1ee3f82f747a`
-- `10_lecteur_h5p_xapi/03_projections_xapi.md`  `4a03619762ff`
-- `10_lecteur_h5p_xapi/README.md`  `dfb416914806`
-- `11_integration_phet/01_catalogue_phet.md`  `8beab9312083`
-- `11_integration_phet/02_lecteur_phet.md`  `a7b75c41f18c`
-- `11_integration_phet/README.md`  `838192194edd`
-- `12_moteur_remediation/01_mapping_gap_contenu.md`  `98c76e2651a4`
-- `12_moteur_remediation/02_plans_quick_repairs.md`  `7074e59e80e9`
-- `12_moteur_remediation/03_reevaluation.md`  `4f83fa11fc49`
-- `12_moteur_remediation/README.md`  `ab04f7d395c5`
-- `13_dashboards/01_dashboard_eleve.md`  `969c7816b07a`
-- `13_dashboards/02_dashboard_parent.md`  `95ae267487a7`
-- `13_dashboards/03_notifications.md`  `cfafda61ad29`
-- `13_dashboards/README.md`  `c40899be1954`
-- `14_securite_performance_observabilite/01_securite_app.md`  `99a04ef5f03b`
-- `14_securite_performance_observabilite/02_performance.md`  `af2d2de815cb`
-- `14_securite_performance_observabilite/03_observabilite.md`  `8244bb397447`
-- `14_securite_performance_observabilite/README.md`  `370a12343a8a`
-- `15_tests_acceptation_demo/01_fixtures_demo.md`  `823218125598`
-- `15_tests_acceptation_demo/02_tests_e2e.md`  `6cd6187bb001`
-- `15_tests_acceptation_demo/03_acceptation_mvp.md`  `cb89f456c3b9`
-- `15_tests_acceptation_demo/README.md`  `b092fc3223b2`
-- `16_deploiement_documentation_release/01_decider_hebergement.md`  `e4434201e5d2`
-- `16_deploiement_documentation_release/02_pipeline_deploiement.md`  `7f56ac95b432`
-- `16_deploiement_documentation_release/03_documentation.md`  `ed4721150fd9`
-- `16_deploiement_documentation_release/04_release_v01.md`  `856d2d8355b2`
-- `16_deploiement_documentation_release/README.md`  `20bc243ac68f`
+- `03_infrastructure_locale_ci/01_docker_compose.md`  `46e9cebdc8d5`
+- `03_infrastructure_locale_ci/02_configurer_base_migrations.md`  `d118fb6a4861`
+- `03_infrastructure_locale_ci/03_configurer_ci.md`  `83e860101a23`
+- `03_infrastructure_locale_ci/04_cloturer_etape.md`  `faee6c061fb9`
+- `03_infrastructure_locale_ci/README.md`  `3b6ee2c3feef`
+- `04_spike_h5p_critique/01_definir_protocole_et_paquets.md`  `4ecae7292dca`
+- `04_spike_h5p_critique/02_preparer_lecteur_standalone.md`  `ac97e4a6334c`
+- `04_spike_h5p_critique/03_capturer_evenements_xapi.md`  `814ae0e8c2fc`
+- `04_spike_h5p_critique/04_analyser_compatibilite_securite.md`  `c971cf4511ca`
+- `04_spike_h5p_critique/05_cloturer_spike.md`  `481dade9ef25`
+- `04_spike_h5p_critique/README.md`  `5c4773d89f93`
+- `05_ux_design_navigation/01_inventorier_parcours_utilisateurs.md`  `aa4b5bec95d0`
+- `05_ux_design_navigation/02_definir_routes_navigation.md`  `e24c452baf9f`
+- `05_ux_design_navigation/03_definir_design_system_bootstrap.md`  `19f19f71a8dd`
+- `05_ux_design_navigation/04_concevoir_layout_parent.md`  `ea3c4b3b4cb4`
+- `05_ux_design_navigation/05_concevoir_layout_eleve.md`  `e91e8f5fe49f`
+- `05_ux_design_navigation/06_definir_etats_accessibilite.md`  `1bf7de67f7b4`
+- `05_ux_design_navigation/07_cloturer_etape.md`  `a25b0381bcda`
+- `05_ux_design_navigation/README.md`  `ac172f2e8ce9`
+- `06_backend_identite_famille/01_modeles_users.md`  `e3952beeda17`
+- `06_backend_identite_famille/02_auth_parent_sessions.md`  `3004bb35c05d`
+- `06_backend_identite_famille/03_acces_enfant.md`  `abd88ebcd062`
+- `06_backend_identite_famille/04_cloturer_etape.md`  `3fcfe57efad2`
+- `06_backend_identite_famille/README.md`  `720e2d601135`
+- `07_referentiel_competences/01_modeles_referentiel.md`  `de0a3b7539e3`
+- `07_referentiel_competences/02_import_referentiel.md`  `c2c47ab2d4fe`
+- `07_referentiel_competences/03_api_competences.md`  `d3112e8ceafd`
+- `07_referentiel_competences/04_cloturer_etape.md`  `47bb43c6cf34`
+- `07_referentiel_competences/README.md`  `eaf89b729724`
+- `08_catalogue_contenus_activites/01_modeles_catalogue.md`  `9ac4a058c7d6`
+- `08_catalogue_contenus_activites/02_contenus_h5p_autorises.md`  `e717012a6fad`
+- `08_catalogue_contenus_activites/03_api_catalogue.md`  `a8fd2dbd4e80`
+- `08_catalogue_contenus_activites/04_cloturer_etape.md`  `b1b05804373a`
+- `08_catalogue_contenus_activites/README.md`  `682ac653038d`
+- `09_affectations_parcours/01_modeles_affectations.md`  `5790700c737c`
+- `09_affectations_parcours/02_api_affectations_parent.md`  `bd76257c166f`
+- `09_affectations_parcours/03_api_activites_eleve.md`  `09013872c6b9`
+- `09_affectations_parcours/04_cloturer_etape.md`  `7bfc9c6862b8`
+- `09_affectations_parcours/README.md`  `272beb67e412`
+- `10_tentatives_resultats/01_modeles_tentatives.md`  `71c17eaee060`
+- `10_tentatives_resultats/02_api_tentatives.md`  `8a76a35fa1e4`
+- `10_tentatives_resultats/03_calcul_resultats.md`  `a698f3bf31f6`
+- `10_tentatives_resultats/04_cloturer_etape.md`  `16c9e9934971`
+- `10_tentatives_resultats/README.md`  `b152ab7f9762`
+- `11_evenements_xapi_progres/01_ingestion_xapi.md`  `6e0b9b2d9d42`
+- `11_evenements_xapi_progres/02_liaison_utilisateur.md`  `e04a56a57d16`
+- `11_evenements_xapi_progres/03_agregation_progres.md`  `46f07db45504`
+- `11_evenements_xapi_progres/04_cloturer_etape.md`  `a1f27cba363f`
+- `11_evenements_xapi_progres/README.md`  `8793cdefb402`
+- `12_diagnostic_remediation/01_regles_diagnostic.md`  `d76efc249433`
+- `12_diagnostic_remediation/02_moteur_recommandation.md`  `6bbd3ca88ea3`
+- `12_diagnostic_remediation/03_api_diagnostic.md`  `7e77359b9887`
+- `12_diagnostic_remediation/04_cloturer_etape.md`  `fb0b434497ea`
+- `12_diagnostic_remediation/README.md`  `fa479472c7c5`
+- `13_dashboards/01_dashboard_eleve.md`  `07b3146f1f7d`
+- `13_dashboards/02_dashboard_parent.md`  `ed48f19dd7fe`
+- `13_dashboards/03_notifications.md`  `b88a345c914e`
+- `13_dashboards/04_cloturer_etape.md`  `567c5db399a9`
+- `13_dashboards/README.md`  `9a98c4c9d054`
+- `14_notifications/01_modeles_preferences.md`  `3f06bb98d0f7`
+- `14_notifications/02_evenements_notifications.md`  `0c87b184d605`
+- `14_notifications/03_api_notifications.md`  `b120b11c430b`
+- `14_notifications/04_cloturer_etape.md`  `47b9281d31e3`
+- `14_notifications/README.md`  `4a6e19701edd`
+- `15_administration_securite_exploitation/01_administration.md`  `374aeb2bc15b`
+- `15_administration_securite_exploitation/02_securite_applicative.md`  `c6cc31e164f3`
+- `15_administration_securite_exploitation/03_observabilite_sauvegarde.md`  `7932b817f2d1`
+- `15_administration_securite_exploitation/04_cloturer_etape.md`  `ab7428be5f83`
+- `15_administration_securite_exploitation/README.md`  `a38311a887d0`
+- `16_validation_mvp_livraison/01_tests_end_to_end.md`  `88ca633396ee`
+- `16_validation_mvp_livraison/02_donnees_demo.md`  `3d1956950f6a`
+- `16_validation_mvp_livraison/03_deploiement_demo.md`  `8780bead9d63`
+- `16_validation_mvp_livraison/04_documentation_livraison.md`  `5e1273146d4b`
+- `16_validation_mvp_livraison/05_cloturer_mvp.md`  `f991983326fc`
+- `16_validation_mvp_livraison/README.md`  `998e5bc3959d`
 - `AGENTS.md`  `d3620f0f65bb`
 - `DECISIONS_FINALES.md`  `3ac9c3607719`
-- `ETAT.md`  `1575c067b4c0`
+- `ETAT.md`  `07261618cf9d`
 - `MODELE_RAPPORT.md`  `d391f4da239a`
-- `PLANNING.md`  `f86215b9473d`
+- `PLANNING.md`  `a79c5cfb777a`
 - `PROMPT_GENERAL.md`  `0c19b4b93d8b`
 - `RAPPORTS_REGLES.md`  `9c07f684b281`
 - `README.md`  `b4684411894a`

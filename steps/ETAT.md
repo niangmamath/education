@@ -120,15 +120,20 @@ Travaux menés sur la branche `feat/backend-identity-family`, non fusionnée.
 
 ### Points ouverts
 
+Les stratégies de résolution des trois premiers points sont décrites dans
+`docs/backend/points-ouverts-authentification.md`.
+
 - ADR-005 cite bcrypt dans un extrait illustratif alors que l’implémentation
-  retient Argon2id ; l’ADR reste à amender ou la décision à revoir.
+  retient Argon2id ; l’ADR reste à amender. À trancher avant que de vrais comptes
+  n’existent, car aucune migration automatique ne franchit un changement
+  d’algorithme.
 - La vérification d’adresse email prévue par ADR-005 n’est pas implémentée faute
   de service d’envoi ; `is_verified` reste à `false` et la connexion ne l’exige pas.
-- Aucune limitation de débit sur la connexion, à traiter en étape 15.
-- `argon2-cffi` est une nouvelle dépendance : les images `api` et `worker` doivent
-  être reconstruites.
-- `steps/MANIFESTE.md` décrit pour les étapes 07 à 16 une arborescence qui ne
-  correspond plus aux dossiers présents.
+- Aucune limitation de débit sur la connexion, alors que `RATE_LIMIT` et
+  `RateLimitException` existent déjà sans être branchés.
+- [x] `argon2-cffi` intégré aux images `api` et `worker` reconstruites.
+- [x] `steps/MANIFESTE.md` régénéré depuis l’arborescence réelle, avec la règle
+      d’inventaire et la commande de régénération.
 
 ## Résultats techniques de l’étape 06
 
