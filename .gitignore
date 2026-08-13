@@ -521,3 +521,6 @@ _step04_xapi_validation/
 studentconnect_step04_xapi_validation.zip
 _step04_analysis/
 studentconnect_step04_compatibility_security.zip
+_step04_closure/
+studentconnect_step04_closure.zip
+apply_step04_closure_fixed.py
