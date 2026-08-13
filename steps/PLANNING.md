@@ -22,7 +22,7 @@
 | S1-07 | Configurer la CI | S1-01, S1-02, S1-03 | Terminé | API CI, Web CI et Secret Scan réussis |
 | P0-05 | Clôturer l’infrastructure locale | P0-05A, S1-03, S1-07 | Terminé | Rapports, commits, push et CI distante |
 | P0-06 | Réaliser le spike H5P | P0-05 | Terminé | Rendu True/False et événement xAPI validés |
-| P0-07 | Geler les types H5P autorisés | P0-06 | Terminé | ADR-011, True/False pilote uniquement |
+| P0-07 | Geler les types H5P autorisés | P0-06 | Terminé | ADR-012, True/False pilote uniquement |
 
 ## Preuves de clôture de P0-05
 
