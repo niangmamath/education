@@ -2,7 +2,7 @@
 
 ## Statut
 
-✅ **Accepted** - Décision validée et implémentée
+✅ **Accepted** - Décision validée, implémentation en cours
 
 ---
 

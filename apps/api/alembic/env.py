@@ -8,6 +8,7 @@ from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from app.core.db import Base, DATABASE_URL
+import app.models  # noqa: F401  # Register model metadata for Alembic
 
 config = context.config
 config.set_main_option("sqlalchemy.url", DATABASE_URL)

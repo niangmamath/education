@@ -172,11 +172,11 @@ docs/
 | Champ | Valeur |
 |-------|--------|
 | **Titre** | Gestion des sessions familiales (Parent + Enfants) |
-| **Statut** | ⏳ À créer |
-| **Date** | - |
-| **Auteur** | - |
-| **Décision** | À décider |
-| **Fichier** | [docs/adr/ADR-005-sessions-familiales.md](../adr/ADR-005-sessions-familiales.md) (à créer) |
+| **Statut** | ✅ Accepted |
+| **Date** | 2026-08-13 |
+| **Auteur** | Équipe StudentConnect |
+| **Décision** | Sessions opaques en Redis, comptes Parent et profils Enfant |
+| **Fichier** | [docs/adr/ADR-005-sessions-familiales.md](../adr/ADR-005-sessions-familiales.md) |
 | **Dépendances** | ADR-003, ADR-004 |
 | **Impact** | Authentification |
 
