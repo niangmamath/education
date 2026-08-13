@@ -74,7 +74,7 @@ Les dossiers détaillés des étapes 04 à 16 sont temporairement retirés du d�
 - [x] Lecture H5P Standalone validée.
 - [x] Événement xAPI réel validé.
 - [x] Compatibilité et sécurité analysées.
-- [x] ADR-009 acceptée sous conditions.
+- [x] ADR-011 acceptée sous conditions.
 - [x] Étape 04 clôturée.
 
 ## Prochaine action

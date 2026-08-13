@@ -1,4 +1,4 @@
-# ADR-009, H5P Standalone pour le pilote
+# ADR-011, H5P Standalone pour le pilote
 
 - Statut : Accepté sous conditions
 - Date : 13 août 2026
