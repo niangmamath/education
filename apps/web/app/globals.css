@@ -55,3 +55,9 @@ body { min-width: 320px; }
   html { scroll-behavior: auto; }
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
 }
+
+.sc-parent-nav { overflow-x: auto; }
+.sc-parent-nav .nav-link { color: var(--sc-text); white-space: nowrap; }
+.sc-parent-nav .nav-link:hover { background: #e8eefc; color: var(--sc-primary-dark); }
+.sc-parent-nav .nav-link.active { background: var(--sc-primary); color: #fff; }
+@media (min-width: 992px) { .sc-parent-nav { position: sticky; top: 1rem; overflow: visible; } }
