@@ -1,0 +1,26 @@
+REVUE DES MÉTADONNÉES EMBARQUÉES
+
+Paquet : true-false-question-34806.h5p
+Licence h5p.json : U
+Version licence h5p.json : None
+Auteurs h5p.json : []
+Source h5p.json : None
+
+Champs pertinents trouvés dans content/content.json :
+- $.media.type.params.file.path = "images/file-582dbbc081261.jpg"
+- $.media.type.params.file.mime = "image/jpeg"
+- $.media.type.params.file.copyright = {"license": "U"}
+- $.media.type.params.file.copyright.license = "U"
+- $.media.type.metadata = {"authors": [{"name": "Rafał Konieczny", "role": "Author"}], "contentType": "Image", "license": "PD", "source": "https://en.wikipedia.org/wiki/Oslo_Opera_House#/media/File:Full_Opera_by_night.jpg", "title": "The new Opera House in Oslo"}
+- $.media.type.metadata.title = "The new Opera House in Oslo"
+- $.media.type.metadata.authors = [{"name": "Rafał Konieczny", "role": "Author"}]
+- $.media.type.metadata.source = "https://en.wikipedia.org/wiki/Oslo_Opera_House#/media/File:Full_Opera_by_night.jpg"
+- $.media.type.metadata.license = "PD"
+
+Médias embarqués :
+- content/images/file-582dbbc081261.jpg | 1053841 octets | SHA-256 4f4ac8fa8489eda9af692193de034b48bf91dab22555e1eeb3fb675858feeb82
+
+Interprétation :
+- Le code U du manifest signifie que la licence du paquet est non divulguée dans h5p.json.
+- La page officielle H5P peut fournir une licence générale distincte, mais l’attribution et les droits de l’image doivent encore être vérifiés dans « Rights of use ».
+- Le paquet peut rester local pour l’analyse technique, mais ne doit pas être redistribué dans Git à ce stade.

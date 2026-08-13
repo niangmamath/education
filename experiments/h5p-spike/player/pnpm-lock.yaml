@@ -1,0 +1,22 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      h5p-standalone:
+        specifier: 3.8.2
+        version: 3.8.2
+
+packages:
+
+  h5p-standalone@3.8.2:
+    resolution: {integrity: sha512-r7eQtTzBk/dbaQZ+tA9XD5FeSmyMxlypRZXudiheCnC8zAT0/zNgUvO4MZtZaznwfYVo98o7do5uxLTUQrxxwg==}
+
+snapshots:
+
+  h5p-standalone@3.8.2: {}

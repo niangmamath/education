@@ -68,14 +68,15 @@ Secret Scan: succès
 
 Les dossiers détaillés des étapes 04 à 16 sont temporairement retirés du dépôt. Chaque dossier sera régénéré proprement au démarrage de l’étape correspondante.
 
+## Étape 04, spike H5P critique
+
+- [x] Protocole et paquet pilote validés.
+- [x] Lecture H5P Standalone validée.
+- [x] Événement xAPI réel validé.
+- [x] Compatibilité et sécurité analysées.
+- [x] ADR-009 acceptée sous conditions.
+- [x] Étape 04 clôturée.
+
 ## Prochaine action
 
-Préparer l’étape `04_spike_h5p_critique`, puis exécuter en premier la collecte et la validation des paquets H5P de test.
-
-## Derniers rapports appliqués
-
-- `rapport_2026-08-11_1709_docker_compose.md`
-- `rapport_2026-08-11_1709_base_migrations.md`
-- `rapport_2026-08-11_1709_ci.md`
-- `rapport_2026-08-11_1709_etape_complete.md`
-- `rapport_2026-08-11_2025_validation_distante.md`
+Préparer `05_ux_design_navigation` après fusion de la branche du spike.

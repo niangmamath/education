@@ -1,0 +1,9 @@
+PRÉPARATION À L’EXÉCUTION H5P STANDALONE
+
+Bibliothèque principale : H5P.TrueFalse
+Entrées dans l’archive : 3
+Bibliothèques incluses dans l’archive :
+- Aucune bibliothèque H5P incluse.
+
+Conclusion : le paquet contient la configuration et le média, mais pas le code H5P.TrueFalse 1.8.
+La prochaine sous-étape devra fournir les bibliothèques d’exécution compatibles avant le rendu Standalone.

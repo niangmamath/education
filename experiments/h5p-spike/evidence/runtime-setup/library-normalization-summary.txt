@@ -1,0 +1,9 @@
+NORMALISATION DES BIBLIOTHEQUES H5P CORRIGEE
+
+Bibliothèques uniques copiées : 13
+Assets JS/CSS déclarés validés : 53
+Source utilisée : library-sources/libraries uniquement
+Dossier temp ignoré : oui
+Métadonnées .git retirées du runtime : oui
+H5P.Components dist validé : oui
+H5P.TrueFalse validé : oui

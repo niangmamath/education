@@ -1,0 +1,1 @@
+experiments/h5p-spike/packages/true-false-question-34806.h5p: Zip archive data, at least v4.5 to extract, compression method=store

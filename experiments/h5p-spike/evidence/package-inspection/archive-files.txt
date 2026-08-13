@@ -1,0 +1,3 @@
+content/content.json
+content/images/file-582dbbc081261.jpg
+h5p.json

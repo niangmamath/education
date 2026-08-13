@@ -1,0 +1,19 @@
+VALIDATION TECHNIQUE DU PAQUET H5P
+
+Fichier : true-false-question-34806.h5p
+Taille : 1056130 octets
+SHA-256 : 9914c27552f00aa91d4a29e85f6a299b11f984030c3451658fb0246f84b07f3c
+Fichiers ZIP : 3
+Taille décompressée : 1055702 octets
+Bibliothèque principale : H5P.TrueFalse
+Titre déclaré : True/False Question
+Langue déclarée : en
+Licence déclarée dans h5p.json : U
+Version de licence : None
+Source déclarée : None
+
+Dépendances préchargées :
+H5P.TrueFalse 1.8
+
+Résultat technique : archive ZIP valide, chemins sûrs, manifests présents, candidat True/False reconnu.
+Résultat juridique : À REVOIR MANUELLEMENT. La licence de la bibliothèque ne suffit pas à valider le contenu complet.

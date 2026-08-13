@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "inspectedAtUtc": "2026-08-12T09:45:26.200072+00:00",
+  "sourceFileName": "true-false-question-34806.h5p",
+  "sizeBytes": 1056130,
+  "sha256": "9914c27552f00aa91d4a29e85f6a299b11f984030c3451658fb0246f84b07f3c",
+  "zipFileCount": 3,
+  "zipUncompressedBytes": 1055702,
+  "suspiciousCompressionRatios": [],
+  "mainLibrary": "H5P.TrueFalse",
+  "title": "True/False Question",
+  "language": "en",
+  "license": "U",
+  "licenseVersion": null,
+  "authors": [],
+  "source": null,
+  "yearFrom": null,
+  "yearTo": null,
+  "changes": [],
+  "preloadedDependencies": [
+    {
+      "machineName": "H5P.TrueFalse",
+      "majorVersion": "1",
+      "minorVersion": "8"
+    }
+  ],
+  "contentTopLevelKeys": [
+    "behaviour",
+    "confirmCheck",
+    "confirmRetry",
+    "correct",
+    "l10n",
+    "media",
+    "question"
+  ],
+  "trueFalseDependencies": [
+    {
+      "machineName": "H5P.TrueFalse",
+      "majorVersion": "1",
+      "minorVersion": "8"
+    }
+  ],
+  "contentLicenseRequiresManualReview": true
+}

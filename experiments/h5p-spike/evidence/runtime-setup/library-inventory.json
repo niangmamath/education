@@ -1,0 +1,93 @@
+[
+  {
+    "machineName": "FontAwesome",
+    "majorVersion": 4,
+    "minorVersion": 5,
+    "source": "/home/tidia/projets/StudentConnect/experiments/h5p-spike/evidence/runtime/library-sources/libraries/FontAwesome-4.5",
+    "target": "/home/tidia/projets/StudentConnect/experiments/h5p-spike/player/runtime/content/FontAwesome-4.5"
+  },
+  {
+    "machineName": "H5P.Audio",
+    "majorVersion": 1,
+    "minorVersion": 5,
+    "source": "/home/tidia/projets/StudentConnect/experiments/h5p-spike/evidence/runtime/library-sources/libraries/H5P.Audio-1.5",
+    "target": "/home/tidia/projets/StudentConnect/experiments/h5p-spike/player/runtime/content/H5P.Audio-1.5"
+  },
+  {
+    "machineName": "H5P.Components",
+    "majorVersion": 1,
+    "minorVersion": 0,
+    "source": "/home/tidia/projets/StudentConnect/experiments/h5p-spike/evidence/runtime/library-sources/libraries/H5P.Components-1.0",
+    "target": "/home/tidia/projets/StudentConnect/experiments/h5p-spike/player/runtime/content/H5P.Components-1.0"
+  },
+  {
+    "machineName": "H5P.FontIcons",
+    "majorVersion": 1,
+    "minorVersion": 0,
+    "source": "/home/tidia/projets/StudentConnect/experiments/h5p-spike/evidence/runtime/library-sources/libraries/H5P.FontIcons-1.0",
+    "target": "/home/tidia/projets/StudentConnect/experiments/h5p-spike/player/runtime/content/H5P.FontIcons-1.0"
+  },
+  {
+    "machineName": "H5P.Image",
+    "majorVersion": 1,
+    "minorVersion": 1,
+    "source": "/home/tidia/projets/StudentConnect/experiments/h5p-spike/evidence/runtime/library-sources/libraries/H5P.Image-1.1",
+    "target": "/home/tidia/projets/StudentConnect/experiments/h5p-spike/player/runtime/content/H5P.Image-1.1"
+  },
+  {
+    "machineName": "H5P.JoubelUI",
+    "majorVersion": 1,
+    "minorVersion": 3,
+    "source": "/home/tidia/projets/StudentConnect/experiments/h5p-spike/evidence/runtime/library-sources/libraries/H5P.JoubelUI-1.3",
+    "target": "/home/tidia/projets/StudentConnect/experiments/h5p-spike/player/runtime/content/H5P.JoubelUI-1.3"
+  },
+  {
+    "machineName": "H5P.Question",
+    "majorVersion": 1,
+    "minorVersion": 5,
+    "source": "/home/tidia/projets/StudentConnect/experiments/h5p-spike/evidence/runtime/library-sources/libraries/H5P.Question-1.5",
+    "target": "/home/tidia/projets/StudentConnect/experiments/h5p-spike/player/runtime/content/H5P.Question-1.5"
+  },
+  {
+    "machineName": "H5P.Transition",
+    "majorVersion": 1,
+    "minorVersion": 0,
+    "source": "/home/tidia/projets/StudentConnect/experiments/h5p-spike/evidence/runtime/library-sources/libraries/H5P.Transition-1.0",
+    "target": "/home/tidia/projets/StudentConnect/experiments/h5p-spike/player/runtime/content/H5P.Transition-1.0"
+  },
+  {
+    "machineName": "H5P.TrueFalse",
+    "majorVersion": 1,
+    "minorVersion": 8,
+    "source": "/home/tidia/projets/StudentConnect/experiments/h5p-spike/evidence/runtime/library-sources/libraries/H5P.TrueFalse-1.8",
+    "target": "/home/tidia/projets/StudentConnect/experiments/h5p-spike/player/runtime/content/H5P.TrueFalse-1.8"
+  },
+  {
+    "machineName": "H5P.Video",
+    "majorVersion": 1,
+    "minorVersion": 6,
+    "source": "/home/tidia/projets/StudentConnect/experiments/h5p-spike/evidence/runtime/library-sources/libraries/H5P.Video-1.6",
+    "target": "/home/tidia/projets/StudentConnect/experiments/h5p-spike/player/runtime/content/H5P.Video-1.6"
+  },
+  {
+    "machineName": "H5PEditor.RadioGroup",
+    "majorVersion": 1,
+    "minorVersion": 1,
+    "source": "/home/tidia/projets/StudentConnect/experiments/h5p-spike/evidence/runtime/library-sources/libraries/H5PEditor.RadioGroup-1.1",
+    "target": "/home/tidia/projets/StudentConnect/experiments/h5p-spike/player/runtime/content/H5PEditor.RadioGroup-1.1"
+  },
+  {
+    "machineName": "H5PEditor.ShowWhen",
+    "majorVersion": 1,
+    "minorVersion": 0,
+    "source": "/home/tidia/projets/StudentConnect/experiments/h5p-spike/evidence/runtime/library-sources/libraries/H5PEditor.ShowWhen-1.0",
+    "target": "/home/tidia/projets/StudentConnect/experiments/h5p-spike/player/runtime/content/H5PEditor.ShowWhen-1.0"
+  },
+  {
+    "machineName": "jQuery.ui",
+    "majorVersion": 1,
+    "minorVersion": 10,
+    "source": "/home/tidia/projets/StudentConnect/experiments/h5p-spike/evidence/runtime/library-sources/libraries/jQuery.ui-1.10",
+    "target": "/home/tidia/projets/StudentConnect/experiments/h5p-spike/player/runtime/content/jQuery.ui-1.10"
+  }
+]

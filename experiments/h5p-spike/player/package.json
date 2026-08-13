@@ -1,0 +1,8 @@
+{
+  "name": "studentconnect-h5p-spike-player",
+  "private": true,
+  "version": "0.0.0",
+  "dependencies": {
+    "h5p-standalone": "3.8.2"
+  }
+}

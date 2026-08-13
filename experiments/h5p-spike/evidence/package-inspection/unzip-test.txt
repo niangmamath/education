@@ -1,0 +1,5 @@
+Archive:  experiments/h5p-spike/packages/true-false-question-34806.h5p
+    testing: content/content.json     OK
+    testing: h5p.json                 OK
+    testing: content/images/file-582dbbc081261.jpg   OK
+No errors detected in compressed data of experiments/h5p-spike/packages/true-false-question-34806.h5p.
