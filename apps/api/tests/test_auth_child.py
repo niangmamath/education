@@ -367,6 +367,73 @@ class TestChildSelfRegistration:
         assert listed[0]["status"] == "pending"
 
 
+class TestTurningDownAPendingProfile:
+    """Regenerating the code closes the door; this clears what came through."""
+
+    def test_the_parent_drops_a_pending_profile(self, client: TestClient) -> None:
+        parent = sign_in_parent(client)
+        chosen = pseudonym()
+        pending_id = register_child(client, parent.family_code, chosen).json()["id"]
+
+        use_session(client, parent.token)
+        response = client.delete(f"{CHILDREN_URL}/{pending_id}")
+
+        assert response.status_code == 204
+        assert client.get(CHILDREN_URL).json() == []
+
+    def test_the_pseudonym_is_free_again_afterwards(self, client: TestClient) -> None:
+        parent = sign_in_parent(client)
+        chosen = pseudonym()
+        pending_id = register_child(client, parent.family_code, chosen).json()["id"]
+
+        use_session(client, parent.token)
+        client.delete(f"{CHILDREN_URL}/{pending_id}")
+
+        assert create_child(client, chosen).status_code == 201
+
+    def test_an_active_profile_is_not_dropped_this_way(
+        self, client: TestClient
+    ) -> None:
+        """An active profile holds a history; removing it is its own decision."""
+        sign_in_parent(client)
+        child_id = create_child(client).json()["id"]
+
+        response = client.delete(f"{CHILDREN_URL}/{child_id}")
+
+        assert response.status_code == 409
+        assert response.json()["error"]["code"] == "CONFLICT"
+        assert len(client.get(CHILDREN_URL).json()) == 1
+
+    def test_a_parent_cannot_drop_another_familys_profile(
+        self, client: TestClient
+    ) -> None:
+        first = sign_in_parent(client)
+        foreign_id = register_child(client, first.family_code).json()["id"]
+
+        other = sign_in_parent(client)
+        use_session(client, other.token)
+
+        assert client.delete(f"{CHILDREN_URL}/{foreign_id}").status_code == 404
+        assert client.delete(f"{CHILDREN_URL}/{uuid.uuid4()}").status_code == 404
+
+    def test_dropping_requires_a_parent_session(self, client: TestClient) -> None:
+        parent = sign_in_parent(client)
+        chosen = pseudonym()
+        pending_id = register_child(client, parent.family_code, chosen).json()["id"]
+
+        assert client.delete(f"{CHILDREN_URL}/{pending_id}").status_code == 401
+
+    def test_a_child_cannot_drop_a_pending_profile(self, client: TestClient) -> None:
+        parent = sign_in_parent(client)
+        pending_id = register_child(client, parent.family_code).json()["id"]
+        sibling = pseudonym()
+        use_session(client, parent.token)
+        create_child(client, sibling)
+        child_login(client, parent.family_code, sibling)
+
+        assert client.delete(f"{CHILDREN_URL}/{pending_id}").status_code == 403
+
+
 class TestFamilyCodeRegeneration:
     """A code that has got around must be replaceable by the parent alone."""
 

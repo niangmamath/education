@@ -54,10 +54,22 @@ Trois effets, et trois seulement :
   déconnexion, qui est déjà immédiate ;
 - **les profils créés sous l'ancien code demeurent**, y compris ceux en attente.
   Supprimer un profil d'Enfant ne doit jamais être l'effet de bord d'une autre
-  action ; c'est au Parent de décider lesquels il active.
+  action ; c'est au Parent de décider lesquels il active et lesquels il écarte.
 
 La route est réservée au Parent : une session Enfant reçoit `403`, une requête sans
 session `401`.
+
+## Écarter une demande
+
+`DELETE /api/v1/auth/children/{id}` est l'autre moitié de la réponse à un code qui
+a circulé : la régénération ferme la porte, celle-ci nettoie ce qui est passé
+avant. Le profil est supprimé et son pseudonyme redevient libre dans la famille.
+
+**Seul un profil en attente peut être écarté.** Un profil `active` répond `409` :
+il porte une histoire que l'enfant a construite, et son retrait est une décision à
+part entière, avec sa propre confirmation et ses propres conséquences sur les
+résultats des étapes ultérieures. Un profil d'une autre famille répond `404`,
+comme un profil inexistant.
 
 ## Points d'entrée
 
@@ -68,6 +80,7 @@ session `401`.
 | `POST` | `/api/v1/auth/child/register` | Créer un profil avec le code famille, sans session | `201`, profil `pending` |
 | `GET` | `/api/v1/auth/children` | Lister les enfants du Parent connecté | `200`, profils en attente inclus |
 | `POST` | `/api/v1/auth/children/{id}/activate` | Activer un profil en attente | `200`, profil `active` |
+| `DELETE` | `/api/v1/auth/children/{id}` | Écarter un profil en attente | `204` sans corps |
 | `POST` | `/api/v1/auth/child/login` | Ouvrir une session Enfant | `200`, profil et cookie |
 | `GET` | `/api/v1/auth/child/me` | Lire l'Enfant connecté | `200`, profil public |
 
@@ -188,20 +201,20 @@ en attente, sans accès.
 ## Limites assumées
 
 - **Rien ne plafonne les profils en attente.** Un tiers connaissant un code
-  famille peut créer des profils `pending` en série. Aucun n'ouvre de session, mais
-  la liste du Parent se remplit. Un plafond par famille et une notification
-  relèvent de l'étape des notifications et de l'étape 15.
+  famille peut créer des profils `pending` en série. Aucun n'ouvre de session, le
+  Parent peut les écarter un par un et régénérer son code, mais la liste se
+  remplit d'abord. Un plafond par famille et une notification relèvent de l'étape
+  des notifications et de l'étape 15.
 - **Le retour arrière de la migration est conditionnel.** Le `downgrade` de
   `0003_family_code_child_status` rétablit l'unicité globale du pseudonyme, ce qui
   est impossible si deux familles en partagent déjà un. La migration s'arrête alors
   avec un message qui le dit, plutôt que de renommer des profils dans le dos de
   leurs familles : ces doublons doivent être arbitrés à la main avant de rejouer le
   retour arrière.
-- **Aucune gestion du cycle de vie du profil.** Ni modification, ni désactivation,
-  ni suppression, ni changement de PIN. L'état `disabled` existe dans le modèle
-  mais aucune route ne le pose. C'est la limite la plus gênante après une fuite de
-  code : le Parent régénère son code, mais ne peut pas encore écarter les profils
-  en attente qui auraient été créés entre-temps.
+- **Le cycle de vie d'un profil actif n'est pas couvert.** Ni modification, ni
+  désactivation, ni suppression, ni changement de PIN. L'état `disabled` existe
+  dans le modèle mais aucune route ne le pose. Seul le retrait d'une demande en
+  attente est livré ici, parce qu'il découle directement de la fuite d'un code.
 - **Verrou par enfant et non par origine.** Le compteur ne distingue pas
   l'appelant : il protège un profil, pas le service. Une limitation de débit
   générale reste le point ouvert n°3 de `points-ouverts-authentification.md`.

@@ -123,7 +123,7 @@ Travaux menés sur la branche `feat/backend-identity-family`, non fusionnée.
       identique, session Redis créée puis supprimée à la déconnexion.
 - [ ] Clôture distante.
 
-### 06.3, création et accès Enfant, en revue
+### 06.3, création et accès Enfant, validée localement
 
 - [x] **Unicité du pseudonyme familiale et non globale**, sur décision du
       propriétaire : deux familles peuvent chacune avoir une `lea`, et le
@@ -135,7 +135,12 @@ Travaux menés sur la branche `feat/backend-identity-family`, non fusionnée.
       les profils existants ne sont pas touchés.
 - [x] Routes `POST /api/v1/auth/children`, `POST /api/v1/auth/child/register`,
       `GET /api/v1/auth/children`, `POST /api/v1/auth/children/{id}/activate`,
-      `POST /api/v1/auth/child/login` et `GET /api/v1/auth/child/me`.
+      `DELETE /api/v1/auth/children/{id}`, `POST /api/v1/auth/child/login` et
+      `GET /api/v1/auth/child/me`.
+- [x] Retrait d’une demande en attente par le Parent, complément de la
+      régénération du code : le profil est supprimé et son pseudonyme redevient
+      libre. Un profil actif répond `409`, son retrait relevant d’une décision à
+      part entière.
 - [x] Auto-inscription de l’Enfant par le code famille : le profil est créé en
       attente, ne peut pas ouvrir de session, et n’est utilisable qu’une fois
       activé par le Parent. Connaître un code permet de demander à rejoindre une
@@ -155,7 +160,18 @@ Travaux menés sur la branche `feat/backend-identity-family`, non fusionnée.
       existants et bascule du booléen vers le statut. Son retour arrière est
       réversible tant qu’aucun pseudonyme n’est partagé par deux familles ; sinon
       elle s’arrête avec un message plutôt que de renommer des profils.
-- [ ] Validation indépendante et clôture distante.
+- [x] Validation indépendante rejouée localement le 14 août 2026, consignée dans
+      `rapport_2026-08-14_cloture_etape_06.md`.
+- [ ] Clôture distante.
+
+### 06.4, clôture de l’étape, en cours
+
+- [x] Séquence complète de l’API CI rejouée localement, tout vert.
+- [x] Rapport de validation `rapport_2026-08-14_cloture_etape_06.md` produit.
+- [x] `PLANNING.md` complété par la phase 2 et les tâches BE-01 à BE-04.
+- [x] Branche `feat/backend-identity-family` poussée et Pull Request ouverte.
+- [ ] API CI et Secret Scan distants verts.
+- [ ] Fusion vers `main`, à la main du propriétaire.
 
 ### Points ouverts
 
@@ -176,8 +192,8 @@ Les stratégies de résolution des trois premiers points sont décrites dans
   celui de l’algorithme de hachage.
 - Rien ne plafonne les profils en attente : qui connaît un code famille peut
   remplir la liste d’un Parent de profils `pending`, sans jamais obtenir d’accès.
-  Le Parent peut désormais régénérer son code, mais aucune route ne lui permet
-  encore d’écarter les profils créés avant qu’il ne le fasse.
+  Le Parent peut régénérer son code et écarter ces demandes une à une, mais ni
+  plafond ni notification n’existent encore.
 - [x] `argon2-cffi` intégré aux images `api` et `worker` reconstruites.
 - [x] `steps/MANIFESTE.md` régénéré depuis l’arborescence réelle, avec la règle
       d’inventaire et la commande de régénération.
@@ -189,15 +205,21 @@ Alembic    : 0003_family_code_child_status (head), downgrade -1 puis base, retou
 Alembic    : check vert, aucune dérive entre modèles et base
 Ruff       : vert, format inclus, 50 fichiers
 Mypy       : vert sur 23 fichiers
-Pytest     : 117 tests réussis
+Pytest     : 123 tests réussis
 API vivante: parent register 201 avec code famille, login 200 avec cookie durci, logout 204
 API vivante: deux familles créent chacune une « lea » en 201, doublon interne refusé en 409
 API vivante: child login 200 par code famille, code d’une autre famille et code inconnu en 401
 API vivante: auto-inscription 201 en attente, connexion refusée 403, activation par le parent 200
 API vivante: activation par une autre famille 404, cinq PIN erronés puis verrou 429
 API vivante: régénération 200, ancien code 401 et 404, nouveau code 200, session ouverte intacte
+API vivante: demande en attente écartée 204 et pseudonyme libéré, profil actif 409, inexistant 404
 ```
+
+## Dernier rapport appliqué
+
+`steps/06_backend_identite_famille/rapport_2026-08-14_cloture_etape_06.md`.
 
 ## Prochaine action
 
-Valider 06.3 de manière indépendante, puis engager `04_cloturer_etape.md`.
+Obtenir des contrôles distants verts sur la Pull Request, fusionner vers `main`,
+puis ouvrir l’étape 07, référentiel de compétences.

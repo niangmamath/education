@@ -58,6 +58,7 @@ LOCKED_MESSAGE = "Trop de tentatives, réessayez dans quelques minutes"
 PSEUDONYM_TAKEN_MESSAGE = "Ce pseudonyme est déjà utilisé dans cette famille"
 UNKNOWN_FAMILY_CODE_MESSAGE = "Code famille inconnu"
 PENDING_MESSAGE = "Profil en attente d'activation par le parent"
+PROFILE_NOT_FOUND_MESSAGE = "Profil introuvable"
 
 
 async def _find_child(
@@ -145,18 +146,26 @@ async def list_children(parent: CurrentParent, db: DbSession) -> Sequence[Child]
     return result.all()
 
 
+async def _own_child(db: DbSession, parent_id: uuid.UUID, child_id: uuid.UUID) -> Child:
+    """Return one child of this family, or refuse without saying more.
+
+    A profile belonging to another family answers exactly like one that does not
+    exist, so these routes cannot be used to probe the other families.
+    """
+    child = await db.scalar(
+        select(Child).where(Child.id == child_id, Child.parent_id == parent_id)
+    )
+    if child is None:
+        raise NotFoundException(message=PROFILE_NOT_FOUND_MESSAGE)
+    return child
+
+
 @router.post("/children/{child_id}/activate", response_model=ChildPublic)
 async def activate_child(
     child_id: uuid.UUID, parent: CurrentParent, db: DbSession
 ) -> Child:
     """Let a parent activate a profile a child opened with the family code."""
-    child = await db.scalar(
-        select(Child).where(Child.id == child_id, Child.parent_id == parent.id)
-    )
-    if child is None:
-        # A profile in another family answers exactly like one that does not
-        # exist, so the route cannot be used to probe other families.
-        raise NotFoundException(message="Profil introuvable")
+    child = await _own_child(db, parent.id, child_id)
 
     if child.status == CHILD_STATUS_DISABLED:
         raise ConflictException(message="Profil désactivé, activation impossible")
@@ -167,6 +176,35 @@ async def activate_child(
         await db.refresh(child)
 
     return child
+
+
+@router.delete(
+    "/children/{child_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_class=Response,
+    # A bare `-> None` annotation would be read as a response model, which a 204
+    # is not allowed to carry.
+    response_model=None,
+)
+async def delete_pending_child(
+    child_id: uuid.UUID, parent: CurrentParent, db: DbSession
+) -> None:
+    """Let a parent turn down a profile opened with the family code.
+
+    This is the other half of the answer to a code that has got around:
+    regenerating it closes the door, this clears what came through before.
+
+    Only a pending profile can be dropped. An active one holds a history a child
+    built, and removing it is a decision of its own, with its own confirmation
+    and its own consequences on the results of the later steps.
+    """
+    child = await _own_child(db, parent.id, child_id)
+
+    if child.status != CHILD_STATUS_PENDING:
+        raise ConflictException(message="Seul un profil en attente peut être écarté")
+
+    await db.delete(child)
+    await db.commit()
 
 
 @router.post("/child/login", response_model=ChildPublic)

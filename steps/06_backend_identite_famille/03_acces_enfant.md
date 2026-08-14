@@ -37,6 +37,7 @@ Permettre au Parent authentifié de créer un profil Enfant, hacher le PIN, conn
 
 ## Statut
 
-En revue. Code, tests et documentation livrés, contrôles locaux verts, migration
-`0003_family_code_child_status` réversible vérifiée, validation indépendante et
-clôture distante restant à faire.
+Terminé localement. Code, tests et documentation livrés, contrôles locaux verts,
+migration `0003_family_code_child_status` vérifiée dans les deux sens, validation
+consignée dans `rapport_2026-08-14_cloture_etape_06.md`. Reste la clôture distante,
+traitée par 06.4.

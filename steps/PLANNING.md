@@ -46,6 +46,16 @@
 | UX-06 | Valider les états et l’accessibilité | UX-04, UX-05 | Terminé | Validation manuelle et page accessibilité |
 | UX-07 | Clôturer l’étape 05 | UX-06 | Terminé | Rapport, fusion et contrôles distants verts |
 
+### Phase 2, backend identité et famille
+
+| ID | Travail | Dépendances | Statut | Preuve |
+|---|---|---|---|---|
+| BE-01 | Modéliser Parent et Enfant | UX-07 | Terminé | Migration `0002`, `alembic check` vert |
+| BE-02 | Authentifier le Parent et ouvrir des sessions | BE-01 | Terminé | Sessions Redis, cookie durci, réponses indistinctes |
+| BE-03 | Créer et connecter l’Enfant | BE-02 | Terminé | Code famille, unicité familiale, verrou PIN, 123 tests |
+| BE-04 | Clôturer l’étape 06 | BE-03 | En cours | Rapport du 14 août 2026, contrôles distants et fusion à faire |
+
 ### Prochaine tâche
 
-Préparer l’étape 06 selon le planning produit.
+Obtenir des contrôles distants verts sur la Pull Request de
+`feat/backend-identity-family`, fusionner vers `main`, puis ouvrir l’étape 07.
