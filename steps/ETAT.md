@@ -268,8 +268,10 @@ Travaux menés sur la branche `feat/referentiel-competences`.
 
 ### Points ouverts de l’étape 07
 
-- ADR-004 esquisse une table `skills` unique auto-référencée, qui n’existe pas :
-  quatre tables explicites ont été retenues. L’ADR reste à amender.
+- [x] ADR-004 amendée le 14 août 2026 : son esquisse d’une table `skills` unique
+      auto-référencée est remplacée par la description des quatre tables
+      explicites et du versionnement. Le registre des décisions, qui affichait
+      encore cette ADR comme « à créer », a été corrigé.
 - La détection des cycles dans l’arbre de prérequis dépasse ce qu’une contrainte
   SQL exprime ; elle appartient à la validation d’import de 07.2.
 
