@@ -1,8 +1,8 @@
-# 07.2, Import contrôlé
+# 16.2, Données de démonstration
 
 ## Objectif
 
-Créer un import idempotent de référentiel fictif/versionné avec validation et rapport d’erreurs.
+Créer un seed fictif idempotent et réversible, clairement séparé de la production.
 
 ## Prérequis
 
@@ -37,9 +37,4 @@ Créer un import idempotent de référentiel fictif/versionné avec validation e
 
 ## Statut
 
-Terminé. Import réconciliant un brouillon, validation complète avec détection
-des cycles de prérequis, commande en ligne à essai à blanc par défaut,
-référentiel fictif de trente-neuf compétences et 54 tests dédiés livrés,
-contrôles locaux verts. Aucune migration, le schéma n'ayant pas changé.
-Validation consignée dans `rapport_2026-08-14_2100_import_referentiel.md`,
-Pull Request #11 fusionnée dans `main`, contrôles distants verts.
+À faire.
