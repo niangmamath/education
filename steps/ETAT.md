@@ -316,6 +316,14 @@ Travaux menés sur la branche `feat/import-referentiel`, fusionnée dans `main` 
   trancher en ouvrant 07.3.
 - Aucune comparaison entre deux éditions. Le code métier stable la rendra
   possible ; rien ne la demande encore.
+- [x] Les déclarations `overlaps` des quatre relations qui partagent `version_id`
+      ne reposent plus sur la vigilance : un test configure les mappers avec les
+      avertissements de SQLAlchemy transformés en erreurs, dans un sous-processus.
+      Vérifié en les retirant toutes, le test échoue.
+- **La publication d’une édition est tranchée** : commande dédiée
+  `python -m app.referential publish <code>`, qui bascule le brouillon en
+  `published` et archive dans la même transaction celle qui l’était. À
+  implémenter avec 07.3.
 
 ## Résultats techniques de l’étape 07
 
