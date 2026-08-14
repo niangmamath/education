@@ -3,6 +3,9 @@
 Routes follow the parent flow of ADR-005: register, then log in against an
 opaque session stored in Redis and carried by an HttpOnly cookie, then log out
 by revoking that session server-side.
+
+Registration also mints the family code, the handle a parent gives their
+children; the child side of it lives in `children.py`.
 """
 
 from __future__ import annotations
@@ -10,11 +13,14 @@ from __future__ import annotations
 from fastapi import APIRouter, Response, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.cookies import clear_session_cookie, set_session_cookie
 from app.api.deps import CurrentParent, DbSession, RedisClient, SessionToken
 from app.core.config import settings
 from app.core.exceptions import AuthenticationException, ConflictException
 from app.core.security import (
+    generate_family_code,
     hash_password,
     needs_rehash,
     spend_dummy_verification,
@@ -29,18 +35,21 @@ router = APIRouter()
 # A single message for every failed login: distinct wording would turn the
 # endpoint into an oracle telling an attacker which emails hold an account.
 INVALID_CREDENTIALS_MESSAGE = "Identifiants invalides"
+EMAIL_TAKEN_MESSAGE = "Un compte existe déjà pour cette adresse email"
+
+# Draws are checked against the accounts already held, so this only bounds an
+# absurd run of bad luck rather than an expected retry.
+FAMILY_CODE_ATTEMPTS = 3
 
 
-def _set_session_cookie(response: Response, token: str) -> None:
-    response.set_cookie(
-        key=settings.SESSION_COOKIE_NAME,
-        value=token,
-        max_age=settings.SESSION_TTL_SECONDS,
-        httponly=True,
-        secure=settings.session_cookie_secure,
-        samesite=settings.SESSION_COOKIE_SAMESITE,
-        path="/",
-    )
+async def _draw_unused_family_code(db: AsyncSession) -> str:
+    """Return a family code no account holds yet."""
+    for _ in range(FAMILY_CODE_ATTEMPTS):
+        code = generate_family_code()
+        if await db.scalar(select(Parent.id).where(Parent.family_code == code)) is None:
+            return code
+
+    raise ConflictException(message="Tirage du code famille impossible, réessayez")
 
 
 @router.post(
@@ -49,19 +58,18 @@ def _set_session_cookie(response: Response, token: str) -> None:
     status_code=status.HTTP_201_CREATED,
 )
 async def register_parent(payload: ParentRegisterRequest, db: DbSession) -> Parent:
-    """Create a parent account without opening a session.
+    """Create a parent account, and with it the family code, without a session.
 
     Registration deliberately does not log the caller in: ADR-005 places email
     verification between the two, and that flow is not implemented yet.
     """
     existing = await db.scalar(select(Parent).where(Parent.email == payload.email))
     if existing is not None:
-        raise ConflictException(
-            message="Un compte existe déjà pour cette adresse email"
-        )
+        raise ConflictException(message=EMAIL_TAKEN_MESSAGE)
 
     parent = Parent(
         email=payload.email,
+        family_code=await _draw_unused_family_code(db),
         password_hash=hash_password(payload.password.get_secret_value()),
         display_name=payload.display_name,
     )
@@ -70,13 +78,35 @@ async def register_parent(payload: ParentRegisterRequest, db: DbSession) -> Pare
     try:
         await db.commit()
     except IntegrityError as exc:
-        # Two concurrent registrations reach the check above together; the
-        # unique constraint is what actually settles the race.
         await db.rollback()
-        raise ConflictException(
-            message="Un compte existe déjà pour cette adresse email"
-        ) from exc
+        # Two concurrent registrations reach the check above together; the unique
+        # constraints are what actually settle the race. Only the email can
+        # realistically clash: the code was just verified free, and two identical
+        # draws out of eight hundred million in the same instant is not a case
+        # worth carrying a retry loop for.
+        taken = await db.scalar(select(Parent.id).where(Parent.email == payload.email))
+        if taken is not None:
+            raise ConflictException(message=EMAIL_TAKEN_MESSAGE) from exc
+        raise
 
+    await db.refresh(parent)
+    return parent
+
+
+@router.post("/parent/family-code/regenerate", response_model=ParentPublic)
+async def regenerate_family_code(parent: CurrentParent, db: DbSession) -> Parent:
+    """Replace the family code, for a parent whose code has got around.
+
+    The old code stops working at once, for logging in as well as for opening a
+    profile. Sessions already opened are untouched: a child logged in on the
+    family tablet is not the reason the code leaked, and throwing it out would
+    turn a precaution into a punishment.
+
+    Profiles already created under the old code remain, pending ones included:
+    deleting a child profile is never a side effect of another action.
+    """
+    parent.family_code = await _draw_unused_family_code(db)
+    await db.commit()
     await db.refresh(parent)
     return parent
 
@@ -115,7 +145,7 @@ async def login_parent(
         user_type=PARENT_USER_TYPE,
         ttl_seconds=settings.SESSION_TTL_SECONDS,
     )
-    _set_session_cookie(response, token)
+    set_session_cookie(response, token, max_age=settings.SESSION_TTL_SECONDS)
 
     return parent
 
@@ -135,11 +165,13 @@ async def logout(
 ) -> None:
     """Revoke the current session and clear the cookie.
 
-    Revoking a session Redis has already expired is a no-op, so a stale cookie
-    still gets cleared instead of trapping the caller in a failing request.
+    The route serves parent and child sessions alike: it only needs the token,
+    never the identity behind it. Revoking a session Redis has already expired
+    is a no-op, so a stale cookie still gets cleared instead of trapping the
+    caller in a failing request.
     """
     await delete_session(client, token)
-    response.delete_cookie(settings.SESSION_COOKIE_NAME, path="/")
+    clear_session_cookie(response)
 
 
 @router.get("/me", response_model=ParentPublic)

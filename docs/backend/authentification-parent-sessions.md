@@ -14,11 +14,16 @@ ici.
 | `POST` | `/api/v1/auth/parent/login` | Ouvrir une session | `200` avec le profil public et le cookie |
 | `DELETE` | `/api/v1/auth/logout` | Révoquer la session | `204` sans corps |
 | `GET` | `/api/v1/auth/me` | Lire le Parent connecté | `200` avec le profil public |
+| `POST` | `/api/v1/auth/parent/family-code/regenerate` | Remplacer le code famille | `200` avec le profil public |
 
-Le profil public ne contient que `id`, `email`, `display_name`, `is_verified` et
-`created_at`. Le schéma `ParentPublic` ne déclare pas `password_hash` : le champ est
-absent par construction et non par filtrage, donc aucune modification ultérieure de
-la route ne peut le laisser fuir.
+Le profil public ne contient que `id`, `email`, `family_code`, `display_name`,
+`is_verified` et `created_at`. Le schéma `ParentPublic` ne déclare pas
+`password_hash` : le champ est absent par construction et non par filtrage, donc
+aucune modification ultérieure de la route ne peut le laisser fuir.
+
+Le `family_code` est frappé à l'inscription. C'est l'identifiant que le Parent
+transmet à ses enfants pour qu'ils rejoignent la famille ; sa mécanique est
+décrite dans `acces-enfant.md`.
 
 ## Hachage des mots de passe
 

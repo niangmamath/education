@@ -56,6 +56,12 @@ class Settings(BaseSettings):
     SESSION_TTL_SECONDS: int = 7 * 24 * 60 * 60
     SESSION_COOKIE_SECURE: bool | None = None
 
+    # Child access (ADR-005: a child session lives a day, not a week, and six
+    # digits only resist guessing if the attempts themselves are capped)
+    CHILD_SESSION_TTL_SECONDS: int = 24 * 60 * 60
+    CHILD_PIN_MAX_ATTEMPTS: int = 5
+    CHILD_PIN_LOCKOUT_SECONDS: int = 15 * 60
+
     # S3-compatible storage
     S3_ENDPOINT_URL: str = "http://storage:9000"
     S3_PUBLIC_ENDPOINT_URL: str = "http://localhost:9000"

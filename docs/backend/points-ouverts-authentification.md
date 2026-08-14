@@ -103,10 +103,16 @@ sécurité et exploitation. Le choix appartient au propriétaire du planning.
 ### Constat
 
 `RATE_LIMIT` et `RATE_LIMIT_PERIOD` figurent dans `app/core/config.py` mais ne
-sont branchés nulle part. `RateLimitException` existe dans `app/core/exceptions.py`
-et n'est levée nulle part. Aujourd'hui, seul le coût d'Argon2id freine une attaque
+sont branchés nulle part. Aujourd'hui, seul le coût d'Argon2id freine une attaque
 par force brute sur `POST /auth/parent/login`. C'est la surface la plus exposée du
 backend.
+
+**Depuis 06.3, la connexion Enfant fait exception.** Six chiffres ne résistant pas
+à un script, un compteur d'échecs par enfant a été branché sur
+`POST /auth/child/login` et lève `RateLimitException` au-delà du plafond. Ce
+compteur protège un profil, pas le service : il ne compte que par enfant, jamais
+par origine, et ne couvre pas la connexion Parent. Le reste de ce point demeure
+donc entier. La mécanique est décrite dans `acces-enfant.md`.
 
 ### Stratégie
 

@@ -37,4 +37,6 @@ Permettre au Parent authentifié de créer un profil Enfant, hacher le PIN, conn
 
 ## Statut
 
-À faire.
+En revue. Code, tests et documentation livrés, contrôles locaux verts, migration
+`0003_family_code_child_status` réversible vérifiée, validation indépendante et
+clôture distante restant à faire.

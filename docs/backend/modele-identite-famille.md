@@ -2,11 +2,13 @@
 
 ## Parent
 
-Le Parent est le compte adulte principal. L’adresse email est unique et sert d’identifiant futur. Le mot de passe est uniquement conservé sous forme hachée.
+Le Parent est le compte adulte principal. L’adresse email est unique et sert d’identifiant futur. Le mot de passe est uniquement conservé sous forme hachée. Le `family_code`, unique lui aussi, est l’identifiant public par lequel les enfants rejoignent la famille ; il est décrit dans `acces-enfant.md`.
 
 ## Enfant
 
-L’Enfant est un profil restreint rattaché à un Parent. Aucun email et aucun téléphone ne sont stockés. Le pseudonyme est unique et le PIN est uniquement conservé sous forme hachée.
+L’Enfant est un profil restreint rattaché à un Parent. Aucun email et aucun téléphone ne sont stockés. Le PIN est uniquement conservé sous forme hachée. Le `status` distingue un profil utilisable, un profil créé par l’enfant et en attente de son parent, et un profil désactivé.
+
+Le pseudonyme est unique **dans la famille** et non sur la plateforme : deux familles peuvent chacune avoir une `lea`, et c’est le code famille qui les distingue à la connexion. Un pseudonyme ne désigne donc jamais un enfant à lui seul.
 
 ## Relation
 
@@ -14,9 +16,11 @@ L’Enfant est un profil restreint rattaché à un Parent. Aucun email et aucun 
 
 ## Unicité et index
 
-L’unicité est toujours déclarée par une `UniqueConstraint` nommée dans `__table_args__`, jamais par `unique=True` sur la colonne. PostgreSQL crée déjà un index unique pour servir cette contrainte, donc aucun index supplémentaire n’est ajouté sur `auth_parents.email` ni sur `auth_children.pseudonym`. Un nom explicite comme `uq_auth_parents_email` remonte dans la `UniqueViolation` renvoyée par le pilote, ce qui permettra aux sous-étapes 06.2 et 06.3 de distinguer les conflits sans analyser un message d’erreur.
+L’unicité est toujours déclarée par une `UniqueConstraint` nommée dans `__table_args__`, jamais par `unique=True` sur la colonne. PostgreSQL crée déjà un index unique pour servir cette contrainte, donc aucun index supplémentaire n’est ajouté sur `auth_parents.email`, sur `auth_parents.family_code` ni sur le couple `auth_children (parent_id, pseudonym)`. Un nom explicite comme `uq_auth_parents_email` remonte dans la `UniqueViolation` renvoyée par le pilote.
 
-Combiner `unique=True` et `index=True` sur une colonne produit un index unique au lieu d’une contrainte : les modèles cessent alors de correspondre à la migration et `alembic check` échoue. Seuls les index qui ne découlent d’aucune contrainte sont déclarés à la main, comme `ix_auth_children_parent_id` sur la clé étrangère.
+L’index composite de `uq_auth_children_parent_pseudonym` commence par `parent_id`, donc il sert déjà les recherches par famille : la clé étrangère n’a pas d’index à elle, et `ix_auth_children_parent_id` a été retiré.
+
+Combiner `unique=True` et `index=True` sur une colonne produit un index unique au lieu d’une contrainte : les modèles cessent alors de correspondre à la migration et `alembic check` échoue. Seuls les index qui ne découlent d’aucune contrainte seraient déclarés à la main ; il n’y en a aucun aujourd’hui.
 
 ## Sessions
 

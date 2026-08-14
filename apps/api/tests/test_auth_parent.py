@@ -21,7 +21,11 @@ from sqlalchemy import Engine, create_engine, text
 
 from app.core.config import settings
 from app.core.db import DATABASE_URL
-from app.core.security import hash_session_token
+from app.core.security import (
+    FAMILY_CODE_ALPHABET,
+    FAMILY_CODE_LENGTH,
+    hash_session_token,
+)
 from app.main import app
 
 TEST_EMAIL_DOMAIN = "example.com"
@@ -104,6 +108,16 @@ class TestRegistration:
         assert body["email"] == email
         assert body["display_name"] == "Parent de test"
         assert body["is_verified"] is False
+
+    def test_register_mints_a_family_code(self, client: TestClient) -> None:
+        """The code is the parent's handle for their children, drawn at random."""
+        first = register(client, f"{TEST_EMAIL_PREFIX}{uuid.uuid4().hex}@example.com")
+        second = register(client, f"{TEST_EMAIL_PREFIX}{uuid.uuid4().hex}@example.com")
+
+        code = first.json()["family_code"]
+        assert len(code) == FAMILY_CODE_LENGTH
+        assert set(code) <= set(FAMILY_CODE_ALPHABET)
+        assert code != second.json()["family_code"]
 
     def test_register_never_returns_the_password(
         self, client: TestClient, email: str
