@@ -149,20 +149,31 @@ docs/
 | Champ | Valeur |
 |-------|--------|
 | **Titre** | Choix de PostgreSQL avec SQLAlchemy 2 et Alembic |
-| **Statut** | ⏳ À créer |
-| **Date** | - |
-| **Auteur** | - |
-| **Décision** | À décider |
-| **Fichier** | [docs/adr/ADR-004-postgresql-et-sqlalchemy.md](../adr/ADR-004-postgresql-et-sqlalchemy.md) (à créer) |
+| **Statut** | ✅ Accepted, amendée le 2026-08-14 |
+| **Date** | 2026-08-10, amendement 2026-08-14 |
+| **Auteur** | Équipe StudentConnect |
+| **Décision** | PostgreSQL, SQLAlchemy 2 et Alembic pour toute la persistance |
+| **Fichier** | [docs/adr/ADR-004-postgresql-et-sqlalchemy.md](../adr/ADR-004-postgresql-et-sqlalchemy.md) |
 | **Dépendances** | ADR-003 |
 | **Impact** | Persistance |
 
 **Résumé** : Décision d'utiliser PostgreSQL comme base de données principale avec SQLAlchemy 2 comme ORM et Alembic pour les migrations.
 
-**Contenu prévu** :
+**Contenu** :
 - Justification de PostgreSQL vs MySQL, MongoDB, Neo4j, etc.
 - Avantages de SQLAlchemy 2
 - Configuration d'Alembic pour les migrations
+
+**Amendement du 2026-08-14**, après la sous-étape 07.1. Le choix du SGBD et de
+l'ORM n'est pas touché ; seule l'esquisse du modèle de compétences est corrigée :
+
+- le référentiel n'est pas une table `skills` unique auto-référencée, mais quatre
+  tables explicites, niveaux, matières, domaines et compétences, plus une table de
+  liens pour l'arbre de prérequis ;
+- il est versionné dans son ensemble, une seule édition publiée à la fois ;
+- l'appartenance à une édition est garantie par des clés étrangères composites, et
+  non par le code d'import ;
+- les libellés sont du texte simple, le MVP étant francophone.
 - Schéma de base de données
 
 ---

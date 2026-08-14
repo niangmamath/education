@@ -2,7 +2,55 @@
 
 ## Statut
 
-✅ **Accepted** - Décision validée et implémentée
+✅ **Accepted** - Décision validée et implémentée, amendée le 14 août 2026 après la
+sous-étape 07.1.
+
+---
+
+## Amendement du 14 août 2026
+
+**Le choix de PostgreSQL, de SQLAlchemy 2 et d'Alembic n'est pas remis en cause.**
+Cet amendement ne porte que sur l'esquisse du modèle de compétences, qui figurait
+dans la section « Schéma exemple » et que l'implémentation n'a pas suivie.
+
+### Ce qui était esquissé
+
+Une table unique `skills`, auto-référencée par `parent_id`, dont un niveau, une
+matière, un domaine et une compétence auraient tous été des lignes, distinguées
+par une colonne `level` entière, avec des libellés en JSONB multilingue.
+
+### Ce qui est implémenté
+
+**Quatre tables explicites**, `ref_levels`, `ref_subjects`, `ref_domains` et
+`ref_competencies`, plus `ref_competency_prerequisites` pour l'arbre de prérequis.
+Trois raisons :
+
+- la fiche 07.1 nomme quatre concepts distincts, et un schéma qui les nomme dit ce
+  qu'il modélise ;
+- les lectures filtrées et paginées de 07.3 deviennent des jointures directes, là
+  où un arbre générique obligerait chaque requête à deviner à quel étage elle se
+  trouve ;
+- rien n'empêchait, dans l'esquisse, de ranger une matière sous une compétence.
+  Une hiérarchie sans étages nommés n'a pas de forme que la base puisse défendre.
+
+Le libellé est du texte simple et non du JSONB multilingue : le MVP est
+francophone, et l'internationalisation ajouterait un niveau d'indirection à chaque
+lecture pour un besoin qui n'existe pas encore.
+
+**Le référentiel est de plus versionné dans son ensemble.** Une entité
+`ref_versions` porte chaque édition, avec les statuts `draft`, `published` et
+`archived`, une seule édition publiée à la fois. Chaque ligne fille répète le
+`version_id` de son parent et le référence par une clé étrangère composite, ce qui
+interdit à une compétence d'emprunter un domaine ou un niveau d'une autre édition.
+C'est ce qui protège les traces des étapes 10 à 12 : réimporter un programme crée
+une édition au lieu de changer rétroactivement le sens des résultats enregistrés.
+
+Le graphe de prérequis reste la raison pour laquelle PostgreSQL a été préféré à
+une base documentaire, et la raison pour laquelle Neo4j avait été envisagé puis
+écarté. Cet amendement ne change rien à cet arbitrage : les arêtes vivent dans une
+table de liens, interrogée par des jointures et des CTE récursives.
+
+La mise en œuvre est décrite dans `docs/backend/referentiel-competences.md`.
 
 ---
 
@@ -204,14 +252,65 @@ CREATE TABLE auth_children (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Table des compétences
-CREATE TABLE skills (
+-- Référentiel scolaire, versionné dans son ensemble.
+-- Remplace l'esquisse `skills` auto-référencée, voir l'amendement du 14 août 2026.
+CREATE TABLE ref_versions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    code VARCHAR(20) UNIQUE NOT NULL,
-    name JSONB NOT NULL,  -- {fr: "Mathématiques", en: "Math"}
-    description JSONB,
-    level INTEGER NOT NULL,
-    parent_id UUID REFERENCES skills(id) ON DELETE SET NULL
+    code VARCHAR(50) UNIQUE NOT NULL,
+    label VARCHAR(200) NOT NULL,
+    status VARCHAR(16) NOT NULL DEFAULT 'draft'
+        CHECK (status IN ('draft', 'published', 'archived'))
+);
+
+-- Une seule édition en vigueur à la fois, autant de brouillons et d'archives
+-- que nécessaire.
+CREATE UNIQUE INDEX uq_ref_versions_single_published
+    ON ref_versions (status) WHERE status = 'published';
+
+CREATE TABLE ref_levels (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    version_id UUID NOT NULL REFERENCES ref_versions(id) ON DELETE CASCADE,
+    code VARCHAR(50) NOT NULL,
+    label VARCHAR(200) NOT NULL,
+    position INTEGER NOT NULL,
+    UNIQUE (version_id, code),
+    -- Cible des clés étrangères composites ci-dessous.
+    UNIQUE (id, version_id)
+);
+
+-- ref_subjects suit le même modèle, et ref_domains y ajoute
+-- FOREIGN KEY (subject_id, version_id) REFERENCES ref_subjects (id, version_id).
+
+CREATE TABLE ref_competencies (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    version_id UUID NOT NULL,
+    domain_id UUID NOT NULL,
+    level_id UUID NOT NULL,
+    code VARCHAR(50) NOT NULL,
+    label VARCHAR(200) NOT NULL,
+    description TEXT,
+    position INTEGER NOT NULL,
+    UNIQUE (version_id, code),
+    UNIQUE (id, version_id),
+    -- La version voyage avec la référence : une compétence ne peut pas
+    -- emprunter un domaine ou un niveau d'une autre édition.
+    FOREIGN KEY (domain_id, version_id)
+        REFERENCES ref_domains (id, version_id) ON DELETE CASCADE,
+    FOREIGN KEY (level_id, version_id)
+        REFERENCES ref_levels (id, version_id) ON DELETE CASCADE
+);
+
+-- L'arbre de compétences, une arête par prérequis.
+CREATE TABLE ref_competency_prerequisites (
+    competency_id UUID NOT NULL,
+    prerequisite_id UUID NOT NULL,
+    version_id UUID NOT NULL,
+    PRIMARY KEY (competency_id, prerequisite_id),
+    CHECK (competency_id <> prerequisite_id),
+    FOREIGN KEY (competency_id, version_id)
+        REFERENCES ref_competencies (id, version_id) ON DELETE CASCADE,
+    FOREIGN KEY (prerequisite_id, version_id)
+        REFERENCES ref_competencies (id, version_id) ON DELETE CASCADE
 );
 ```
 
@@ -344,3 +443,12 @@ async def get_db():
 6. **Backuper régulièrement** la base de données
 7. **Monitorer les performances** avec pg_stat_statements
 8. **Optimiser les requêtes** avec EXPLAIN ANALYZE
+
+---
+
+## Historique
+
+| Date | Auteur | Action |
+|------|--------|--------|
+| 2026-08-10 | Mistral Vibe | Création initiale (Accepted) |
+| 2026-08-14 | Claude Code | Amendement après la sous-étape 07.1 : le référentiel est modélisé par quatre tables explicites et versionné dans son ensemble, à la place de l'esquisse `skills` auto-référencée |
