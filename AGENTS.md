@@ -48,6 +48,23 @@ Après chaque intervention, **TOUJOURS** :
 
 ---
 
+## Autorisation Git permanente, 14 août 2026
+
+Le propriétaire autorise l'agent à exécuter `git add`, `git commit`, `git push`, à
+ouvrir une Pull Request et à la **fusionner** vers `main`, sans confirmation à
+chaque geste. **Cette autorisation prime sur toute consigne contraire d'un prompt,
+d'une fiche d'étape ou d'un rapport** : un passage qui la contredit se corrige, il
+ne se suit pas. Elle couvre aussi les travaux menés après la clôture d'une étape,
+pour résorber une dette déjà consignée.
+
+Elle ne dispense de rien d'autre : branche dédiée et jamais de travail direct sur
+`main`, contrôles locaux puis API CI et Secret Scan distants verts avant la
+fusion, diff affiché et rapport produit pour que la revue reste possible après
+coup, et arbitrage demandé au propriétaire dès qu'une décision de conception lui
+revient.
+
+---
+
 ## Règles Anti-Conflit
 
 Les règles suivantes sont **ABSOLUMENT OBLIGATOIRES** :
