@@ -8,10 +8,10 @@
 - Agent : Claude Code
 - ID du planning : BE-01 à BE-04
 - Branche : `feat/backend-identity-family`
-- Commit ou pull request : `254f9a1`, `983ed51`, `62f40af`, `ae97bd9` et le commit
-  portant ce rapport ; Pull Request vers `main`
-- Statut : Partiel, la fusion et les contrôles distants restent à la main du
-  propriétaire
+- Commit ou pull request : `254f9a1`, `983ed51`, `62f40af`, `ae97bd9`, `ff58ed0` ;
+  Pull Request vers `main` non encore ouverte
+- Statut : Partiel, l’ouverture de la Pull Request, les contrôles distants et la
+  fusion restent à la main du propriétaire
 
 ## Objectif
 
@@ -173,10 +173,12 @@ Aucun.
 
 ## Prochaines actions
 
-1. Contrôles distants sur la Pull Request : API CI, Web CI si déclenchée, Secret Scan.
-2. Fusion vers `main` par le propriétaire.
-3. Amendement d'ADR-005 sur l'algorithme de hachage et sur la connexion Enfant.
-4. Ouverture de l'étape 07, référentiel de compétences.
+1. Ouvrir la Pull Request de `feat/backend-identity-family` vers `main`. L’agent ne
+   peut pas la créer : l’outil `gh` n’est pas installé dans l’environnement.
+2. Contrôles distants sur la Pull Request : API CI et Secret Scan.
+3. Fusion vers `main` par le propriétaire.
+4. Amendement d'ADR-005 sur l'algorithme de hachage et sur la connexion Enfant.
+5. Ouverture de l'étape 07, référentiel de compétences.
 
 ## Mise à jour appliquée à ETAT.md
 

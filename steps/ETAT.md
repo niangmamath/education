@@ -169,8 +169,10 @@ Travaux menés sur la branche `feat/backend-identity-family`, non fusionnée.
 - [x] Séquence complète de l’API CI rejouée localement, tout vert.
 - [x] Rapport de validation `rapport_2026-08-14_cloture_etape_06.md` produit.
 - [x] `PLANNING.md` complété par la phase 2 et les tâches BE-01 à BE-04.
-- [x] Branche `feat/backend-identity-family` poussée et Pull Request ouverte.
-- [ ] API CI et Secret Scan distants verts.
+- [x] Branche `feat/backend-identity-family` poussée, commits `ae97bd9` et `ff58ed0`.
+- [ ] Pull Request vers `main` à ouvrir depuis GitHub : l’outil `gh` n’est pas
+      installé dans l’environnement de développement, l’agent ne peut pas la créer.
+- [ ] API CI et Secret Scan distants verts, déclenchés par cette Pull Request.
 - [ ] Fusion vers `main`, à la main du propriétaire.
 
 ### Points ouverts

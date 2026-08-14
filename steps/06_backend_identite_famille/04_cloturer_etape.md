@@ -38,6 +38,6 @@ Valider migrations, sécurité, tests, API CI, Secret Scan, documentation et fus
 ## Statut
 
 En cours. Validation locale complète et rapport produit dans
-`rapport_2026-08-14_cloture_etape_06.md`, branche poussée et Pull Request ouverte.
-Restent les contrôles distants et la fusion vers `main`, qui appartiennent au
-propriétaire du dépôt.
+`rapport_2026-08-14_cloture_etape_06.md`, branche poussée. Restent l’ouverture de
+la Pull Request, que l’agent ne peut pas créer faute de l’outil `gh`, puis les
+contrôles distants et la fusion vers `main`, qui appartiennent au propriétaire.
