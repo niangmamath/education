@@ -66,7 +66,7 @@ Secret Scan: succès
 
 ## Organisation des étapes
 
-Les dossiers détaillés des étapes 04 à 16 sont temporairement retirés du dépôt. Chaque dossier sera régénéré proprement au démarrage de l’étape correspondante.
+Les dossiers détaillés des étapes 08 à 16 sont temporairement retirés du dépôt. Chaque dossier rejoint le dépôt au démarrage de l’étape correspondante ; celui de l’étape 07 y est entré le 14 août 2026.
 
 ## Étape 04, spike H5P critique
 
@@ -246,9 +246,36 @@ API vivante: PIN réinitialisé 200 levant le verrou 429, PIN changé par l’en
 Alembic    : downgrade avec trois « lea » de familles différentes, deux renommées et journalisées
 ```
 
+## Étape 07, référentiel de compétences, en cours
+
+Travaux menés sur la branche `feat/referentiel-competences`.
+
+### 07.1, référentiel scolaire, en revue
+
+- [x] Trois décisions de conception tranchées par le propriétaire : quatre tables
+      explicites plutôt qu’un arbre générique, versionnement porté par une entité
+      version, arbre de prérequis modélisé dès maintenant.
+- [x] Modèles `ReferentialVersion`, `Level`, `Subject`, `Domain`, `Competency` et
+      `CompetencyPrerequisite`.
+- [x] Étanchéité des versions portée par le schéma : chaque ligne fille répète le
+      `version_id` de son parent et le référence par une clé étrangère composite,
+      donc rien ne peut pointer d’une édition vers une autre.
+- [x] Code métier stable, unique dans sa version et non au-delà.
+- [x] Une seule version publiée à la fois, par index unique partiel.
+- [x] Migration `0004_referential_competencies`, réversible, `alembic check` vert.
+- [x] 23 tests dédiés, dont 16 vérifiant que les contraintes refusent réellement.
+- [ ] Clôture distante.
+
+### Points ouverts de l’étape 07
+
+- ADR-004 esquisse une table `skills` unique auto-référencée, qui n’existe pas :
+  quatre tables explicites ont été retenues. L’ADR reste à amender.
+- La détection des cycles dans l’arbre de prérequis dépasse ce qu’une contrainte
+  SQL exprime ; elle appartient à la validation d’import de 07.2.
+
 ## Dernier rapport appliqué
 
-`steps/06_backend_identite_famille/rapport_2026-08-14_cloture_etape_06.md`.
+`steps/07_referentiel_competences/rapport_2026-08-14_1730_modeles_referentiel.md`.
 
 ## Historique de clôture de l’étape 06
 
@@ -262,5 +289,4 @@ Alembic    : downgrade avec trois « lea » de familles différentes, deux renom
 
 ## Prochaine action
 
-Ouvrir l’étape 07, référentiel de compétences, en commençant par sa première
-sous-étape.
+Engager la sous-étape 07.2, import contrôlé et idempotent du référentiel.

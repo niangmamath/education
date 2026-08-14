@@ -63,6 +63,15 @@
 - [x] API CI distante réussie sur la Pull Request puis sur `main`.
 - [x] Secret Scan distant réussi sur la Pull Request puis sur `main`.
 
+### Phase 3, référentiel de compétences
+
+| ID | Travail | Dépendances | Statut | Preuve |
+|---|---|---|---|---|
+| REF-01 | Modéliser le référentiel scolaire | BE-05 | Terminé | Migration `0004`, 23 tests de contraintes, rapport du 14 août 2026 |
+| REF-02 | Importer un référentiel fictif de façon idempotente | REF-01 | À faire | |
+| REF-03 | Exposer les lectures filtrées et paginées | REF-02 | À faire | |
+| REF-04 | Clôturer l’étape 07 | REF-03 | À faire | |
+
 ### Prochaine tâche
 
-Ouvrir l’étape 07, référentiel de compétences.
+Engager REF-02, l’import contrôlé du référentiel.
