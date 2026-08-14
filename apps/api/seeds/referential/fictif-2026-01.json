@@ -1,0 +1,390 @@
+{
+  "version": {
+    "code": "fictif-2026-01",
+    "label": "Référentiel fictif 2026-01"
+  },
+  "levels": [
+    { "code": "cp", "label": "Cours préparatoire", "position": 1 },
+    { "code": "ce1", "label": "Cours élémentaire première année", "position": 2 },
+    { "code": "ce2", "label": "Cours élémentaire deuxième année", "position": 3 },
+    { "code": "cm1", "label": "Cours moyen première année", "position": 4 },
+    { "code": "cm2", "label": "Cours moyen deuxième année", "position": 5 }
+  ],
+  "subjects": [
+    {
+      "code": "math",
+      "label": "Mathématiques",
+      "position": 1,
+      "domains": [
+        { "code": "math-num", "label": "Nombres et calcul", "position": 1 },
+        { "code": "math-gra", "label": "Grandeurs et mesures", "position": 2 },
+        { "code": "math-geo", "label": "Espace et géométrie", "position": 3 },
+        { "code": "math-pro", "label": "Résolution de problèmes", "position": 4 }
+      ]
+    },
+    {
+      "code": "fr",
+      "label": "Français",
+      "position": 2,
+      "domains": [
+        { "code": "fr-ora", "label": "Langage oral", "position": 1 },
+        { "code": "fr-lec", "label": "Lecture et compréhension", "position": 2 },
+        { "code": "fr-ecr", "label": "Écriture", "position": 3 },
+        { "code": "fr-gra", "label": "Grammaire et orthographe", "position": 4 }
+      ]
+    }
+  ],
+  "competencies": [
+    {
+      "code": "cp-math-num-01",
+      "label": "Dénombrer une collection jusqu’à 100",
+      "description": "Compter, comparer et ranger des collections d’objets jusqu’à cent.",
+      "position": 1,
+      "level": "cp",
+      "domain": "math-num",
+      "prerequisites": []
+    },
+    {
+      "code": "cp-math-num-02",
+      "label": "Additionner deux nombres inférieurs à 20",
+      "description": "Calculer une somme en ligne, avec ou sans passage de la dizaine.",
+      "position": 2,
+      "level": "cp",
+      "domain": "math-num",
+      "prerequisites": ["cp-math-num-01"]
+    },
+    {
+      "code": "cp-math-gra-01",
+      "label": "Comparer deux longueurs par superposition",
+      "description": "Dire laquelle de deux bandes est la plus longue sans instrument.",
+      "position": 1,
+      "level": "cp",
+      "domain": "math-gra",
+      "prerequisites": []
+    },
+    {
+      "code": "cp-math-geo-01",
+      "label": "Reconnaître le carré, le rectangle et le triangle",
+      "description": "Nommer ces trois figures et les distinguer les unes des autres.",
+      "position": 1,
+      "level": "cp",
+      "domain": "math-geo",
+      "prerequisites": []
+    },
+    {
+      "code": "cp-fr-ora-01",
+      "label": "Raconter un événement vécu",
+      "description": "Restituer oralement une suite d’actions dans l’ordre où elles ont eu lieu.",
+      "position": 1,
+      "level": "cp",
+      "domain": "fr-ora",
+      "prerequisites": []
+    },
+    {
+      "code": "cp-fr-lec-01",
+      "label": "Déchiffrer un mot régulier",
+      "description": "Associer les lettres aux sons pour lire un mot inconnu mais régulier.",
+      "position": 1,
+      "level": "cp",
+      "domain": "fr-lec",
+      "prerequisites": []
+    },
+    {
+      "code": "cp-fr-lec-02",
+      "label": "Lire à voix haute une phrase simple",
+      "description": "Lire une phrase courte sans hésiter sur chaque mot.",
+      "position": 2,
+      "level": "cp",
+      "domain": "fr-lec",
+      "prerequisites": ["cp-fr-lec-01"]
+    },
+    {
+      "code": "cp-fr-ecr-01",
+      "label": "Copier une phrase en écriture cursive",
+      "description": "Reproduire une phrase modèle en respectant le tracé des lettres.",
+      "position": 1,
+      "level": "cp",
+      "domain": "fr-ecr",
+      "prerequisites": []
+    },
+    {
+      "code": "ce1-math-num-01",
+      "label": "Lire et écrire les nombres jusqu’à 1 000",
+      "description": "Passer du chiffre à la lettre et inversement, unités, dizaines et centaines.",
+      "position": 1,
+      "level": "ce1",
+      "domain": "math-num",
+      "prerequisites": ["cp-math-num-01"]
+    },
+    {
+      "code": "ce1-math-num-02",
+      "label": "Poser une addition avec retenue",
+      "description": "Additionner deux nombres de trois chiffres en colonnes.",
+      "position": 2,
+      "level": "ce1",
+      "domain": "math-num",
+      "prerequisites": ["cp-math-num-02", "ce1-math-num-01"]
+    },
+    {
+      "code": "ce1-math-num-03",
+      "label": "Poser une soustraction sans retenue",
+      "description": "Soustraire deux nombres de trois chiffres, chaque chiffre du haut étant le plus grand.",
+      "position": 3,
+      "level": "ce1",
+      "domain": "math-num",
+      "prerequisites": ["ce1-math-num-01"]
+    },
+    {
+      "code": "ce1-math-gra-01",
+      "label": "Mesurer une longueur en centimètres",
+      "description": "Utiliser une règle graduée et lire la mesure obtenue.",
+      "position": 1,
+      "level": "ce1",
+      "domain": "math-gra",
+      "prerequisites": ["cp-math-gra-01"]
+    },
+    {
+      "code": "ce1-math-pro-01",
+      "label": "Résoudre un problème additif en une étape",
+      "description": "Choisir l’opération, la poser et rédiger la phrase réponse.",
+      "position": 1,
+      "level": "ce1",
+      "domain": "math-pro",
+      "prerequisites": ["ce1-math-num-02"]
+    },
+    {
+      "code": "ce1-fr-lec-01",
+      "label": "Comprendre un texte court lu seul",
+      "description": "Répondre à des questions portant sur un texte de quelques lignes.",
+      "position": 1,
+      "level": "ce1",
+      "domain": "fr-lec",
+      "prerequisites": ["cp-fr-lec-02"]
+    },
+    {
+      "code": "ce1-fr-ecr-01",
+      "label": "Écrire trois phrases sur un sujet donné",
+      "description": "Produire un court texte cohérent à partir d’une consigne.",
+      "position": 1,
+      "level": "ce1",
+      "domain": "fr-ecr",
+      "prerequisites": ["cp-fr-ecr-01"]
+    },
+    {
+      "code": "ce1-fr-gra-01",
+      "label": "Identifier le verbe et le sujet",
+      "description": "Repérer les deux constituants principaux d’une phrase simple.",
+      "position": 1,
+      "level": "ce1",
+      "domain": "fr-gra",
+      "prerequisites": []
+    },
+    {
+      "code": "ce2-math-num-01",
+      "label": "Lire et écrire les nombres jusqu’à 10 000",
+      "description": "Étendre la numération décimale aux milliers.",
+      "position": 1,
+      "level": "ce2",
+      "domain": "math-num",
+      "prerequisites": ["ce1-math-num-01"]
+    },
+    {
+      "code": "ce2-math-num-02",
+      "label": "Poser une soustraction avec retenue",
+      "description": "Soustraire en colonnes lorsqu’un emprunt est nécessaire.",
+      "position": 2,
+      "level": "ce2",
+      "domain": "math-num",
+      "prerequisites": ["ce1-math-num-03"]
+    },
+    {
+      "code": "ce2-math-num-03",
+      "label": "Connaître les tables de multiplication jusqu’à 5",
+      "description": "Restituer les produits des tables de 2 à 5 sans calcul intermédiaire.",
+      "position": 3,
+      "level": "ce2",
+      "domain": "math-num",
+      "prerequisites": ["ce1-math-num-01"]
+    },
+    {
+      "code": "ce2-math-geo-01",
+      "label": "Tracer un angle droit à l’équerre",
+      "description": "Vérifier et tracer un angle droit avec l’instrument adapté.",
+      "position": 1,
+      "level": "ce2",
+      "domain": "math-geo",
+      "prerequisites": ["cp-math-geo-01"]
+    },
+    {
+      "code": "ce2-math-pro-01",
+      "label": "Résoudre un problème en deux étapes",
+      "description": "Enchaîner deux opérations et justifier l’ordre choisi.",
+      "position": 1,
+      "level": "ce2",
+      "domain": "math-pro",
+      "prerequisites": ["ce1-math-pro-01"]
+    },
+    {
+      "code": "ce2-fr-lec-01",
+      "label": "Repérer l’information explicite d’un texte documentaire",
+      "description": "Retrouver dans le texte la phrase qui répond à la question posée.",
+      "position": 1,
+      "level": "ce2",
+      "domain": "fr-lec",
+      "prerequisites": ["ce1-fr-lec-01"]
+    },
+    {
+      "code": "ce2-fr-ecr-01",
+      "label": "Rédiger un court récit",
+      "description": "Écrire une histoire d’une dizaine de lignes avec un début et une fin.",
+      "position": 1,
+      "level": "ce2",
+      "domain": "fr-ecr",
+      "prerequisites": ["ce1-fr-ecr-01"]
+    },
+    {
+      "code": "ce2-fr-gra-01",
+      "label": "Accorder le verbe avec son sujet",
+      "description": "Appliquer l’accord au présent de l’indicatif dans une phrase simple.",
+      "position": 1,
+      "level": "ce2",
+      "domain": "fr-gra",
+      "prerequisites": ["ce1-fr-gra-01"]
+    },
+    {
+      "code": "cm1-math-num-01",
+      "label": "Lire et écrire les nombres jusqu’au million",
+      "description": "Manipuler les classes des unités, des milliers et des millions.",
+      "position": 1,
+      "level": "cm1",
+      "domain": "math-num",
+      "prerequisites": ["ce2-math-num-01"]
+    },
+    {
+      "code": "cm1-math-num-02",
+      "label": "Poser une multiplication à deux chiffres",
+      "description": "Multiplier un nombre par un multiplicateur de deux chiffres en colonnes.",
+      "position": 2,
+      "level": "cm1",
+      "domain": "math-num",
+      "prerequisites": ["ce2-math-num-03"]
+    },
+    {
+      "code": "cm1-math-num-03",
+      "label": "Comparer deux fractions simples",
+      "description": "Ranger des fractions de même dénominateur puis de dénominateurs multiples.",
+      "position": 3,
+      "level": "cm1",
+      "domain": "math-num",
+      "prerequisites": ["cm1-math-num-01"]
+    },
+    {
+      "code": "cm1-math-gra-01",
+      "label": "Calculer le périmètre d’un rectangle",
+      "description": "Appliquer la formule après avoir mesuré les côtés.",
+      "position": 1,
+      "level": "cm1",
+      "domain": "math-gra",
+      "prerequisites": ["ce1-math-gra-01", "ce2-math-geo-01"]
+    },
+    {
+      "code": "cm1-math-pro-01",
+      "label": "Résoudre un problème de proportionnalité simple",
+      "description": "Passer à l’unité puis multiplier pour obtenir la quantité demandée.",
+      "position": 1,
+      "level": "cm1",
+      "domain": "math-pro",
+      "prerequisites": ["ce2-math-pro-01", "cm1-math-num-02"]
+    },
+    {
+      "code": "cm1-fr-lec-01",
+      "label": "Distinguer le narrateur et le personnage",
+      "description": "Dire qui parle dans un récit et à quel moment cela change.",
+      "position": 1,
+      "level": "cm1",
+      "domain": "fr-lec",
+      "prerequisites": ["ce2-fr-lec-01"]
+    },
+    {
+      "code": "cm1-fr-ecr-01",
+      "label": "Rédiger un texte de dix lignes cohérent",
+      "description": "Organiser un texte en paragraphes et enchaîner les idées.",
+      "position": 1,
+      "level": "cm1",
+      "domain": "fr-ecr",
+      "prerequisites": ["ce2-fr-ecr-01"]
+    },
+    {
+      "code": "cm1-fr-gra-01",
+      "label": "Accorder l’adjectif avec le nom",
+      "description": "Appliquer l’accord en genre et en nombre dans le groupe nominal.",
+      "position": 1,
+      "level": "cm1",
+      "domain": "fr-gra",
+      "prerequisites": ["ce2-fr-gra-01"]
+    },
+    {
+      "code": "cm2-math-num-01",
+      "label": "Poser une division par un nombre à un chiffre",
+      "description": "Effectuer la division euclidienne et interpréter le reste.",
+      "position": 1,
+      "level": "cm2",
+      "domain": "math-num",
+      "prerequisites": ["cm1-math-num-02"]
+    },
+    {
+      "code": "cm2-math-num-02",
+      "label": "Additionner deux fractions de même dénominateur",
+      "description": "Additionner sans réduire, puis simplifier le résultat obtenu.",
+      "position": 2,
+      "level": "cm2",
+      "domain": "math-num",
+      "prerequisites": ["cm1-math-num-03"]
+    },
+    {
+      "code": "cm2-math-gra-01",
+      "label": "Calculer l’aire d’un rectangle",
+      "description": "Distinguer aire et périmètre, puis appliquer la formule.",
+      "position": 1,
+      "level": "cm2",
+      "domain": "math-gra",
+      "prerequisites": ["cm1-math-gra-01"]
+    },
+    {
+      "code": "cm2-math-pro-01",
+      "label": "Résoudre un problème à plusieurs étapes",
+      "description": "Décomposer un énoncé long en calculs successifs et vérifier la vraisemblance.",
+      "position": 1,
+      "level": "cm2",
+      "domain": "math-pro",
+      "prerequisites": ["cm1-math-pro-01", "cm2-math-num-01"]
+    },
+    {
+      "code": "cm2-fr-lec-01",
+      "label": "Repérer l’implicite d’un texte narratif",
+      "description": "Déduire une information que le texte ne dit pas explicitement.",
+      "position": 1,
+      "level": "cm2",
+      "domain": "fr-lec",
+      "prerequisites": ["cm1-fr-lec-01"]
+    },
+    {
+      "code": "cm2-fr-ecr-01",
+      "label": "Rédiger un texte argumenté court",
+      "description": "Défendre un point de vue en l’appuyant sur deux arguments.",
+      "position": 1,
+      "level": "cm2",
+      "domain": "fr-ecr",
+      "prerequisites": ["cm1-fr-ecr-01"]
+    },
+    {
+      "code": "cm2-fr-gra-01",
+      "label": "Conjuguer au passé composé",
+      "description": "Choisir l’auxiliaire et accorder le participe passé avec le sujet.",
+      "position": 1,
+      "level": "cm2",
+      "domain": "fr-gra",
+      "prerequisites": ["cm1-fr-gra-01"]
+    }
+  ]
+}
