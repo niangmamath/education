@@ -9,8 +9,9 @@
 - ID du planning : BE-01 à BE-04
 - Branche : `feat/backend-identity-family`
 - Commit ou pull request : `254f9a1`, `983ed51`, `62f40af`, `ae97bd9`, `ff58ed0`,
-  `da601ca`, fusion `81da709` ; Pull Request #4 vers `main`
-- Statut : Partiel, seule la fusion vers `main` reste à la main du propriétaire
+  `da601ca`, fusion `81da709`, `59d2ee4` ; Pull Request #4 fusionnée dans `main`
+  par le commit `a49ec43`
+- Statut : Terminé
 
 ## Objectif
 
@@ -142,7 +143,8 @@ API vivante: cinq PIN erronés puis verrou 429, y compris avec le bon PIN
 - [x] Formatage, lint, typage et tests verts.
 - [x] Aucun secret ni donnée réelle dans le dépôt ou les journaux.
 - [x] API CI et Secret Scan distants verts sur la Pull Request #4.
-- [ ] Fusion vers `main`.
+- [x] Fusion vers `main`, commit `a49ec43`, puis API CI et Secret Scan verts sur
+      `main`.
 
 ## Décisions ou ADR
 
@@ -183,9 +185,8 @@ Aucun.
 
 ## Prochaines actions
 
-1. Fusion de la Pull Request #4 vers `main` par le propriétaire.
-2. Amendement d'ADR-005 sur l'algorithme de hachage et sur la connexion Enfant.
-3. Ouverture de l'étape 07, référentiel de compétences.
+1. Amendement d'ADR-005 sur l'algorithme de hachage et sur la connexion Enfant.
+2. Ouverture de l'étape 07, référentiel de compétences.
 
 ## Mise à jour appliquée à ETAT.md
 
