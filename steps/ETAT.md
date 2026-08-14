@@ -93,9 +93,10 @@ Les dossiers détaillés des étapes 04 à 16 sont temporairement retirés du d�
 - [x] Validation GitHub Actions et fusion vers `main`.
 - [x] Étape 05 clôturée.
 
-## Étape 06, backend identité et famille, en cours
+## Étape 06, backend identité et famille, clôturée
 
-Travaux menés sur la branche `feat/backend-identity-family`, non fusionnée.
+Travaux menés sur la branche `feat/backend-identity-family`, fusionnée dans `main`
+le 14 août 2026 par la Pull Request #4, commit de fusion `a49ec43`.
 
 ### 06.1, modèles Parent et Enfant, validée localement
 
@@ -164,7 +165,7 @@ Travaux menés sur la branche `feat/backend-identity-family`, non fusionnée.
       `rapport_2026-08-14_cloture_etape_06.md`.
 - [ ] Clôture distante.
 
-### 06.4, clôture de l’étape, en cours
+### 06.4, clôture de l’étape, terminée
 
 - [x] Séquence complète de l’API CI rejouée localement, tout vert.
 - [x] Rapport de validation `rapport_2026-08-14_cloture_etape_06.md` produit.
@@ -177,9 +178,11 @@ Travaux menés sur la branche `feat/backend-identity-family`, non fusionnée.
       fusion d’essai et donc de lancer le moindre contrôle. `main` a été fusionnée
       dans la branche ; l’arbre obtenu est identique à celui de la branche, `main`
       n’apportant rien qu’elle n’avait déjà.
-- [x] API CI distante réussie, `test` en 1 min 49 s.
-- [x] Secret Scan distant réussi, `Gitleaks` en 18 s.
-- [ ] Fusion vers `main`, à la main du propriétaire.
+- [x] API CI distante réussie sur la Pull Request, `test` en 1 min 40 s.
+- [x] Secret Scan distant réussi sur la Pull Request, `Gitleaks` en 10 s.
+- [x] Fusion vers `main` le 14 août 2026, commit `a49ec43`.
+- [x] API CI et Secret Scan réussis sur `main` après la fusion, `test` en 1 min 42 s.
+- [x] Étape 06 clôturée.
 
 ### Points ouverts
 
@@ -227,7 +230,17 @@ API vivante: demande en attente écartée 204 et pseudonyme libéré, profil act
 
 `steps/06_backend_identite_famille/rapport_2026-08-14_cloture_etape_06.md`.
 
+## Historique de clôture de l’étape 06
+
+- Pull Request #3 du 13 août : première coupe des modèles d’identité, fusionnée
+  alors que la branche continuait d’évoluer.
+- Pull Request #4 du 14 août : reste de l’étape 06. Elle est d’abord ressortie en
+  conflit et sans aucun contrôle, GitHub ne lançant rien tant qu’il ne peut pas
+  construire la fusion d’essai. `main` fusionnée dans la branche, conflits résolus
+  du côté de la branche, qui portait déjà ce contenu et sa suite.
+- Commit de fusion `a49ec43`, API CI et Secret Scan verts sur `main`.
+
 ## Prochaine action
 
-Obtenir des contrôles distants verts sur la Pull Request, fusionner vers `main`,
-puis ouvrir l’étape 07, référentiel de compétences.
+Ouvrir l’étape 07, référentiel de compétences, en commençant par sa première
+sous-étape.

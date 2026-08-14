@@ -37,7 +37,7 @@ Valider migrations, sécurité, tests, API CI, Secret Scan, documentation et fus
 
 ## Statut
 
-En revue. Validation locale complète et rapport produit dans
-`rapport_2026-08-14_cloture_etape_06.md`, branche poussée, Pull Request #4 ouverte,
-API CI et Secret Scan distants verts. Reste la fusion vers `main`, qui appartient
-au propriétaire du dépôt.
+Terminé. Validation locale complète et rapport produit dans
+`rapport_2026-08-14_cloture_etape_06.md`, Pull Request #4 fusionnée dans `main` le
+14 août 2026 par le commit `a49ec43`, API CI et Secret Scan verts sur la Pull
+Request puis sur `main`.

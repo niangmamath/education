@@ -44,7 +44,7 @@ Nombre de fiches : 91
 - `06_backend_identite_famille/01_modeles_users.md`  `e3952beeda17`
 - `06_backend_identite_famille/02_auth_parent_sessions.md`  `3004bb35c05d`
 - `06_backend_identite_famille/03_acces_enfant.md`  `1e7173a1aa0c`
-- `06_backend_identite_famille/04_cloturer_etape.md`  `0761b9944df9`
+- `06_backend_identite_famille/04_cloturer_etape.md`  `7f6482774bf8`
 - `06_backend_identite_famille/README.md`  `4630263ae7c4`
 - `07_referentiel_competences/01_modeles_referentiel.md`  `de0a3b7539e3`
 - `07_referentiel_competences/02_import_referentiel.md`  `c2c47ab2d4fe`
@@ -99,9 +99,9 @@ Nombre de fiches : 91
 - `16_validation_mvp_livraison/README.md`  `998e5bc3959d`
 - `AGENTS.md`  `d3620f0f65bb`
 - `DECISIONS_FINALES.md`  `dbb29febf720`
-- `ETAT.md`  `354fe9569d20`
+- `ETAT.md`  `96b3f8099afc`
 - `MODELE_RAPPORT.md`  `d391f4da239a`
-- `PLANNING.md`  `95a34f134fca`
+- `PLANNING.md`  `f19a898a603f`
 - `PROMPT_GENERAL.md`  `3a6e4c18eb73`
 - `RAPPORTS_REGLES.md`  `9c07f684b281`
 - `README.md`  `b4684411894a`

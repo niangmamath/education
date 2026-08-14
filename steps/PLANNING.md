@@ -53,9 +53,15 @@
 | BE-01 | Modéliser Parent et Enfant | UX-07 | Terminé | Migration `0002`, `alembic check` vert |
 | BE-02 | Authentifier le Parent et ouvrir des sessions | BE-01 | Terminé | Sessions Redis, cookie durci, réponses indistinctes |
 | BE-03 | Créer et connecter l’Enfant | BE-02 | Terminé | Code famille, unicité familiale, verrou PIN, 123 tests |
-| BE-04 | Clôturer l’étape 06 | BE-03 | En cours | Rapport du 14 août 2026, contrôles distants et fusion à faire |
+| BE-04 | Clôturer l’étape 06 | BE-03 | Terminé | Rapport du 14 août 2026, PR #4 fusionnée, CI verte sur `main` |
+
+### Preuves de clôture de BE-04
+
+- [x] Rapport de validation produit et appliqué à `ETAT.md`.
+- [x] Pull Request #4 fusionnée dans `main`, commit `a49ec43`.
+- [x] API CI distante réussie sur la Pull Request puis sur `main`.
+- [x] Secret Scan distant réussi sur la Pull Request puis sur `main`.
 
 ### Prochaine tâche
 
-Obtenir des contrôles distants verts sur la Pull Request de
-`feat/backend-identity-family`, fusionner vers `main`, puis ouvrir l’étape 07.
+Ouvrir l’étape 07, référentiel de compétences.
