@@ -8,10 +8,9 @@
 - Agent : Claude Code
 - ID du planning : BE-01 à BE-04
 - Branche : `feat/backend-identity-family`
-- Commit ou pull request : `254f9a1`, `983ed51`, `62f40af`, `ae97bd9`, `ff58ed0` ;
-  Pull Request vers `main` non encore ouverte
-- Statut : Partiel, l’ouverture de la Pull Request, les contrôles distants et la
-  fusion restent à la main du propriétaire
+- Commit ou pull request : `254f9a1`, `983ed51`, `62f40af`, `ae97bd9`, `ff58ed0`,
+  `da601ca`, fusion `81da709` ; Pull Request #4 vers `main`
+- Statut : Partiel, seule la fusion vers `main` reste à la main du propriétaire
 
 ## Objectif
 
@@ -57,6 +56,17 @@ apparaît dans Redis sous l'empreinte du jeton, jamais sous le jeton, et dispara
 - PIN de six chiffres haché en Argon2id, chiffre répété et suite continue refusés.
 - Verrou sur les tentatives de PIN, compteur d'échecs par enfant en Redis.
 - Session Enfant d'une journée contre sept pour le Parent.
+
+### Clôture
+
+Pull Request #4 ouverte vers `main`. Elle est d'abord ressortie en conflit, sans
+aucun contrôle déclenché : la Pull Request #3 du 13 août avait fusionné une version
+antérieure des mêmes fichiers, et GitHub ne lance rien tant qu'il ne peut pas
+construire la fusion d'essai. `main` a été fusionnée dans la branche et les cinq
+conflits résolus du côté de la branche, qui portait déjà ce contenu et sa suite,
+dont le correctif de dérive retirant l'index redondant sur `auth_parents.email`.
+L'arbre obtenu est identique à celui de la branche avant fusion. Les contrôles
+distants se sont alors déclenchés et sont verts.
 
 ## Fichiers créés
 
@@ -131,7 +141,7 @@ API vivante: cinq PIN erronés puis verrou 429, y compris avec le bon PIN
 - [x] Migrations réversibles, `alembic check` sans dérive.
 - [x] Formatage, lint, typage et tests verts.
 - [x] Aucun secret ni donnée réelle dans le dépôt ou les journaux.
-- [ ] API CI et Secret Scan distants verts.
+- [x] API CI et Secret Scan distants verts sur la Pull Request #4.
 - [ ] Fusion vers `main`.
 
 ## Décisions ou ADR
@@ -173,12 +183,9 @@ Aucun.
 
 ## Prochaines actions
 
-1. Ouvrir la Pull Request de `feat/backend-identity-family` vers `main`. L’agent ne
-   peut pas la créer : l’outil `gh` n’est pas installé dans l’environnement.
-2. Contrôles distants sur la Pull Request : API CI et Secret Scan.
-3. Fusion vers `main` par le propriétaire.
-4. Amendement d'ADR-005 sur l'algorithme de hachage et sur la connexion Enfant.
-5. Ouverture de l'étape 07, référentiel de compétences.
+1. Fusion de la Pull Request #4 vers `main` par le propriétaire.
+2. Amendement d'ADR-005 sur l'algorithme de hachage et sur la connexion Enfant.
+3. Ouverture de l'étape 07, référentiel de compétences.
 
 ## Mise à jour appliquée à ETAT.md
 

@@ -169,10 +169,16 @@ Travaux menés sur la branche `feat/backend-identity-family`, non fusionnée.
 - [x] Séquence complète de l’API CI rejouée localement, tout vert.
 - [x] Rapport de validation `rapport_2026-08-14_cloture_etape_06.md` produit.
 - [x] `PLANNING.md` complété par la phase 2 et les tâches BE-01 à BE-04.
-- [x] Branche `feat/backend-identity-family` poussée, commits `ae97bd9` et `ff58ed0`.
-- [ ] Pull Request vers `main` à ouvrir depuis GitHub : l’outil `gh` n’est pas
-      installé dans l’environnement de développement, l’agent ne peut pas la créer.
-- [ ] API CI et Secret Scan distants verts, déclenchés par cette Pull Request.
+- [x] Branche `feat/backend-identity-family` poussée, commits `ae97bd9`, `ff58ed0`,
+      `da601ca` et la fusion `81da709`.
+- [x] Pull Request #4 ouverte vers `main`.
+- [x] Conflit avec `main` résolu : la PR #3 du 13 août avait fusionné une version
+      antérieure des mêmes fichiers, ce qui empêchait GitHub de construire la
+      fusion d’essai et donc de lancer le moindre contrôle. `main` a été fusionnée
+      dans la branche ; l’arbre obtenu est identique à celui de la branche, `main`
+      n’apportant rien qu’elle n’avait déjà.
+- [x] API CI distante réussie, `test` en 1 min 49 s.
+- [x] Secret Scan distant réussi, `Gitleaks` en 18 s.
 - [ ] Fusion vers `main`, à la main du propriétaire.
 
 ### Points ouverts
