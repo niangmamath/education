@@ -268,9 +268,10 @@ Pull Request #10, commit de fusion `71776c7`.
 - [x] 23 tests dédiés, dont 16 vérifiant que les contraintes refusent réellement.
 - [x] Clôture distante, Pull Requests #9 et #10 fusionnées.
 
-### 07.2, import contrôlé, en revue
+### 07.2, import contrôlé, clôturée
 
-Travaux menés sur la branche `feat/import-referentiel`.
+Travaux menés sur la branche `feat/import-referentiel`, fusionnée dans `main` le
+14 août 2026 par la Pull Request #11, commit de fusion `90b28e1`.
 
 - [x] Deux décisions de conception tranchées par le propriétaire : l’idempotence
       est une réconciliation de brouillon, et l’import est une commande en ligne
@@ -297,7 +298,8 @@ Travaux menés sur la branche `feat/import-referentiel`.
       trente-neuf compétences et trente-six prérequis traversant les niveaux.
 - [x] Aucune migration : le schéma de 07.1 n’a pas bougé.
 - [x] 54 tests dédiés, dont 22 d’intégration contre PostgreSQL réel.
-- [ ] Clôture distante.
+- [x] Clôture distante : API CI et Secret Scan verts sur la Pull Request #11
+      puis sur `main` après la fusion, `test` en 1 min 48 s.
 
 ### Points ouverts de l’étape 07
 
@@ -349,6 +351,6 @@ Tests      : compétence déplacée de domaine, même identifiant conservé
 
 ## Prochaine action
 
-Clôturer 07.2 à distance, puis engager la sous-étape 07.3, lectures filtrées et
-paginées du référentiel. Trancher au préalable la publication d’une édition,
-sans laquelle aucune lecture n’a d’édition en vigueur à servir.
+Engager la sous-étape 07.3, lectures filtrées et paginées du référentiel.
+Trancher au préalable la publication d’une édition, sans laquelle aucune lecture
+n’a d’édition en vigueur à servir.
