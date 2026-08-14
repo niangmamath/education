@@ -61,7 +61,14 @@ uniquement une entrée Redis :
 - chaque connexion crée un nouveau jeton, ce qui ferme la fixation de session
   listée dans les risques d'ADR-005 ;
 - la déconnexion supprime la clé, donc une session est révocable immédiatement,
-  côté serveur, sans attendre son expiration.
+  côté serveur, sans attendre son expiration ;
+- un index `user-sessions:<id>` liste les clés de session d'un compte. Rien
+  d'autre ne permettrait de retrouver les sessions d'un profil, puisqu'elles sont
+  indexées par l'empreinte d'un jeton que seul son porteur connaît. C'est cet
+  index qui rend possibles la révocation en bloc lors d'un changement de PIN et la
+  fermeture immédiate des accès quand un profil Enfant est désactivé. Un membre
+  dont la session a expiré désigne une clé qui n'existe plus, que la suppression
+  ignore, et l'index expire avec la dernière session qu'il référence.
 
 ## Cookie
 

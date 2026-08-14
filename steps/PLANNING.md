@@ -54,6 +54,7 @@
 | BE-02 | Authentifier le Parent et ouvrir des sessions | BE-01 | Terminé | Sessions Redis, cookie durci, réponses indistinctes |
 | BE-03 | Créer et connecter l’Enfant | BE-02 | Terminé | Code famille, unicité familiale, verrou PIN, 123 tests |
 | BE-04 | Clôturer l’étape 06 | BE-03 | Terminé | Rapport du 14 août 2026, PR #4 fusionnée, CI verte sur `main` |
+| BE-05 | Résorber la dette de l’étape 06 | BE-04 | Terminé | Cycle de vie du profil, retour arrière de `0003`, ADR-005 amendée |
 
 ### Preuves de clôture de BE-04
 

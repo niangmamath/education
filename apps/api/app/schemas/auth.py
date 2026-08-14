@@ -89,6 +89,20 @@ def _normalise_pseudonym(value: str) -> str:
     return value.strip().lower()
 
 
+def validate_new_pin(value: SecretStr) -> SecretStr:
+    """Refuse a PIN that is malformed or among the first an attacker would try.
+
+    Shared by every route that sets a PIN, so a PIN chosen at creation, reset by
+    a parent or changed by a child all pass exactly the same bar.
+    """
+    pin = value.get_secret_value()
+    if len(pin) != PIN_LENGTH or not pin.isdecimal() or not pin.isascii():
+        raise ValueError(f"pin must be exactly {PIN_LENGTH} digits")
+    if _is_trivial_pin(pin):
+        raise ValueError("pin must not be a repeated digit or a straight run")
+    return value
+
+
 class ParentPublic(BaseModel):
     """Parent fields the API is allowed to return.
 
@@ -135,12 +149,7 @@ class ChildCreateRequest(BaseModel):
     @field_validator("pin")
     @classmethod
     def validate_pin(cls, value: SecretStr) -> SecretStr:
-        pin = value.get_secret_value()
-        if len(pin) != PIN_LENGTH or not pin.isdecimal() or not pin.isascii():
-            raise ValueError(f"pin must be exactly {PIN_LENGTH} digits")
-        if _is_trivial_pin(pin):
-            raise ValueError("pin must not be a repeated digit or a straight run")
-        return value
+        return validate_new_pin(value)
 
     @field_validator("display_name")
     @classmethod
@@ -197,6 +206,33 @@ class ChildLoginRequest(BaseModel):
     @classmethod
     def normalise_pseudonym(cls, value: str) -> str:
         return _normalise_pseudonym(value)
+
+
+class ChildPinResetRequest(BaseModel):
+    """New PIN chosen by the parent for one of their children.
+
+    No current PIN is asked: this is the route for a PIN nobody remembers, and
+    the parent's own session is the proof of who is asking.
+    """
+
+    pin: SecretStr
+
+    @field_validator("pin")
+    @classmethod
+    def validate_pin(cls, value: SecretStr) -> SecretStr:
+        return validate_new_pin(value)
+
+
+class ChildPinChangeRequest(BaseModel):
+    """New PIN chosen by a child for itself, against the current one."""
+
+    current_pin: SecretStr
+    new_pin: SecretStr
+
+    @field_validator("new_pin")
+    @classmethod
+    def validate_pin(cls, value: SecretStr) -> SecretStr:
+        return validate_new_pin(value)
 
 
 class ChildPublic(BaseModel):

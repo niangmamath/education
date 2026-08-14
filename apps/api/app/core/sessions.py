@@ -16,6 +16,13 @@ import redis.asyncio as redis
 from app.core.security import generate_session_token, hash_session_token
 
 SESSION_KEY_PREFIX: Final = "session:"
+
+# Sessions are keyed by the digest of a token nobody but their holder knows, so
+# nothing lets the server find the sessions of a given account. This index does:
+# it is what makes revoking every session of one child possible when its PIN
+# changes or its profile is turned off.
+USER_SESSIONS_KEY_PREFIX: Final = "user-sessions:"
+
 PARENT_USER_TYPE: Final = "parent"
 CHILD_USER_TYPE: Final = "child"
 
@@ -32,6 +39,11 @@ class SessionData:
 def session_key(token: str) -> str:
     """Return the Redis key holding the session for this token."""
     return f"{SESSION_KEY_PREFIX}{hash_session_token(token)}"
+
+
+def user_sessions_key(user_id: uuid.UUID) -> str:
+    """Return the Redis key indexing every session key of one account."""
+    return f"{USER_SESSIONS_KEY_PREFIX}{user_id}"
 
 
 async def create_session(
@@ -59,6 +71,13 @@ async def create_session(
     )
     await client.expire(key, ttl_seconds)
 
+    # The index outlives no session it points to: its own expiry is pushed to the
+    # newest one, and a member whose session has expired is a key that no longer
+    # exists, which deleting simply ignores.
+    index = user_sessions_key(user_id)
+    await client.sadd(index, key)  # type: ignore[misc]
+    await client.expire(index, ttl_seconds)
+
     return token, SessionData(
         user_id=user_id, user_type=user_type, expires_at=expires_at
     )
@@ -82,4 +101,29 @@ async def read_session(client: redis.Redis, token: str) -> SessionData | None:
 
 async def delete_session(client: redis.Redis, token: str) -> None:
     """Revoke the session for this token. Deleting an absent session is a no-op."""
-    await client.delete(session_key(token))
+    key = session_key(token)
+    session = await read_session(client, token)
+
+    await client.delete(key)
+    if session is not None:
+        await client.srem(user_sessions_key(session.user_id), key)  # type: ignore[misc]
+
+
+async def revoke_user_sessions(
+    client: redis.Redis, user_id: uuid.UUID, except_token: str | None = None
+) -> int:
+    """Revoke every session of an account and return how many were dropped.
+
+    `except_token` spares the caller's own session, which is what a child
+    changing its own PIN expects: the other devices are logged out, not the one
+    in its hands.
+    """
+    index = user_sessions_key(user_id)
+    spared = session_key(except_token) if except_token is not None else None
+
+    keys = {key for key in await client.smembers(index) if key != spared}  # type: ignore[misc]
+    if keys:
+        await client.delete(*keys)
+        await client.srem(index, *keys)  # type: ignore[misc]
+
+    return len(keys)
