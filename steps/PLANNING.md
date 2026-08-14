@@ -68,10 +68,12 @@
 | ID | Travail | Dépendances | Statut | Preuve |
 |---|---|---|---|---|
 | REF-01 | Modéliser le référentiel scolaire | BE-05 | Terminé | Migration `0004`, 23 tests de contraintes, rapport du 14 août 2026 |
-| REF-02 | Importer un référentiel fictif de façon idempotente | REF-01 | À faire | |
+| REF-02 | Importer un référentiel fictif de façon idempotente | REF-01 | En revue | Commande d’import, 54 tests, rapport du 14 août 2026 |
 | REF-03 | Exposer les lectures filtrées et paginées | REF-02 | À faire | |
 | REF-04 | Clôturer l’étape 07 | REF-03 | À faire | |
 
 ### Prochaine tâche
 
-Engager REF-02, l’import contrôlé du référentiel.
+Clôturer REF-02 à distance, puis engager REF-03, les lectures filtrées et
+paginées. La publication d’une édition reste à trancher : sans elle, aucune
+lecture n’a d’édition en vigueur à servir.

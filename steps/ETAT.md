@@ -248,9 +248,11 @@ Alembic    : downgrade avec trois « lea » de familles différentes, deux renom
 
 ## Étape 07, référentiel de compétences, en cours
 
-Travaux menés sur la branche `feat/referentiel-competences`.
+### 07.1, référentiel scolaire, clôturée
 
-### 07.1, référentiel scolaire, en revue
+Travaux menés sur la branche `feat/referentiel-competences`, fusionnée dans
+`main` le 14 août 2026 par la Pull Request #9. ADR-004 amendée ensuite par la
+Pull Request #10, commit de fusion `71776c7`.
 
 - [x] Trois décisions de conception tranchées par le propriétaire : quatre tables
       explicites plutôt qu’un arbre générique, versionnement porté par une entité
@@ -264,6 +266,37 @@ Travaux menés sur la branche `feat/referentiel-competences`.
 - [x] Une seule version publiée à la fois, par index unique partiel.
 - [x] Migration `0004_referential_competencies`, réversible, `alembic check` vert.
 - [x] 23 tests dédiés, dont 16 vérifiant que les contraintes refusent réellement.
+- [x] Clôture distante, Pull Requests #9 et #10 fusionnées.
+
+### 07.2, import contrôlé, en revue
+
+Travaux menés sur la branche `feat/import-referentiel`.
+
+- [x] Deux décisions de conception tranchées par le propriétaire : l’idempotence
+      est une réconciliation de brouillon, et l’import est une commande en ligne
+      plutôt qu’une route d’administration.
+- [x] Le fichier décrit **l’état voulu d’une édition** : l’import crée,
+      met à jour et **supprime** ce que le fichier ne mentionne plus. Rejouer le
+      même fichier ne rapporte rien à faire.
+- [x] L’identité d’une ligne est son code métier : déplacer une compétence d’un
+      domaine à un autre met à jour la ligne et lui conserve son identifiant.
+- [x] Une version `published` ou `archived` est immuable, l’import la refuse et
+      demande un nouveau code de version. Les traces des étapes 10 à 12 ne
+      peuvent pas changer de sens rétroactivement.
+- [x] Validation complète avant toute écriture, **toutes les erreurs rendues en
+      une passe**, chacune nommant la ligne fautive du fichier.
+- [x] **Détection des cycles de prérequis**, dette consignée par 07.1 : parcours
+      en profondeur itératif, une même boucle signalée une seule fois. C’est la
+      seule vérification sans équivalent en base.
+- [x] Commande `python -m app.referential <fichier> [--apply]`, **essai à blanc
+      par défaut**. L’essai fait le travail entier et l’annule, donc il éprouve
+      réellement les contraintes au lieu de les estimer.
+- [x] Codes de retour distincts : `1` illisible, `2` refusé, `3` immuable,
+      `4` refus de la base.
+- [x] Référentiel fictif livré, cinq niveaux, deux matières, huit domaines,
+      trente-neuf compétences et trente-six prérequis traversant les niveaux.
+- [x] Aucune migration : le schéma de 07.1 n’a pas bougé.
+- [x] 54 tests dédiés, dont 22 d’intégration contre PostgreSQL réel.
 - [ ] Clôture distante.
 
 ### Points ouverts de l’étape 07
@@ -272,12 +305,37 @@ Travaux menés sur la branche `feat/referentiel-competences`.
       auto-référencée est remplacée par la description des quatre tables
       explicites et du versionnement. Le registre des décisions, qui affichait
       encore cette ADR comme « à créer », a été corrigé.
-- La détection des cycles dans l’arbre de prérequis dépasse ce qu’une contrainte
-  SQL exprime ; elle appartient à la validation d’import de 07.2.
+- [x] La détection des cycles dans l’arbre de prérequis, hors de portée d’une
+      contrainte SQL, a été livrée avec la validation d’import de 07.2.
+- **Rien ne permet encore de publier une édition.** L’import s’arrête au
+  brouillon, et mettre une version en vigueur est un acte distinct dont la
+  décision revient au propriétaire. Tant qu’il n’existe pas, les lectures de
+  07.3 n’auront aucune édition publiée à servir : c’est le premier point à
+  trancher en ouvrant 07.3.
+- Aucune comparaison entre deux éditions. Le code métier stable la rendra
+  possible ; rien ne la demande encore.
+
+## Résultats techniques de l’étape 07
+
+```text
+Ruff       : vert, format inclus, 62 fichiers
+Mypy       : vert sur 29 fichiers
+Alembic    : 0004_referential_competencies (head), check vert, downgrade base et retour au head
+Pytest     : 218 tests réussis, dont 54 pour l’import
+Commande   : essai à blanc, 5 niveaux, 2 matières, 8 domaines, 39 compétences, 36 prérequis
+Commande   : essai à blanc annulé, version absente de la base
+Commande   : --apply, version créée en brouillon, base comptée à 5 / 2 / 8 / 39 / 36
+Commande   : rejoué, 0 création, 0 modification, 0 suppression
+Commande   : fichier fautif refusé, 3 erreurs nommant leur ligne, code de retour 2
+Commande   : version publiée puis archivée refusées, code de retour 3, édition intacte
+Commande   : fichier absent, code de retour 1 ; JSON malformé, code de retour 2
+Tests      : cycle à deux et à trois compétences détecté, losange non confondu avec un cycle
+Tests      : compétence déplacée de domaine, même identifiant conservé
+```
 
 ## Dernier rapport appliqué
 
-`steps/07_referentiel_competences/rapport_2026-08-14_1730_modeles_referentiel.md`.
+`steps/07_referentiel_competences/rapport_2026-08-14_2100_import_referentiel.md`.
 
 ## Historique de clôture de l’étape 06
 
@@ -291,4 +349,6 @@ Travaux menés sur la branche `feat/referentiel-competences`.
 
 ## Prochaine action
 
-Engager la sous-étape 07.2, import contrôlé et idempotent du référentiel.
+Clôturer 07.2 à distance, puis engager la sous-étape 07.3, lectures filtrées et
+paginées du référentiel. Trancher au préalable la publication d’une édition,
+sans laquelle aucune lecture n’a d’édition en vigueur à servir.
