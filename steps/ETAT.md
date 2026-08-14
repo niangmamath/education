@@ -184,23 +184,40 @@ le 14 août 2026 par la Pull Request #4, commit de fusion `a49ec43`.
 - [x] API CI et Secret Scan réussis sur `main` après la fusion, `test` en 1 min 42 s.
 - [x] Étape 06 clôturée.
 
+### Dette de l’étape 06, résorbée le 14 août 2026
+
+Trois dettes consignées à la clôture ont été traitées après elle, sur la branche
+`fix/step06-child-lifecycle`. Rapport :
+`rapport_2026-08-14_1530_dette_etape_06.md`.
+
+- [x] **Cycle de vie d’un profil Enfant.** Désactivation qui révoque sur-le-champ
+      les sessions ouvertes, réactivation, réinitialisation du PIN par le Parent
+      qui lève aussi le verrou, changement de PIN par l’Enfant contre le PIN
+      actuel, et suppression d’un profil en attente ou désactivé. Un profil actif
+      doit d’abord être désactivé pour être supprimé.
+- [x] **Révocation en bloc des sessions d’un compte**, par un index Redis
+      `user-sessions:<id>`, sans lequel un changement de PIN ne fermait rien.
+- [x] **Retour arrière de la migration `0003`.** Il ne s’arrête plus : les
+      pseudonymes partagés entre familles sont tranchés par une règle, le plus
+      ancien garde le sien et les autres reçoivent un suffixe tiré de leur
+      identifiant, chaque renommage étant journalisé en `WARNING`.
+- [x] **ADR-005 amendée** : unicité familiale et code famille, Argon2id au lieu de
+      bcrypt, plafond sur les tentatives de PIN, précisions sur les sessions
+      Redis. Registre des décisions mis à jour.
+
 ### Points ouverts
 
-Les stratégies de résolution des trois premiers points sont décrites dans
+Les stratégies de résolution sont décrites dans
 `docs/backend/points-ouverts-authentification.md`.
 
-- ADR-005 cite bcrypt dans un extrait illustratif alors que l’implémentation
-  retient Argon2id ; l’ADR reste à amender. À trancher avant que de vrais comptes
-  n’existent, car aucune migration automatique ne franchit un changement
-  d’algorithme.
 - La vérification d’adresse email prévue par ADR-005 n’est pas implémentée faute
   de service d’envoi ; `is_verified` reste à `false` et la connexion ne l’exige pas.
 - Aucune limitation de débit sur la connexion Parent, alors que `RATE_LIMIT` existe
   déjà sans être branché. La connexion Enfant fait exception depuis 06.3 : elle
   dispose d’un compteur d’échecs par enfant, qui protège un profil et non le service.
-- ADR-005 montre une connexion Enfant par pseudonyme et PIN seuls, ce que la règle
-  d’unicité familiale rend impossible. L’ADR reste à amender sur ce point comme sur
-  celui de l’algorithme de hachage.
+- Un profil Enfant ne se modifie pas : ni pseudonyme, ni nom affiché, ni date de
+  naissance. Le changement de pseudonyme demandera de décider ce qu’il advient de
+  l’historique attaché.
 - Rien ne plafonne les profils en attente : qui connaît un code famille peut
   remplir la liste d’un Parent de profils `pending`, sans jamais obtenir d’accès.
   Le Parent peut régénérer son code et écarter ces demandes une à une, mais ni
@@ -216,7 +233,7 @@ Alembic    : 0003_family_code_child_status (head), downgrade -1 puis base, retou
 Alembic    : check vert, aucune dérive entre modèles et base
 Ruff       : vert, format inclus, 50 fichiers
 Mypy       : vert sur 23 fichiers
-Pytest     : 123 tests réussis
+Pytest     : 141 tests réussis, dette de l’étape 06 comprise
 API vivante: parent register 201 avec code famille, login 200 avec cookie durci, logout 204
 API vivante: deux familles créent chacune une « lea » en 201, doublon interne refusé en 409
 API vivante: child login 200 par code famille, code d’une autre famille et code inconnu en 401
@@ -224,6 +241,9 @@ API vivante: auto-inscription 201 en attente, connexion refusée 403, activation
 API vivante: activation par une autre famille 404, cinq PIN erronés puis verrou 429
 API vivante: régénération 200, ancien code 401 et 404, nouveau code 200, session ouverte intacte
 API vivante: demande en attente écartée 204 et pseudonyme libéré, profil actif 409, inexistant 404
+API vivante: désactivation 200 fermant les deux sessions ouvertes, suppression ensuite 204
+API vivante: PIN réinitialisé 200 levant le verrou 429, PIN changé par l’enfant 200, session gardée
+Alembic    : downgrade avec trois « lea » de familles différentes, deux renommées et journalisées
 ```
 
 ## Dernier rapport appliqué

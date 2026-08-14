@@ -2,7 +2,68 @@
 
 ## Statut
 
-✅ **Accepted** - Décision validée, implémentation en cours
+✅ **Accepted** - Décision validée, amendée le 14 août 2026 après l'implémentation
+de l'étape 06.
+
+---
+
+## Amendement du 14 août 2026
+
+L'implémentation de l'étape 06 a mis au jour trois points sur lesquels cette ADR
+ne pouvait pas tenir telle quelle. **Les règles ci-dessous prévalent sur tout
+extrait plus ancien de ce document.**
+
+### 1. L'unicité du pseudonyme est familiale, et la connexion Enfant passe par le code famille
+
+Le flux d'origine, `POST /auth/child/login (pseudonyme, pin)`, supposait qu'un
+pseudonyme désigne un enfant sur toute la plateforme. C'est intenable : le premier
+inscrit réserverait `lea` pour tout le monde. Le pseudonyme est donc unique **dans
+sa famille**, la contrainte porte sur le couple `(parent_id, pseudonym)`, et deux
+familles peuvent chacune avoir une `lea`.
+
+Le pseudonyme ne désignant plus personne à lui seul, chaque Parent porte un **code
+famille** de six caractères, tiré au hasard à l'inscription, rendu dans son profil,
+et régénérable en cas de fuite. La connexion Enfant devient
+`POST /auth/child/login (family_code, pseudonyme, pin)`.
+
+Un Enfant peut aussi ouvrir son propre profil avec ce code, via
+`POST /auth/child/register`, mais ce profil reste **en attente** jusqu'à activation
+par le Parent : connaître un code permet de demander à rejoindre une famille,
+jamais d'y entrer.
+
+### 2. Argon2id remplace bcrypt
+
+Les extraits de code de cette ADR mentionnaient bcrypt ; sa section Décision ne
+fixait aucun algorithme. Mots de passe Parent et PIN Enfant sont hachés en
+**Argon2id**, avec les paramètres par défaut d'`argon2-cffi`, qui suivent le profil
+recommandé par la RFC 9106. Argon2id est en tête des recommandations OWASP devant
+bcrypt : son coût mémoire rend l'attaque par matériel dédié bien plus chère. Une
+connexion réussie réhache une empreinte produite sous d'anciens paramètres.
+
+### 3. Un PIN à six chiffres ne tient que si les tentatives sont plafonnées
+
+La table des risques ne comptait que sur le million de combinaisons, ce qu'un
+script épuise. Un compteur d'échecs par enfant est tenu dans Redis, en fenêtre
+glissante ; au-delà du plafond la connexion répond `429`, y compris avec le bon
+PIN. Sont également refusés à la création le chiffre répété et la suite continue.
+
+### Précisions apportées par l'implémentation
+
+- **Aucune table SQL de session.** Le modèle ci-dessous montre une entité
+  `Session` ; elle n'existe pas. Une session est une entrée Redis, indexée par
+  l'empreinte SHA-256 du jeton et non par le jeton, afin qu'une copie de Redis ne
+  livre aucun cookie rejouable.
+- **Un index des sessions par compte** permet de toutes les révoquer d'un coup,
+  ce qu'exigent le changement de PIN et la désactivation d'un profil.
+- **Trois états de profil Enfant**, `pending`, `active` et `disabled`, à la place
+  d'un booléen : la question « ce profil peut-il ouvrir une session » a trois
+  réponses.
+- **Session Enfant d'une journée** contre sept jours pour le Parent.
+- **La vérification d'adresse email reste non implémentée**, faute de service
+  d'envoi. `is_verified` demeure à `false` et la connexion ne l'exige pas.
+
+La mise en œuvre est décrite dans `docs/backend/authentification-parent-sessions.md`
+et `docs/backend/acces-enfant.md`.
 
 ---
 
@@ -38,10 +99,13 @@ Concevoir un système d'**authentification et de gestion des sessions** qui :
 
 ```
 Authentification:
-├── Parent (email, password_hash, is_verified)
-├── Child (parent_id, pseudonyme, pin_hash)
-├── Session (session_id, user_id, user_type, expires_at)
+├── Parent (email, family_code, password_hash, is_verified)
+├── Child (parent_id, pseudonyme, pin_hash, status)
+├── Session (Redis uniquement : user_id, user_type, expires_at)
 └── Family (parent_id, children[])
+
+Unicité : email et family_code sur toute la plateforme,
+          pseudonyme dans sa famille seulement.
 ```
 
 ### Flux d'authentification
@@ -56,8 +120,10 @@ Parent Flow:
 
 Child Flow:
 1. Parent crée enfant: POST /auth/children (pseudonyme, pin)
-2. Child login: POST /auth/child/login (pseudonyme, pin)
-3. Session: Cookie HttpOnly avec session_id (marqué comme child)
+   ou l'enfant le demande: POST /auth/child/register (family_code, pseudonyme, pin),
+   profil en attente jusqu'à POST /auth/children/{id}/activate
+2. Child login: POST /auth/child/login (family_code, pseudonyme, pin)
+3. Session: Cookie HttpOnly avec session_id (marqué comme child), un jour
 4. Logout: DELETE /auth/logout
 ```
 
@@ -153,6 +219,11 @@ Child Flow:
 
 ### Modèle de données SQLAlchemy
 
+> Extrait d'origine, conservé pour mémoire. L'amendement du 14 août 2026 prévaut :
+> il n'existe aucune table `Session`, le PIN est haché en Argon2id et non en
+> bcrypt, `Parent` porte un `family_code`, `Child` porte un `status`, et l'unicité
+> du pseudonyme est familiale. Le modèle réel est `apps/api/app/models/identity.py`.
+
 ```python
 # models/user.py
 from sqlalchemy import Column, String, Boolean, Date, ForeignKey
@@ -198,6 +269,10 @@ class Session(Base):
 ---
 
 ## Implémentation
+
+> Extraits d'origine, conservés pour mémoire. Ils précèdent l'amendement du
+> 14 août 2026 : la connexion Enfant y prend un pseudonyme seul et les sessions y
+> sont écrites sans empreinte. Le code livré est dans `apps/api/app/api/v1/`.
 
 ### FastAPI Middleware
 
@@ -337,7 +412,9 @@ async def logout(response: Response, session: dict = Depends(require_auth)):
 | Session fixation | Faible | Élevé | Régénérer session_id au login |
 | Session expiration | Moyenne | Moyen | Auto-refresh avec CSRF token |
 | Redis downtime | Faible | Élevé | Fallback en mémoire (limité) |
-| PIN deviné | Faible | Moyen | PIN à 6 chiffres (1M combinaisons) |
+| PIN deviné | Moyenne | Élevé | PIN à 6 chiffres hachés en Argon2id, PIN triviaux refusés, et surtout compteur d'échecs par enfant : sans plafond, un million de combinaisons s'épuise |
+| Code famille divulgué | Moyenne | Moyen | Il ne donne aucun accès, seulement le droit de demander un profil, que le Parent doit activer. Régénérable, et les demandes reçues sont écartables |
+| Profil Enfant compromis | Faible | Élevé | PIN réinitialisable par le Parent, profil désactivable, et toutes les sessions du profil révocables d'un coup |
 
 ---
 
@@ -346,7 +423,9 @@ async def logout(response: Response, session: dict = Depends(require_auth)):
 - [OWASP Session Management](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html)
 - [FastAPI Security](https://fastapi.tiangolo.com/tutorial/security/)
 - [Redis Sessions](https://redis.io/topics/sessions)
-- [bcrypt Documentation](https://bcrypt.readthedocs.io/)
+- [RFC 9106, Argon2](https://www.rfc-editor.org/rfc/rfc9106.html)
+- [OWASP Password Storage](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html)
+- [argon2-cffi](https://argon2-cffi.readthedocs.io/)
 
 ---
 
@@ -355,3 +434,4 @@ async def logout(response: Response, session: dict = Depends(require_auth)):
 | Date | Auteur | Action |
 |------|--------|--------|
 | 2026-08-10 | Mistral Vibe | Création initiale (Accepted) |
+| 2026-08-14 | Claude Code | Amendement après l'étape 06 : unicité familiale du pseudonyme et code famille, Argon2id au lieu de bcrypt, plafond sur les tentatives de PIN, précisions sur les sessions Redis |

@@ -17,7 +17,13 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from app.api.cookies import set_session_cookie
-from app.api.deps import CurrentChild, CurrentParent, DbSession, RedisClient
+from app.api.deps import (
+    CurrentChild,
+    CurrentParent,
+    DbSession,
+    RedisClient,
+    SessionToken,
+)
 from app.core.config import settings
 from app.core.exceptions import (
     AuthenticationException,
@@ -33,7 +39,7 @@ from app.core.security import (
     spend_dummy_verification,
     verify_pin,
 )
-from app.core.sessions import CHILD_USER_TYPE, create_session
+from app.core.sessions import CHILD_USER_TYPE, create_session, revoke_user_sessions
 from app.models import Parent
 from app.models.identity import (
     CHILD_STATUS_ACTIVE,
@@ -44,6 +50,8 @@ from app.models.identity import (
 from app.schemas.auth import (
     ChildCreateRequest,
     ChildLoginRequest,
+    ChildPinChangeRequest,
+    ChildPinResetRequest,
     ChildPublic,
     ChildSelfRegisterRequest,
 )
@@ -164,16 +172,92 @@ async def _own_child(db: DbSession, parent_id: uuid.UUID, child_id: uuid.UUID) -
 async def activate_child(
     child_id: uuid.UUID, parent: CurrentParent, db: DbSession
 ) -> Child:
-    """Let a parent activate a profile a child opened with the family code."""
+    """Open access to a profile, whether it was pending or turned off."""
     child = await _own_child(db, parent.id, child_id)
-
-    if child.status == CHILD_STATUS_DISABLED:
-        raise ConflictException(message="Profil désactivé, activation impossible")
 
     if child.status != CHILD_STATUS_ACTIVE:
         child.status = CHILD_STATUS_ACTIVE
         await db.commit()
         await db.refresh(child)
+
+    return child
+
+
+@router.post("/children/{child_id}/deactivate", response_model=ChildPublic)
+async def deactivate_child(
+    child_id: uuid.UUID, parent: CurrentParent, db: DbSession, client: RedisClient
+) -> Child:
+    """Close access to a profile without losing anything it holds.
+
+    Sessions open on the child's devices are revoked on the spot rather than
+    left to expire: turning a profile off has to mean it, including on the
+    tablet already logged in.
+    """
+    child = await _own_child(db, parent.id, child_id)
+
+    if child.status == CHILD_STATUS_PENDING:
+        raise ConflictException(
+            message="Profil en attente, écartez-le plutôt que de le désactiver"
+        )
+
+    if child.status != CHILD_STATUS_DISABLED:
+        child.status = CHILD_STATUS_DISABLED
+        await db.commit()
+        await db.refresh(child)
+
+    await revoke_user_sessions(client, child.id)
+    return child
+
+
+@router.put("/children/{child_id}/pin", response_model=ChildPublic)
+async def reset_child_pin(
+    child_id: uuid.UUID,
+    payload: ChildPinResetRequest,
+    parent: CurrentParent,
+    db: DbSession,
+    client: RedisClient,
+) -> Child:
+    """Set a new PIN for a child, for the day nobody remembers the old one.
+
+    Two things follow, and both are the point of the route: the failed-attempt
+    lockout is cleared, since a child locked out of a PIN that no longer exists
+    would stay locked out for nothing, and the sessions opened with the previous
+    PIN are revoked.
+    """
+    child = await _own_child(db, parent.id, child_id)
+
+    child.pin_hash = hash_pin(payload.pin.get_secret_value())
+    await db.commit()
+    await db.refresh(child)
+
+    await clear_failures(client, child.id)
+    await revoke_user_sessions(client, child.id)
+
+    return child
+
+
+@router.put("/child/pin", response_model=ChildPublic)
+async def change_own_pin(
+    payload: ChildPinChangeRequest,
+    child: CurrentChild,
+    token: SessionToken,
+    db: DbSession,
+    client: RedisClient,
+) -> Child:
+    """Let a child replace its own PIN, against the current one.
+
+    The child's own session survives, the others do not: whoever else was logged
+    in with the old PIN loses access, which is the whole reason a child changes
+    a PIN it thinks someone has seen.
+    """
+    if not verify_pin(payload.current_pin.get_secret_value(), child.pin_hash):
+        raise AuthenticationException(message=INVALID_CREDENTIALS_MESSAGE)
+
+    child.pin_hash = hash_pin(payload.new_pin.get_secret_value())
+    await db.commit()
+    await db.refresh(child)
+
+    await revoke_user_sessions(client, child.id, except_token=token)
 
     return child
 
@@ -186,25 +270,32 @@ async def activate_child(
     # is not allowed to carry.
     response_model=None,
 )
-async def delete_pending_child(
-    child_id: uuid.UUID, parent: CurrentParent, db: DbSession
+async def delete_child(
+    child_id: uuid.UUID, parent: CurrentParent, db: DbSession, client: RedisClient
 ) -> None:
-    """Let a parent turn down a profile opened with the family code.
+    """Remove a profile, with everything the family cascade carries with it.
 
-    This is the other half of the answer to a code that has got around:
-    regenerating it closes the door, this clears what came through before.
+    A pending profile goes straight away: that is the other half of the answer to
+    a family code that has got around, since regenerating the code closes the
+    door and this clears what came through before.
 
-    Only a pending profile can be dropped. An active one holds a history a child
-    built, and removing it is a decision of its own, with its own confirmation
-    and its own consequences on the results of the later steps.
+    An active profile does not. It holds a history a child built, and the results
+    of the later steps will hang from it, so it must be deactivated first: two
+    deliberate steps, and a window during which the parent can still change their
+    mind, instead of one call that empties a child's year.
     """
     child = await _own_child(db, parent.id, child_id)
 
-    if child.status != CHILD_STATUS_PENDING:
-        raise ConflictException(message="Seul un profil en attente peut être écarté")
+    if child.status == CHILD_STATUS_ACTIVE:
+        raise ConflictException(
+            message="Profil actif, désactivez-le avant de le supprimer"
+        )
 
     await db.delete(child)
     await db.commit()
+
+    await revoke_user_sessions(client, child.id)
+    await clear_failures(client, child.id)
 
 
 @router.post("/child/login", response_model=ChildPublic)

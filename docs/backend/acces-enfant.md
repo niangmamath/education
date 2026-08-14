@@ -59,17 +59,45 @@ Trois effets, et trois seulement :
 La route est réservée au Parent : une session Enfant reçoit `403`, une requête sans
 session `401`.
 
-## Écarter une demande
+## Cycle de vie d'un profil
 
-`DELETE /api/v1/auth/children/{id}` est l'autre moitié de la réponse à un code qui
-a circulé : la régénération ferme la porte, celle-ci nettoie ce qui est passé
-avant. Le profil est supprimé et son pseudonyme redevient libre dans la famille.
+Le Parent dispose de quatre gestes sur les profils de sa famille, et d'aucun sur
+ceux des autres, qui répondent `404` comme un profil inexistant.
 
-**Seul un profil en attente peut être écarté.** Un profil `active` répond `409` :
-il porte une histoire que l'enfant a construite, et son retrait est une décision à
-part entière, avec sa propre confirmation et ses propres conséquences sur les
-résultats des étapes ultérieures. Un profil d'une autre famille répond `404`,
-comme un profil inexistant.
+**Activer**, `POST /children/{id}/activate`, ouvre l'accès, que le profil vienne
+d'une demande en attente ou d'une désactivation. La route est idempotente.
+
+**Désactiver**, `POST /children/{id}/deactivate`, ferme l'accès sans rien perdre de
+ce que le profil contient. Les sessions ouvertes sur les appareils de l'enfant sont
+révoquées sur-le-champ, pas laissées à expirer : couper un accès doit valoir aussi
+pour la tablette déjà connectée. Un profil en attente répond `409`, il s'écarte au
+lieu de se désactiver.
+
+**Réinitialiser le PIN**, `PUT /children/{id}/pin`, sert le jour où plus personne ne
+s'en souvient ; aucun PIN actuel n'est demandé, la session du Parent est la preuve
+de qui demande. Deux effets en découlent, et ils sont le sens même de la route : le
+verrou sur les tentatives est levé, car un enfant bloqué sur un PIN qui n'existe
+plus attendrait pour rien, et les sessions ouvertes avec l'ancien PIN sont
+révoquées.
+
+**Supprimer**, `DELETE /children/{id}`, retire le profil et libère son pseudonyme
+dans la famille. Un profil en attente part immédiatement : c'est l'autre moitié de
+la réponse à un code qui a circulé, la régénération fermant la porte et la
+suppression nettoyant ce qui est passé avant. **Un profil actif, lui, répond `409`
+et doit d'abord être désactivé** : il porte une histoire que l'enfant a construite,
+et les résultats des étapes ultérieures y seront accrochés. Deux gestes délibérés,
+avec un intervalle pour changer d'avis, plutôt qu'un appel qui vide l'année d'un
+enfant.
+
+## L'Enfant change son propre PIN
+
+`PUT /api/v1/auth/child/pin` demande le PIN actuel et le nouveau. Un PIN actuel
+erroné répond `401` et ne change rien. Le nouveau PIN passe exactement les mêmes
+règles qu'à la création.
+
+La session de l'appelant survit, les autres non : celui qui restait connecté avec
+l'ancien PIN perd l'accès, ce qui est précisément la raison pour laquelle un enfant
+change un PIN qu'il croit avoir été vu par-dessus son épaule.
 
 ## Points d'entrée
 
@@ -80,7 +108,10 @@ comme un profil inexistant.
 | `POST` | `/api/v1/auth/child/register` | Créer un profil avec le code famille, sans session | `201`, profil `pending` |
 | `GET` | `/api/v1/auth/children` | Lister les enfants du Parent connecté | `200`, profils en attente inclus |
 | `POST` | `/api/v1/auth/children/{id}/activate` | Activer un profil en attente | `200`, profil `active` |
-| `DELETE` | `/api/v1/auth/children/{id}` | Écarter un profil en attente | `204` sans corps |
+| `POST` | `/api/v1/auth/children/{id}/deactivate` | Fermer l'accès d'un profil | `200`, profil `disabled` |
+| `PUT` | `/api/v1/auth/children/{id}/pin` | Réinitialiser le PIN d'un enfant | `200`, profil public |
+| `PUT` | `/api/v1/auth/child/pin` | L'Enfant change son propre PIN | `200`, profil public |
+| `DELETE` | `/api/v1/auth/children/{id}` | Supprimer un profil en attente ou désactivé | `204` sans corps |
 | `POST` | `/api/v1/auth/child/login` | Ouvrir une session Enfant | `200`, profil et cookie |
 | `GET` | `/api/v1/auth/child/me` | Lire l'Enfant connecté | `200`, profil public |
 
@@ -205,16 +236,19 @@ en attente, sans accès.
   Parent peut les écarter un par un et régénérer son code, mais la liste se
   remplit d'abord. Un plafond par famille et une notification relèvent de l'étape
   des notifications et de l'étape 15.
-- **Le retour arrière de la migration est conditionnel.** Le `downgrade` de
-  `0003_family_code_child_status` rétablit l'unicité globale du pseudonyme, ce qui
-  est impossible si deux familles en partagent déjà un. La migration s'arrête alors
-  avec un message qui le dit, plutôt que de renommer des profils dans le dos de
-  leurs familles : ces doublons doivent être arbitrés à la main avant de rejouer le
-  retour arrière.
-- **Le cycle de vie d'un profil actif n'est pas couvert.** Ni modification, ni
-  désactivation, ni suppression, ni changement de PIN. L'état `disabled` existe
-  dans le modèle mais aucune route ne le pose. Seul le retrait d'une demande en
-  attente est livré ici, parce qu'il découle directement de la fuite d'un code.
+- **Le retour arrière de la migration renomme des profils.** Le `downgrade` de
+  `0003_family_code_child_status` rétablit l'unicité globale du pseudonyme, que les
+  données ne respectent plus. Refuser de s'exécuter laisserait un opérateur bloqué
+  au milieu d'un retour arrière, donc les doublons sont tranchés par une règle : au
+  sein d'un pseudonyme partagé, le profil le plus ancien le garde, les autres
+  reçoivent un suffixe tiré de leur propre identifiant, par exemple `lea-7af54d`.
+  Chaque renommage est journalisé en `WARNING`, car un pseudonyme est ce qu'un
+  enfant tape pour se connecter : qui exécute ce retour arrière doit savoir
+  lesquels ont changé.
+- **Le profil ne se modifie pas.** Ni pseudonyme, ni nom affiché, ni date de
+  naissance : seuls l'état et le PIN changent après la création. Une route de
+  modification relève d'une étape ultérieure, et le changement de pseudonyme
+  demandera de décider ce qu'il advient de l'historique qui y est attaché.
 - **Verrou par enfant et non par origine.** Le compteur ne distingue pas
   l'appelant : il protège un profil, pas le service. Une limitation de débit
   générale reste le point ouvert n°3 de `points-ouverts-authentification.md`.

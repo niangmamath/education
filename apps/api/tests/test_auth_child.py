@@ -47,6 +47,7 @@ CHILD_REGISTER_URL = "/api/v1/auth/child/register"
 REGENERATE_CODE_URL = "/api/v1/auth/parent/family-code/regenerate"
 CHILD_LOGIN_URL = "/api/v1/auth/child/login"
 CHILD_ME_URL = "/api/v1/auth/child/me"
+CHILD_PIN_URL = "/api/v1/auth/child/pin"
 
 
 class ParentAccount(NamedTuple):
@@ -597,6 +598,255 @@ class TestFamilyIsolation:
         child_login(client, parent.family_code, chosen)
 
         assert client.get(ME_URL).status_code == 403
+
+
+class TestProfileLifecycle:
+    """What a parent can do to a profile once it is in use."""
+
+    def test_deactivation_closes_access_and_open_sessions(
+        self, client: TestClient, redis_client: sync_redis.Redis
+    ) -> None:
+        parent = sign_in_parent(client)
+        chosen = pseudonym()
+        child_id = create_child(client, chosen).json()["id"]
+        tablet = child_login(client, parent.family_code, chosen).cookies[
+            settings.SESSION_COOKIE_NAME
+        ]
+        phone = child_login(client, parent.family_code, chosen).cookies[
+            settings.SESSION_COOKIE_NAME
+        ]
+
+        use_session(client, parent.token)
+        response = client.post(f"{CHILDREN_URL}/{child_id}/deactivate")
+
+        assert response.status_code == 200
+        assert response.json()["status"] == "disabled"
+        for token in (tablet, phone):
+            assert redis_client.exists(session_key(token)) == 0
+            use_session(client, token)
+            assert client.get(CHILD_ME_URL).status_code == 401
+        assert child_login(client, parent.family_code, chosen).status_code == 401
+
+    def test_reactivation_gives_access_back(self, client: TestClient) -> None:
+        parent = sign_in_parent(client)
+        chosen = pseudonym()
+        child_id = create_child(client, chosen).json()["id"]
+
+        use_session(client, parent.token)
+        client.post(f"{CHILDREN_URL}/{child_id}/deactivate")
+        reactivated = client.post(f"{CHILDREN_URL}/{child_id}/activate")
+
+        assert reactivated.status_code == 200
+        assert reactivated.json()["status"] == "active"
+        assert child_login(client, parent.family_code, chosen).status_code == 200
+
+    def test_a_pending_profile_is_turned_down_not_deactivated(
+        self, client: TestClient
+    ) -> None:
+        parent = sign_in_parent(client)
+        pending_id = register_child(client, parent.family_code).json()["id"]
+
+        use_session(client, parent.token)
+
+        assert client.post(f"{CHILDREN_URL}/{pending_id}/deactivate").status_code == 409
+
+    def test_a_deactivated_profile_can_then_be_deleted(
+        self, client: TestClient
+    ) -> None:
+        """Two deliberate steps, instead of one call emptying a child's year."""
+        parent = sign_in_parent(client)
+        child_id = create_child(client).json()["id"]
+
+        use_session(client, parent.token)
+        assert client.delete(f"{CHILDREN_URL}/{child_id}").status_code == 409
+        client.post(f"{CHILDREN_URL}/{child_id}/deactivate")
+
+        assert client.delete(f"{CHILDREN_URL}/{child_id}").status_code == 204
+        assert client.get(CHILDREN_URL).json() == []
+
+    def test_the_parent_resets_a_forgotten_pin(self, client: TestClient) -> None:
+        parent = sign_in_parent(client)
+        chosen = pseudonym()
+        child_id = create_child(client, chosen).json()["id"]
+
+        use_session(client, parent.token)
+        response = client.put(f"{CHILDREN_URL}/{child_id}/pin", json={"pin": OTHER_PIN})
+
+        assert response.status_code == 200
+        assert child_login(client, parent.family_code, chosen).status_code == 401
+        assert (
+            child_login(client, parent.family_code, chosen, pin=OTHER_PIN).status_code
+            == 200
+        )
+
+    def test_a_reset_lifts_the_lockout(
+        self, client: TestClient, redis_client: sync_redis.Redis
+    ) -> None:
+        """A child locked out of a PIN that no longer exists would wait for nothing."""
+        parent = sign_in_parent(client)
+        chosen = pseudonym()
+        child_id = create_child(client, chosen).json()["id"]
+        for _ in range(settings.CHILD_PIN_MAX_ATTEMPTS):
+            child_login(client, parent.family_code, chosen, pin=WRONG_PIN)
+        assert child_login(client, parent.family_code, chosen).status_code == 429
+
+        use_session(client, parent.token)
+        client.put(f"{CHILDREN_URL}/{child_id}/pin", json={"pin": OTHER_PIN})
+
+        assert redis_client.exists(failure_key(uuid.UUID(child_id))) == 0
+        assert (
+            child_login(client, parent.family_code, chosen, pin=OTHER_PIN).status_code
+            == 200
+        )
+
+    def test_a_reset_revokes_the_sessions_opened_with_the_old_pin(
+        self, client: TestClient
+    ) -> None:
+        parent = sign_in_parent(client)
+        chosen = pseudonym()
+        child_id = create_child(client, chosen).json()["id"]
+        before = child_login(client, parent.family_code, chosen).cookies[
+            settings.SESSION_COOKIE_NAME
+        ]
+
+        use_session(client, parent.token)
+        client.put(f"{CHILDREN_URL}/{child_id}/pin", json={"pin": OTHER_PIN})
+
+        use_session(client, before)
+        assert client.get(CHILD_ME_URL).status_code == 401
+
+    @pytest.mark.parametrize("pin", ["111111", "123456", "12345", "abcdef"])
+    def test_a_reset_applies_the_same_pin_rules(
+        self, client: TestClient, pin: str
+    ) -> None:
+        sign_in_parent(client)
+        child_id = create_child(client).json()["id"]
+
+        assert client.put(
+            f"{CHILDREN_URL}/{child_id}/pin", json={"pin": pin}
+        ).status_code == (422)
+
+    def test_lifecycle_routes_are_reserved_to_the_parent(
+        self, client: TestClient
+    ) -> None:
+        parent = sign_in_parent(client)
+        chosen = pseudonym()
+        child_id = create_child(client, chosen).json()["id"]
+
+        client.cookies.clear()
+        assert client.post(f"{CHILDREN_URL}/{child_id}/deactivate").status_code == 401
+        assert (
+            client.put(
+                f"{CHILDREN_URL}/{child_id}/pin", json={"pin": OTHER_PIN}
+            ).status_code
+            == 401
+        )
+
+        child_login(client, parent.family_code, chosen)
+        assert client.post(f"{CHILDREN_URL}/{child_id}/deactivate").status_code == 403
+        assert (
+            client.put(
+                f"{CHILDREN_URL}/{child_id}/pin", json={"pin": OTHER_PIN}
+            ).status_code
+            == 403
+        )
+
+    def test_another_family_reaches_none_of_them(self, client: TestClient) -> None:
+        sign_in_parent(client)
+        foreign_id = create_child(client).json()["id"]
+
+        other = sign_in_parent(client)
+        use_session(client, other.token)
+
+        assert client.post(f"{CHILDREN_URL}/{foreign_id}/deactivate").status_code == 404
+        assert (
+            client.put(
+                f"{CHILDREN_URL}/{foreign_id}/pin", json={"pin": OTHER_PIN}
+            ).status_code
+            == 404
+        )
+
+
+class TestChildChangingItsOwnPin:
+    def test_a_child_changes_its_pin_against_the_current_one(
+        self, client: TestClient
+    ) -> None:
+        parent = sign_in_parent(client)
+        chosen = pseudonym()
+        create_child(client, chosen)
+        child_login(client, parent.family_code, chosen)
+
+        response = client.put(
+            CHILD_PIN_URL, json={"current_pin": VALID_PIN, "new_pin": OTHER_PIN}
+        )
+
+        assert response.status_code == 200
+        assert child_login(client, parent.family_code, chosen).status_code == 401
+        assert (
+            child_login(client, parent.family_code, chosen, pin=OTHER_PIN).status_code
+            == 200
+        )
+
+    def test_a_wrong_current_pin_changes_nothing(self, client: TestClient) -> None:
+        parent = sign_in_parent(client)
+        chosen = pseudonym()
+        create_child(client, chosen)
+        child_login(client, parent.family_code, chosen)
+
+        response = client.put(
+            CHILD_PIN_URL, json={"current_pin": WRONG_PIN, "new_pin": OTHER_PIN}
+        )
+
+        assert response.status_code == 401
+        assert child_login(client, parent.family_code, chosen).status_code == 200
+
+    def test_the_change_keeps_the_caller_in_and_logs_the_others_out(
+        self, client: TestClient
+    ) -> None:
+        parent = sign_in_parent(client)
+        chosen = pseudonym()
+        create_child(client, chosen)
+        other_device = child_login(client, parent.family_code, chosen).cookies[
+            settings.SESSION_COOKIE_NAME
+        ]
+        mine = child_login(client, parent.family_code, chosen).cookies[
+            settings.SESSION_COOKIE_NAME
+        ]
+
+        use_session(client, mine)
+        assert (
+            client.put(
+                CHILD_PIN_URL, json={"current_pin": VALID_PIN, "new_pin": OTHER_PIN}
+            ).status_code
+            == 200
+        )
+
+        assert client.get(CHILD_ME_URL).status_code == 200
+        use_session(client, other_device)
+        assert client.get(CHILD_ME_URL).status_code == 401
+
+    def test_the_new_pin_faces_the_same_rules(self, client: TestClient) -> None:
+        parent = sign_in_parent(client)
+        chosen = pseudonym()
+        create_child(client, chosen)
+        child_login(client, parent.family_code, chosen)
+
+        response = client.put(
+            CHILD_PIN_URL, json={"current_pin": VALID_PIN, "new_pin": "111111"}
+        )
+
+        assert response.status_code == 422
+
+    def test_a_parent_session_is_refused_on_the_child_route(
+        self, client: TestClient
+    ) -> None:
+        sign_in_parent(client)
+
+        response = client.put(
+            CHILD_PIN_URL, json={"current_pin": VALID_PIN, "new_pin": OTHER_PIN}
+        )
+
+        assert response.status_code == 403
 
 
 class TestChildLogin:

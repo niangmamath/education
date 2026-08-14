@@ -172,8 +172,8 @@ docs/
 | Champ | Valeur |
 |-------|--------|
 | **Titre** | Gestion des sessions familiales (Parent + Enfants) |
-| **Statut** | ✅ Accepted |
-| **Date** | 2026-08-13 |
+| **Statut** | ✅ Accepted, amendée le 2026-08-14 |
+| **Date** | 2026-08-13, amendement 2026-08-14 |
 | **Auteur** | Équipe StudentConnect |
 | **Décision** | Sessions opaques en Redis, comptes Parent et profils Enfant |
 | **Fichier** | [docs/adr/ADR-005-sessions-familiales.md](../adr/ADR-005-sessions-familiales.md) |
@@ -182,12 +182,21 @@ docs/
 
 **Résumé** : Décision sur le système d'authentification et de gestion des sessions pour les familles (parents et enfants).
 
-**Contenu prévu** :
+**Contenu** :
 - Modèle de données : Parent, Enfant, Famille
 - Authentification parent : email + mot de passe + vérification email
 - Authentification enfant : profil rattaché + pseudonyme + PIN haché
 - Sessions : cookies opaques, HttpOnly, Secure, SameSite
 - Stockage des sessions : Redis
+
+**Amendement du 2026-08-14**, après l'implémentation de l'étape 06 :
+- le pseudonyme d'un Enfant est unique dans sa famille et non sur la plateforme ;
+- chaque Parent porte un code famille, que l'Enfant saisit pour se connecter ou
+  pour demander un profil, lequel reste en attente jusqu'à activation ;
+- Argon2id remplace bcrypt pour les mots de passe et les PIN ;
+- les tentatives de PIN sont plafonnées par un compteur d'échecs par enfant ;
+- aucune table SQL de session, et un index Redis par compte permet de révoquer
+  toutes les sessions d'un profil d'un seul coup.
 
 ---
 

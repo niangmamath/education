@@ -1,15 +1,25 @@
 # Points ouverts de l'authentification, stratégies de résolution
 
-Trois écarts subsistent après la sous-étape 06.2. Aucun n'empêche 06.3 de
-démarrer, mais chacun doit être tranché avant la clôture de l'étape 06 ou avant
-la mise en service. Cette page décrit pour chacun l'état constaté, les options et
-la voie recommandée.
+Trois écarts subsistaient après la sous-étape 06.2. Cette page décrit pour chacun
+l'état constaté, les options et la voie recommandée.
+
+**Point 1 réglé le 14 août 2026** : ADR-005 a été amendée, l'option A ci-dessous
+ayant été retenue. Le constat et les options sont conservés pour mémoire du
+raisonnement. Les points 2 et 3 restent ouverts.
 
 ---
 
-## 1. Argon2id face à la mention bcrypt d'ADR-005
+## 1. Argon2id face à la mention bcrypt d'ADR-005, réglé
 
-### Constat
+### Résolution
+
+ADR-005 porte depuis le 14 août 2026 une section « Amendement » qui nomme
+Argon2id, la bibliothèque `argon2-cffi`, ses paramètres par défaut alignés sur la
+RFC 9106 et le réhachage à la connexion. L'extrait de modèle mentionnant bcrypt
+est signalé comme antérieur à l'amendement, la référence bcrypt a été remplacée et
+l'historique de l'ADR porte la ligne correspondante.
+
+### Constat d'origine
 
 `app/core/security.py` hache les mots de passe en **Argon2id**. ADR-005 écrit
 `hashed_pin = Column(String(255))  # bcrypt hash` dans son extrait de modèle et
