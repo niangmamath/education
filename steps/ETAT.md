@@ -4,7 +4,7 @@
 
 - Projet : StudentConnect
 - Date : 13 août 2026
-- Dépôt : `Tidianesarrndiaye-org/StudentConnect`
+- Dépôt : `Tidianesarrndiaye/StudentConnect`
 - Branche : `main`
 - Version cible : `V0.1`
 
@@ -93,6 +93,141 @@ Les dossiers détaillés des étapes 04 à 16 sont temporairement retirés du d�
 - [x] Validation GitHub Actions et fusion vers `main`.
 - [x] Étape 05 clôturée.
 
+## Étape 06, backend identité et famille, en cours
+
+Travaux menés sur la branche `feat/backend-identity-family`, non fusionnée.
+
+### 06.1, modèles Parent et Enfant, validée localement
+
+- [x] Modèles SQLAlchemy `Parent` et `Child`, relation familiale en cascade.
+- [x] Migration `0002_identity_family_models`, réversible jusqu’à `base`.
+- [x] Dérive entre modèles et migration corrigée sur `auth_parents.email` :
+      l’unicité vient d’une `UniqueConstraint` nommée, l’index redondant a été
+      retiré et `alembic check` est vert.
+- [x] `alembic check` et le cycle downgrade puis upgrade ajoutés à l’API CI.
+- [x] Validation indépendante rejouée localement le 14 août 2026 : `alembic check`
+      vert, cycle downgrade base puis upgrade head rejoué, aucune dérive.
+- [ ] Clôture distante.
+
+### 06.2, authentification Parent et sessions, validée localement
+
+- [x] Routes `POST /api/v1/auth/parent/register`, `POST /api/v1/auth/parent/login`,
+      `DELETE /api/v1/auth/logout` et `GET /api/v1/auth/me`.
+- [x] Mots de passe hachés en Argon2id, réponses identiques pour un mot de passe
+      erroné et une adresse inconnue.
+- [x] Sessions opaques en Redis, indexées par l’empreinte du jeton, cookie
+      `HttpOnly` et `SameSite=lax`, révocation immédiate à la déconnexion.
+- [x] Aucune table SQL de session, conformément à ADR-005.
+- [x] Validation indépendante rejouée localement le 14 août 2026 : parcours complet
+      sur l’API vivante, mot de passe erroné et adresse inconnue rendant une réponse
+      identique, session Redis créée puis supprimée à la déconnexion.
+- [ ] Clôture distante.
+
+### 06.3, création et accès Enfant, validée localement
+
+- [x] **Unicité du pseudonyme familiale et non globale**, sur décision du
+      propriétaire : deux familles peuvent chacune avoir une `lea`, et le
+      pseudonyme ne désigne plus personne à lui seul.
+- [x] Code famille de six caractères frappé à l’inscription du Parent, rendu dans
+      son profil public, alphabet sans caractères confondables à la lecture.
+- [x] Régénération du code par le Parent, `POST /api/v1/auth/parent/family-code/regenerate` :
+      l’ancien code cesse aussitôt de fonctionner, les sessions déjà ouvertes et
+      les profils existants ne sont pas touchés.
+- [x] Routes `POST /api/v1/auth/children`, `POST /api/v1/auth/child/register`,
+      `GET /api/v1/auth/children`, `POST /api/v1/auth/children/{id}/activate`,
+      `DELETE /api/v1/auth/children/{id}`, `POST /api/v1/auth/child/login` et
+      `GET /api/v1/auth/child/me`.
+- [x] Retrait d’une demande en attente par le Parent, complément de la
+      régénération du code : le profil est supprimé et son pseudonyme redevient
+      libre. Un profil actif répond `409`, son retrait relevant d’une décision à
+      part entière.
+- [x] Auto-inscription de l’Enfant par le code famille : le profil est créé en
+      attente, ne peut pas ouvrir de session, et n’est utilisable qu’une fois
+      activé par le Parent. Connaître un code permet de demander à rejoindre une
+      famille, jamais d’y entrer.
+- [x] Trois états de profil, `pending`, `active` et `disabled`, à la place du
+      booléen `is_active`.
+- [x] PIN de six chiffres haché en Argon2id, chiffre répété et suite continue
+      refusés à la création.
+- [x] Session Enfant `user_type=child` d’une journée au lieu de sept, socle de
+      session et route de déconnexion réutilisés sans modification.
+- [x] Verrou sur les tentatives de PIN, compteur d’échecs par enfant en Redis à
+      fenêtre glissante, `429` au-delà du plafond y compris pour le bon PIN.
+- [x] Isolation familiale portée par les requêtes : rattachement à la session ou
+      au code famille, liste filtrée, activation limitée à sa propre famille avec
+      un `404` indistinct, `403` croisé entre espace Parent et espace Enfant.
+- [x] Migration `0003_family_code_child_status`, avec remplissage des codes famille
+      existants et bascule du booléen vers le statut. Son retour arrière est
+      réversible tant qu’aucun pseudonyme n’est partagé par deux familles ; sinon
+      elle s’arrête avec un message plutôt que de renommer des profils.
+- [x] Validation indépendante rejouée localement le 14 août 2026, consignée dans
+      `rapport_2026-08-14_cloture_etape_06.md`.
+- [ ] Clôture distante.
+
+### 06.4, clôture de l’étape, en cours
+
+- [x] Séquence complète de l’API CI rejouée localement, tout vert.
+- [x] Rapport de validation `rapport_2026-08-14_cloture_etape_06.md` produit.
+- [x] `PLANNING.md` complété par la phase 2 et les tâches BE-01 à BE-04.
+- [x] Branche `feat/backend-identity-family` poussée, commits `ae97bd9`, `ff58ed0`,
+      `da601ca` et la fusion `81da709`.
+- [x] Pull Request #4 ouverte vers `main`.
+- [x] Conflit avec `main` résolu : la PR #3 du 13 août avait fusionné une version
+      antérieure des mêmes fichiers, ce qui empêchait GitHub de construire la
+      fusion d’essai et donc de lancer le moindre contrôle. `main` a été fusionnée
+      dans la branche ; l’arbre obtenu est identique à celui de la branche, `main`
+      n’apportant rien qu’elle n’avait déjà.
+- [x] API CI distante réussie, `test` en 1 min 49 s.
+- [x] Secret Scan distant réussi, `Gitleaks` en 18 s.
+- [ ] Fusion vers `main`, à la main du propriétaire.
+
+### Points ouverts
+
+Les stratégies de résolution des trois premiers points sont décrites dans
+`docs/backend/points-ouverts-authentification.md`.
+
+- ADR-005 cite bcrypt dans un extrait illustratif alors que l’implémentation
+  retient Argon2id ; l’ADR reste à amender. À trancher avant que de vrais comptes
+  n’existent, car aucune migration automatique ne franchit un changement
+  d’algorithme.
+- La vérification d’adresse email prévue par ADR-005 n’est pas implémentée faute
+  de service d’envoi ; `is_verified` reste à `false` et la connexion ne l’exige pas.
+- Aucune limitation de débit sur la connexion Parent, alors que `RATE_LIMIT` existe
+  déjà sans être branché. La connexion Enfant fait exception depuis 06.3 : elle
+  dispose d’un compteur d’échecs par enfant, qui protège un profil et non le service.
+- ADR-005 montre une connexion Enfant par pseudonyme et PIN seuls, ce que la règle
+  d’unicité familiale rend impossible. L’ADR reste à amender sur ce point comme sur
+  celui de l’algorithme de hachage.
+- Rien ne plafonne les profils en attente : qui connaît un code famille peut
+  remplir la liste d’un Parent de profils `pending`, sans jamais obtenir d’accès.
+  Le Parent peut régénérer son code et écarter ces demandes une à une, mais ni
+  plafond ni notification n’existent encore.
+- [x] `argon2-cffi` intégré aux images `api` et `worker` reconstruites.
+- [x] `steps/MANIFESTE.md` régénéré depuis l’arborescence réelle, avec la règle
+      d’inventaire et la commande de régénération.
+
+## Résultats techniques de l’étape 06
+
+```text
+Alembic    : 0003_family_code_child_status (head), downgrade -1 puis base, retour au head validés
+Alembic    : check vert, aucune dérive entre modèles et base
+Ruff       : vert, format inclus, 50 fichiers
+Mypy       : vert sur 23 fichiers
+Pytest     : 123 tests réussis
+API vivante: parent register 201 avec code famille, login 200 avec cookie durci, logout 204
+API vivante: deux familles créent chacune une « lea » en 201, doublon interne refusé en 409
+API vivante: child login 200 par code famille, code d’une autre famille et code inconnu en 401
+API vivante: auto-inscription 201 en attente, connexion refusée 403, activation par le parent 200
+API vivante: activation par une autre famille 404, cinq PIN erronés puis verrou 429
+API vivante: régénération 200, ancien code 401 et 404, nouveau code 200, session ouverte intacte
+API vivante: demande en attente écartée 204 et pseudonyme libéré, profil actif 409, inexistant 404
+```
+
+## Dernier rapport appliqué
+
+`steps/06_backend_identite_famille/rapport_2026-08-14_cloture_etape_06.md`.
+
 ## Prochaine action
 
-Préparer l’étape 06 selon le planning produit.
+Obtenir des contrôles distants verts sur la Pull Request, fusionner vers `main`,
+puis ouvrir l’étape 07, référentiel de compétences.

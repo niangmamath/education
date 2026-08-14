@@ -6,6 +6,7 @@ from typing import Any
 
 import structlog
 from fastapi import FastAPI, Request, status
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
@@ -190,7 +191,10 @@ def validation_exception_handler(
             "error": {
                 "code": "VALIDATION_ERROR",
                 "message": "Validation error",
-                "details": exc.errors(),
+                # A field validator raising ValueError puts that exception object
+                # in the error context, which plain JSON cannot render; without
+                # the encoder the response collapses into a 500.
+                "details": jsonable_encoder(exc.errors()),
             },
         },
     )

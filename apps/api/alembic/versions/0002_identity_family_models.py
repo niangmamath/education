@@ -43,7 +43,6 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("email", name="uq_auth_parents_email"),
     )
-    op.create_index("ix_auth_parents_email", "auth_parents", ["email"], unique=False)
 
     op.create_table(
         "auth_children",
@@ -81,5 +80,4 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.drop_index("ix_auth_children_parent_id", table_name="auth_children")
     op.drop_table("auth_children")
-    op.drop_index("ix_auth_parents_email", table_name="auth_parents")
     op.drop_table("auth_parents")

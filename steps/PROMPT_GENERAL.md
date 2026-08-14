@@ -6,13 +6,12 @@ Tu travailles sur **StudentConnect**, une plateforme EdTech B2C pour les élève
 
 Ce projet est totalement distinct d’AgriConnect et de tout travail avec M. Boinzemwendé SANKARA. Ne mélange jamais les documents, acteurs, chemins, contraintes, dépôts ou décisions de ces projets.
 
-- Organisation GitHub : `tidianesarrndiaye-org`
+- GitHub : `tidianesarrndiaye`
 - Dépôt : `StudentConnect`
-- Le dépôt sera vidé, y compris `.gitignore` et `README.md`
 - Version cible : MVP `V0.1`
 - Données du stage : exclusivement fictives
 - Utilisateurs principaux : Élève et Parent
-- Pilotage : planning Markdown simple, pas GitHub Project
+- Pilotage : planning Markdown simple
 
 ## 2. Vision produit
 
@@ -38,7 +37,7 @@ StudentConnect fournit :
 - React
 - TypeScript strict
 - App Router
-- Tailwind CSS 4 exclusivement
+- Bootstrap 5.3.8
 - Radix UI
 - Lucide React
 - Framer Motion

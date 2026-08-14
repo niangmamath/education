@@ -50,4 +50,7 @@ jobs:
       - run: ruff check .
       - run: mypy app --ignore-missing-imports
       - run: alembic upgrade head
+      - run: alembic check
+      - run: alembic downgrade base
+      - run: alembic upgrade head
       - run: pytest -q

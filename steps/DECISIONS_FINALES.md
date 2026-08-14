@@ -25,6 +25,11 @@
 
 - Parent : email, mot de passe et email vérifié.
 - Enfant : profil rattaché, pseudonyme et PIN haché.
+- Le pseudonyme d’un Enfant est unique dans sa famille, jamais sur la plateforme.
+- Chaque Parent porte un code famille, identifiant public de la famille.
+- L’Enfant se connecte avec le code famille, son pseudonyme et son PIN.
+- Un Enfant peut créer son profil avec le code famille ; ce profil reste en attente
+  tant que le Parent ne l’a pas activé.
 - Sessions opaques en cookie HttpOnly, Secure et SameSite.
 - Sessions stockées dans Redis.
 

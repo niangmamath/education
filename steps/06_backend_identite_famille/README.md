@@ -24,6 +24,8 @@ Implémenter l’identité Parent et Élève, les relations familiales et les se
 - le parent utilise email et mot de passe ;
 - l’enfant n’a ni email ni téléphone ;
 - l’enfant utilise un pseudonyme et un PIN haché ;
+- le pseudonyme est unique dans la famille, jamais sur la plateforme ;
+- l’enfant atteint sa famille par le code famille de son parent ;
 - les sessions opaques seront stockées dans Redis ;
 - un parent ne peut accéder qu’aux enfants associés ;
 - toutes les données de stage restent fictives.
