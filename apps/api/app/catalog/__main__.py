@@ -22,11 +22,17 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
+import tempfile
+
 from app.catalog.checks import check_catalogue
 from app.catalog.h5p import PackageRefused
 from app.catalog.registration import RegistrationRefused, register_package
+from sqlalchemy import select
 from app.catalog.storage import S3ObjectStore
+from app.content import deploy as runtime
+from app.core.config import settings
 from app.core.db import DATABASE_URL, sync_database_url
+from app.models.catalog import Activity
 
 EXIT_OK: Final = 0
 EXIT_REFUSED: Final = 3
@@ -59,9 +65,27 @@ def main(argv: list[str] | None = None) -> int:
     )
     check.add_argument("--database-url", default=DATABASE_URL, help=argparse.SUPPRESS)
 
+    deploy = verbs.add_parser(
+        "deploy", help="déployer un paquet vers l’origine de contenu"
+    )
+    deploy.add_argument("activite", help="code de l’activité à déployer")
+    deploy.add_argument("--database-url", default=DATABASE_URL, help=argparse.SUPPRESS)
+
+    runtime_parser = verbs.add_parser(
+        "deploy-runtime",
+        help="déployer les bibliothèques et le lecteur préparés hors ligne",
+    )
+    runtime_parser.add_argument(
+        "dossier", type=Path, help="dossier préparé contenant libraries/ et player/"
+    )
+
     arguments = parser.parse_args(argv)
     if arguments.verbe == "check":
         return _check(arguments.database_url)
+    if arguments.verbe == "deploy":
+        return _deploy(arguments.activite, arguments.database_url)
+    if arguments.verbe == "deploy-runtime":
+        return _deploy_runtime(arguments.dossier)
     return _register(
         arguments.activite,
         arguments.fichier,
@@ -104,6 +128,67 @@ def _register(
     print(f"Taille     : {report.size_bytes} octets")
     print(f"Objet      : {report.object_key}")
     print("Paquet enregistré.")
+    return EXIT_OK
+
+
+def _deploy(activity_code: str, url: str) -> int:
+    """Lay a vetted package out where the content origin can serve it.
+
+    The archive is read back from the bucket rather than from any copy that
+    happens to be on disk: what is served must be what was vetted.
+    """
+    engine = create_engine(sync_database_url(url))
+    try:
+        with Session(engine) as session:
+            activity = session.scalars(
+                select(Activity).where(Activity.code == activity_code)
+            ).one_or_none()
+            if activity is None or activity.h5p_package is None:
+                print(
+                    f"L’activité « {activity_code} » n’existe pas ou n’a pas de "
+                    "paquet H5P.",
+                    file=sys.stderr,
+                )
+                return EXIT_REFUSED
+            package = activity.h5p_package
+            object_key, digest = package.object_key, package.sha256
+    finally:
+        engine.dispose()
+
+    root = Path(settings.CONTENT_RUNTIME_ROOT)
+    with tempfile.TemporaryDirectory() as workspace:
+        archive = Path(workspace) / "package.h5p"
+        try:
+            S3ObjectStore().get(object_key, archive)
+            report = runtime.deploy_package(root, archive, digest)
+        except runtime.DeploymentRefused as refusal:
+            print(str(refusal), file=sys.stderr)
+            return EXIT_REFUSED
+
+    print(f"Activité   : {activity_code}")
+    print(f"Empreinte  : {report.digest}")
+    print(f"Déployé    : {report.files} fichiers, {report.bytes_written} octets")
+    print(f"Chemin     : {report.path}")
+    return EXIT_OK
+
+
+def _deploy_runtime(prepared: Path) -> int:
+    """Put the offline-prepared libraries and player in place.
+
+    ADR-012, condition 3: the libraries are internal artefacts, prepared away
+    from the platform and frozen. An inventory of their digests is written
+    beside them, because an artefact nobody can name is not frozen.
+    """
+    root = Path(settings.CONTENT_RUNTIME_ROOT)
+    try:
+        inventory = runtime.deploy_libraries(root, prepared / "libraries")
+        players = runtime.deploy_player(root, prepared / "player")
+    except runtime.DeploymentRefused as refusal:
+        print(str(refusal), file=sys.stderr)
+        return EXIT_REFUSED
+
+    print(f"Bibliothèques : {len(inventory)} fichiers, inventaire écrit")
+    print(f"Lecteur       : {players} fichiers")
     return EXIT_OK
 
 

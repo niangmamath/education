@@ -66,7 +66,7 @@ Secret Scan: succès
 
 ## Organisation des étapes
 
-Les dossiers détaillés des étapes 10 à 16 sont temporairement retirés du dépôt. Chaque dossier rejoint le dépôt au démarrage de l’étape correspondante ; celui de l’étape 07 y est entré le 14 août 2026, celui de l’étape 08 et celui de l’étape 09 le 15 août 2026.
+Les dossiers détaillés des étapes 12 à 16 sont temporairement retirés du dépôt. Chaque dossier rejoint le dépôt au démarrage de l’étape correspondante ; celui de l’étape 07 y est entré le 14 août 2026, ceux des étapes 08, 09, 10 et 11 le 15 août 2026.
 
 ## Étape 04, spike H5P critique
 
@@ -564,7 +564,9 @@ consignées ci-dessous.
 - [x] Séquence complète de l'API CI rejouée localement, tout vert, 361 tests.
 - [x] Rapport `rapport_2026-08-15_1615_affectations.md` produit.
 - [x] Une seule Pull Request pour toute l'étape.
-- [ ] Clôture distante, à consigner au premier commit de l'étape 10.
+- [x] Clôture distante : Pull Request #16 fusionnée le 15 août 2026, commit de
+      fusion `71af66e`. Dette résorbée ensuite par la Pull Request #17, commit
+      `5bf1df0`, contrôles verts sur les deux.
 
 ### Dette de l'étape 09, résorbée le 15 août 2026
 
@@ -618,6 +620,69 @@ Tests      : terminer avant de commencer, rouvrir, reprendre, annuler une termin
 Tests      : annulation conservant la ligne et sa date
 ```
 
+## Prérequis transverse, runtime de contenu, terminé
+
+Travaux menés sur la branche `feat/etape-11-runtime-xapi`, fusionnés avant les
+étapes 10 et 11 dont il est le prérequis commun.
+
+### Un trou du découpage initial
+
+Trois étapes présupposent un **runtime de contenu** sans qu'aucune ne le
+construise : 11.2 parle de « ne pas exposer l'identité au runtime de contenu »,
+13.1 d'une « activité à reprendre », et 16.1 teste les activités de bout en bout.
+Le propriétaire a validé le 15 août 2026 de construire ce runtime avant les
+étapes qui le présupposent : l'endpoint xAPI de 11.1 n'a aucun producteur tant
+que rien ne joue de contenu, et une tentative de l'étape 10 n'a pas davantage de
+sens sans contenu jouable.
+
+### Une erreur d'ordre, corrigée le 15 août 2026
+
+Ce travail avait d'abord été rattaché à l'étape 11, **avec un décalage de
+l'étape 10 après elle**. Ce décalage était une erreur, et il n'avait pas été
+soumis au propriétaire : l'objectif de 11.3 est de produire des agrégats « à
+partir des événements **et résultats** », et ces résultats sont ceux de 10.3.
+**L'étape 11 dépend de l'étape 10, pas l'inverse.**
+
+Le raisonnement initial — une tentative n'a de sens qu'une fois un contenu
+jouable — justifiait de faire le runtime en premier, pas d'inverser deux étapes.
+Une conclusion valide avait été étendue au-delà de sa portée.
+
+L'ordre du découpage initial est rétabli. Le runtime, lui, n'est le contenu
+d'aucune des deux étapes : c'est leur **prérequis commun**, fusionné avant elles,
+écart assumé à la règle d'une seule fusion par étape et validé par le
+propriétaire.
+
+### Ce que le runtime apporte
+
+- [x] **Une seconde origine, servie par nginx.** Un contenu H5P est du
+      JavaScript tiers qui a besoin d'`eval` et de scripts en ligne pour
+      fonctionner. Le servir depuis l'origine de l'application lui donnerait
+      accès aux cookies de session, et aucune CSP ne rattrape cela puisque le
+      navigateur le considérerait comme faisant partie du site. **La séparation
+      est la mesure elle-même**, et c'est aussi ce qui rend acceptables les
+      `unsafe-inline` et `unsafe-eval` de sa CSP : ils ne coûtent rien là où il
+      n'y a rien à prendre.
+- [x] **Un ticket remplace le cookie**, qui ne voyage pas jusqu'à l'autre
+      origine. Valeur opaque frappée quand un enfant ouvre une activité en
+      cours, gardée trente minutes dans Redis, vérifiée par `auth_request` à
+      chaque fichier. Il ne porte aucune identité : il nomme une affectation et
+      le contenu qu'il ouvre. Rangé sous son empreinte comme une session, donc
+      qui lit Redis apprend quels contenus sont ouverts, jamais les tickets.
+- [x] Un ticket pour un autre contenu est refusé comme un ticket absent.
+- [x] **Le déploiement est l'endroit où l'archive est enfin ouverte**, après
+      avoir été vérifiée en 08.2. Elle est relue depuis le bucket, jamais depuis
+      une copie sur disque, et les contrôles de chemin sont rejoués à l'écriture
+      — non par méfiance envers le premier contrôle, mais envers l'intervalle
+      entre les deux.
+- [x] L'empreinte nomme le dossier : redéployer est idempotent, deux paquets ne
+      peuvent pas se télescoper. Volume monté **en lecture seule** dans
+      l'origine.
+- [x] Inventaire des empreintes des bibliothèques, condition 3 d'ADR-012 : un
+      artefact que personne ne peut nommer n'est pas figé.
+- [x] `play.html`, seule partie de cette origine que nous ayons écrite, remonte
+      les événements xAPI par `postMessage` sans jamais parler à l'API.
+- [x] 23 tests dédiés, 397 au total. Éprouvé sur la pile vivante.
+
 ## Prochaine action
 
-Ouvrir l'étape 10, tentatives et résultats.
+Mener l'étape 10, tentatives et résultats, puis l'étape 11.

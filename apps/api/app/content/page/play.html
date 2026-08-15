@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Activité</title>
+<link rel="stylesheet" href="/player/styles/h5p.css">
+<style>
+  body { margin: 0; font-family: system-ui, sans-serif; background: #fff; color: #17202a; }
+  #h5p { min-height: 320px; }
+  #erreur { display: none; padding: 16px; color: #a40000; }
+</style>
+</head>
+<body>
+<div id="h5p"></div>
+<p id="erreur" role="alert"></p>
+<script src="/player/main.bundle.js"></script>
+<script>
+// This page runs on the content origin and knows nothing about anyone. It reads
+// the content to play and the ticket that opens it from its own URL, and hands
+// every xAPI statement up to the application through postMessage — the only
+// channel two origins are allowed, and the reason the separation costs nothing.
+(function () {
+  var params = new URLSearchParams(window.location.search);
+  var digest = params.get('c');
+  var ticket = params.get('t');
+  var erreur = document.getElementById('erreur');
+
+  function fail(message) {
+    erreur.textContent = message;
+    erreur.style.display = 'block';
+  }
+
+  if (!digest || !ticket) {
+    fail("Contenu non spécifié.");
+    return;
+  }
+
+  var query = '?c=' + encodeURIComponent(digest) + '&t=' + encodeURIComponent(ticket);
+  var options = {
+    h5pJsonPath: '/content/' + digest,
+    librariesPath: '/libraries',
+    frameJs: '/player/frame.bundle.js' + query,
+    frameCss: '/player/styles/h5p.css' + query,
+    // Every asset request carries the ticket, because the origin checks each one.
+    customJs: [],
+    urlPrefix: query
+  };
+
+  new H5PStandalone.H5P(document.getElementById('h5p'), options)
+    .then(function () {
+      if (window.H5P && window.H5P.externalDispatcher) {
+        window.H5P.externalDispatcher.on('xAPI', function (event) {
+          // The parent decides what to do with it; this page never talks to the
+          // API itself, and holds no credential that would let it.
+          window.parent.postMessage(
+            { type: 'studentconnect:xapi', statement: event.data.statement },
+            '*'
+          );
+        });
+      }
+      window.parent.postMessage({ type: 'studentconnect:ready' }, '*');
+    })
+    .catch(function (error) {
+      fail("Ce contenu n’a pas pu être ouvert.");
+      window.parent.postMessage({ type: 'studentconnect:error' }, '*');
+      console.error(error);
+    });
+})();
+</script>
+</body>
+</html>

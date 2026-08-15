@@ -27,6 +27,8 @@ class ObjectStore(Protocol):
 
     def presign(self, key: str, expires_in: int) -> str: ...
 
+    def get(self, key: str, path: Path) -> None: ...
+
 
 class S3ObjectStore:
     """The real bucket, reached with the credentials of the configuration."""
@@ -52,6 +54,15 @@ class S3ObjectStore:
 
     def remove(self, key: str) -> None:
         self._client.delete_object(Bucket=self.bucket, Key=key)
+
+    def get(self, key: str, path: Path) -> None:
+        """Fetch the object back, to lay it out for the runtime.
+
+        The archive kept in the bucket is the only source of truth: deploying
+        reads it back rather than trusting a copy that happens to be on disk.
+        """
+        with path.open("wb") as handle:
+            self._client.download_fileobj(self.bucket, key, handle)
 
     def presign(self, key: str, expires_in: int) -> str:
         """A link that opens this object, for a short while and for no other.

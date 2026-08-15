@@ -72,18 +72,19 @@ class ChildAssignmentPublic(BaseModel):
 
 
 class ActivityContent(BaseModel):
-    """A short-lived way to fetch one package, and what it plays.
+    """Where to play one activity, and for how long that stays true.
 
-    The link is signed and expires. It is not a location a client may keep: the
-    bucket is private, by ADR-008, and access to a content follows the
-    assignment rather than the content.
+    `play_url` points at the **content origin**, not at the API: the runtime is
+    isolated behind its own origin so that a content cannot reach the
+    application's cookies, per ADR-012. The page is meant to be embedded in a
+    sandboxed iframe and talks back only through `postMessage`.
 
-    This is not yet the isolated runtime origin ADR-012 asks for. Serving the
-    unpacked package under its own domain and CSP is infrastructure, and the
-    xAPI endpoint that will capture what happens in it is step 11.
+    The ticket in the URL is what the content origin checks on every asset it
+    serves. It expires, and it opens exactly one content — access follows the
+    assignment, never the content itself.
     """
 
     library_name: str
     library_version: str
-    package_url: str
+    play_url: str
     expires_in: int

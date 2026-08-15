@@ -6,7 +6,7 @@ Main router for all API endpoints.
 
 from fastapi import APIRouter
 
-from app.api.v1 import assignments, auth, catalog, children, referential
+from app.api.v1 import assignments, auth, catalog, children, internal, referential
 
 # Create the main API router
 api_router = APIRouter()
@@ -18,6 +18,7 @@ api_router.include_router(
 )
 api_router.include_router(catalog.router, prefix="/catalog", tags=["catalog"])
 api_router.include_router(assignments.router, tags=["assignments"])
+api_router.include_router(internal.router, tags=["internal"])
 
 
 # Sub-routers added as their step implements them:

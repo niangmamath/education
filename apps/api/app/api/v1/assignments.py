@@ -16,10 +16,11 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, Query, status
 
-from app.api.deps import CurrentChild, CurrentParent, DbSession
+from app.api.deps import CurrentChild, CurrentParent, DbSession, RedisClient
 from app.assignments import service
 from app.models.assignment import ASSIGNMENT_STATUSES
-from app.catalog.storage import S3ObjectStore
+from app.content.tokens import CONTENT_TICKET_TTL_SECONDS, mint_ticket
+from app.core.config import settings
 from app.schemas.assignment import (
     ActivityContent,
     AssignmentCreateRequest,
@@ -27,8 +28,6 @@ from app.schemas.assignment import (
     ChildAssignmentPublic,
 )
 
-# Long enough to open an activity, too short to be worth keeping.
-CONTENT_LINK_TTL_SECONDS = 300
 
 router = APIRouter()
 
@@ -121,22 +120,27 @@ async def complete_my_activity(
 
 @router.get("/me/activities/{assignment_id}/content", response_model=ActivityContent)
 async def read_my_activity_content(
-    assignment_id: uuid.UUID, child: CurrentChild, db: DbSession
+    assignment_id: uuid.UUID,
+    child: CurrentChild,
+    db: DbSession,
+    client: RedisClient,
 ) -> ActivityContent:
-    """A signed, short-lived link to the package of an activity under way.
+    """Where to play an activity under way, and the ticket that opens it.
 
-    The bucket stays private: nothing is readable without a signature, and the
-    signature lasts five minutes. Access follows the assignment, so a child who
-    has not started, or has finished, gets nothing.
+    The URL points at the content origin, which will check the ticket on every
+    asset it serves. Access follows the assignment, so a child who has not
+    started, or has finished, gets nothing at all.
     """
-    _, package = await service.content_for(db, child, assignment_id)
+    assignment, package = await service.content_for(db, child, assignment_id)
+    ticket = await mint_ticket(client, assignment.id, package.sha256)
     return ActivityContent(
         library_name=package.library_name,
         library_version=package.library_version,
-        package_url=S3ObjectStore().presign(
-            package.object_key, CONTENT_LINK_TTL_SECONDS
+        play_url=(
+            f"{settings.CONTENT_ORIGIN_URL}/player/play.html"
+            f"?c={package.sha256}&t={ticket}"
         ),
-        expires_in=CONTENT_LINK_TTL_SECONDS,
+        expires_in=CONTENT_TICKET_TTL_SECONDS,
     )
 
 

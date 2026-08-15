@@ -90,6 +90,38 @@
 | AFF-03 | Exposer l’API Élève | AFF-02 | Terminé | Liste, démarrage, achèvement, aucun retour arrière |
 | AFF-04 | Clôturer l’étape 09 | AFF-03 | Terminé | Séquence de l’API CI rejouée, 361 tests, PR unique |
 
+### Prérequis transverse
+
+| ID | Travail | Dépendances | Statut | Preuve |
+|---|---|---|---|---|
+| PRE-01 | Construire le runtime de contenu isolé | AFF-04 | Terminé | Origine isolée, tickets, déploiement, 23 tests |
+
+`PRE-01` comble un trou du découpage initial : trois étapes présupposent un
+runtime de contenu sans qu’aucune ne le construise. Il n’est le contenu d’aucune
+étape, c’est le prérequis commun des étapes 10 et 11, fusionné avant elles.
+
+### Phase 6, tentatives et résultats
+
+| ID | Travail | Dépendances | Statut | Preuve |
+|---|---|---|---|---|
+| TEN-01 | Modéliser tentatives et réponses | PRE-01 | À faire | |
+| TEN-02 | Exposer l’API des tentatives | TEN-01 | À faire | |
+| TEN-03 | Calculer les résultats par règles explicites | TEN-02 | À faire | |
+| TEN-04 | Clôturer l’étape 10 | TEN-03 | À faire | |
+
+### Phase 7, événements xAPI et progrès
+
+| ID | Travail | Dépendances | Statut | Preuve |
+|---|---|---|---|---|
+| XAP-01 | Ingérer et valider les événements xAPI | TEN-04 | À faire | |
+| XAP-02 | Relier l’acteur pseudonyme à l’Élève | XAP-01 | À faire | |
+| XAP-03 | Agréger les progrès | XAP-02, TEN-03 | À faire | |
+| XAP-04 | Clôturer l’étape 11 | XAP-03 | À faire | |
+
+L’étape 11 **dépend de l’étape 10** : `XAP-03` produit des agrégats « à partir
+des événements et résultats », et ces résultats sont ceux de `TEN-03`. Un
+décalage inverse avait été inscrit par erreur le 15 août 2026 ; il est corrigé.
+
 ### Prochaine tâche
 
-Ouvrir l’étape 10, tentatives et résultats.
+Mener TEN-01, la modélisation des tentatives.

@@ -75,6 +75,12 @@ class Settings(BaseSettings):
     S3_BUCKET_PRIVATE_EVIDENCE: str = "studentconnect-private-evidence"
     S3_BUCKET_THUMBNAILS: str = "studentconnect-thumbnails"
 
+    # Content runtime (ADR-012, condition 5: a runtime isolated behind its own
+    # origin, so that a content cannot read the application's cookies). The API
+    # writes the deployed tree, the content origin serves it read-only.
+    CONTENT_RUNTIME_ROOT: str = "/srv/content"
+    CONTENT_ORIGIN_URL: str = "http://localhost:8081"
+
     # Logging
     LOG_LEVEL: str = "INFO"
     LOG_FORMAT: str = "json"
