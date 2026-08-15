@@ -2,11 +2,11 @@
 
 ## Métadonnées
 
-- Étape : 11, événements xAPI et progrès
-- Sous-étape : 11.0, runtime de contenu
+- Étape : prérequis transverse aux étapes 10 et 11
+- Sous-étape : runtime de contenu
 - Date et heure : 15 août 2026, 16h30
 - Agent : Claude Code
-- ID du planning : XAP-00
+- ID du planning : PRE-01
 - Branche : `feat/etape-11-runtime-xapi`
 - Commit : `cd40620`
 - Statut : Terminé
@@ -170,8 +170,16 @@ Aucun.
 
 ## Prochaines actions
 
-1. Sous-étape 11.1, ingestion et validation des événements xAPI.
-2. Puis 11.2, 11.3 et la clôture de l'étape.
+1. Étape 10, tentatives et résultats.
+2. Puis l'étape 11, dont 11.3 consomme les résultats de 10.3.
+
+## Correction d'ordre
+
+Ce travail avait d'abord été rattaché à l'étape 11, avec un décalage de l'étape
+10 après elle. Le décalage était une erreur : 11.3 produit des agrégats « à
+partir des événements **et résultats** », et ces résultats sont ceux de 10.3.
+L'ordre initial du découpage est rétabli. Le runtime, lui, reste avant les deux :
+il est leur prérequis commun.
 
 ## Mise à jour appliquée à ETAT.md
 

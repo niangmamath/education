@@ -620,31 +620,39 @@ Tests      : terminer avant de commencer, rouvrir, reprendre, annuler une termin
 Tests      : annulation conservant la ligne et sa date
 ```
 
-## Étape 11, événements xAPI et progrès, en cours
+## Prérequis transverse, runtime de contenu, terminé
 
-Travaux menés sur la branche `feat/etape-11-runtime-xapi`.
+Travaux menés sur la branche `feat/etape-11-runtime-xapi`, fusionnés avant les
+étapes 10 et 11 dont il est le prérequis commun.
 
-### Un trou du découpage initial, comblé par une sous-étape 11.0
+### Un trou du découpage initial
 
 Trois étapes présupposent un **runtime de contenu** sans qu'aucune ne le
 construise : 11.2 parle de « ne pas exposer l'identité au runtime de contenu »,
 13.1 d'une « activité à reprendre », et 16.1 teste les activités de bout en bout.
-Le propriétaire a validé le 15 août 2026 de le rattacher au début de l'étape 11,
-avant 11.1, pour trois raisons :
+Le propriétaire a validé le 15 août 2026 de construire ce runtime avant les
+étapes qui le présupposent : l'endpoint xAPI de 11.1 n'a aucun producteur tant
+que rien ne joue de contenu, et une tentative de l'étape 10 n'a pas davantage de
+sens sans contenu jouable.
 
-- l'endpoint xAPI de 11.1 n'a **aucun producteur** tant que rien ne joue de
-  contenu ; le construire d'abord reviendrait à écrire un récepteur qu'on ne peut
-  éprouver qu'avec des requêtes fabriquées à la main ;
-- 11.2 parle déjà du runtime comme d'une chose existante ;
-- les conditions 3, 5 et 6 d'ADR-012 forment un bloc — bibliothèques figées,
-  origine isolée avec CSP, endpoint authentifié — et les séparer reviendrait à
-  valider trois fois la même chose.
+### Une erreur d'ordre, corrigée le 15 août 2026
 
-L'étape 10, tentatives et résultats, est décalée après l'étape 11 : une tentative
-n'a de sens qu'une fois qu'un contenu peut réellement être joué et qu'il émet des
-événements.
+Ce travail avait d'abord été rattaché à l'étape 11, **avec un décalage de
+l'étape 10 après elle**. Ce décalage était une erreur, et il n'avait pas été
+soumis au propriétaire : l'objectif de 11.3 est de produire des agrégats « à
+partir des événements **et résultats** », et ces résultats sont ceux de 10.3.
+**L'étape 11 dépend de l'étape 10, pas l'inverse.**
 
-### 11.0, runtime de contenu, terminée
+Le raisonnement initial — une tentative n'a de sens qu'une fois un contenu
+jouable — justifiait de faire le runtime en premier, pas d'inverser deux étapes.
+Une conclusion valide avait été étendue au-delà de sa portée.
+
+L'ordre du découpage initial est rétabli. Le runtime, lui, n'est le contenu
+d'aucune des deux étapes : c'est leur **prérequis commun**, fusionné avant elles,
+écart assumé à la règle d'une seule fusion par étape et validé par le
+propriétaire.
+
+### Ce que le runtime apporte
 
 - [x] **Une seconde origine, servie par nginx.** Un contenu H5P est du
       JavaScript tiers qui a besoin d'`eval` et de scripts en ligne pour
@@ -677,5 +685,4 @@ n'a de sens qu'une fois qu'un contenu peut réellement être joué et qu'il éme
 
 ## Prochaine action
 
-Mener 11.1 à 11.4 : ingestion des événements xAPI, liaison de l'acteur
-pseudonyme, agrégation des progrès, clôture de l'étape.
+Mener l'étape 10, tentatives et résultats, puis l'étape 11.
