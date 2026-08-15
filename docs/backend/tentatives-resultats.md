@@ -98,20 +98,22 @@ plutôt que caché : la plateforme ne peut pas en dire plus que l'activité.
 
 ### D'où vient une réponse
 
-Chaque réponse porte sa provenance. `declared` signifie que le navigateur l'a
-dite ; `xapi` signifiera que l'événement du runtime lui-même est parvenu au
-serveur.
+Chaque réponse porte sa provenance. `declared` signifie que le navigateur a
+rapporté sa propre conclusion ; `xapi` que l'événement du runtime est parvenu au
+serveur et que le serveur l'a lu.
 
 **Le champ n'est pas dans la charge utile** : un client qui pourrait déclarer
 « ceci vient du runtime » annulerait la distinction. Il est posé par le serveur,
-et une charge utile qui le mentionne est refusée.
+et une charge utile qui le mentionne est refusée. Il en va de même pour un
+événement xAPI : la route pose `xapi`, l'événement ne le demande pas.
 
-La distinction est la frontière de confiance rendue visible. Rien ne prouve
-encore que ce qu'un navigateur rapporte est ce qui s'est passé dans le contenu ;
-l'étape 11 apportera les événements du runtime à côté de ces déclarations, et il
-faudra alors décider ce qui prime. Enregistrer laquelle est laquelle dès
-maintenant est ce qui permettra de trancher sans avoir à deviner pour les lignes
-déjà écrites.
+**Quand les deux décrivent la même question, l'événement du runtime prime**,
+quel que soit l'ordre d'arrivée — décision de l'étape 11, ADR-014. Ce n'est pas
+que l'un serait plus dur à falsifier que l'autre : les deux passent par le même
+navigateur. C'est que ce sont deux récits d'un même fait, pas deux faits, et que
+celui que le serveur a lui-même interprété est celui qu'il garde. Entre deux
+récits de même nature, le plus récent l'emporte toujours : répondre deux fois
+reste deux réponses, et les deux lignes restent en base.
 
 `recorded_at` est l'horloge du serveur, jamais celle du client — ADR-012 demande
 qu'une date de réception serveur reste distincte de ce qu'une source prétend.
@@ -149,11 +151,10 @@ publier à personne qui en a besoin.
 
 ## Ce que l'étape 10 ne fait pas
 
-- Aucune ingestion xAPI : les réponses restent déclarées par le client, ce que
-  leur provenance dit désormais explicitement. L'étape 11 recevra celles du
-  runtime.
+- Aucune ingestion xAPI : les réponses de cette étape restent déclarées par le
+  client. L'étape 11 a livré celles du runtime, `evenements-xapi.md`.
 - Aucun agrégat dans le temps : un résultat porte sur une tentative. L'agrégation
-  est 11.3.
+  a été livrée en 11.3, `progres.md`.
 - Aucun diagnostic ni recommandation : c'est l'étape 12, et une lecture par
   tentative n'est qu'un des éléments qu'elle prendra.
 - Aucune lecture côté Parent au-delà de l'affectation : les tableaux de bord sont

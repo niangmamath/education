@@ -37,4 +37,4 @@ Relier l’acteur pseudonyme à l’Élève sans exposer son identité au runtim
 
 ## Statut
 
-À faire.
+Terminée. Preuve : rapport `rapport_2026-08-15_2030_evenements_xapi_progres.md`.

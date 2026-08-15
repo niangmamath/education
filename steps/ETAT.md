@@ -429,7 +429,7 @@ Tests      : trois pages de deux rendent cinq compétences distinctes
 
 ## Dernier rapport appliqué
 
-`steps/10_tentatives_resultats/rapport_2026-08-15_1820_tentatives.md`.
+`steps/11_evenements_xapi_progres/rapport_2026-08-15_2030_evenements_xapi_progres.md`.
 
 ## Historique de clôture de l’étape 06
 
@@ -888,7 +888,131 @@ autres. Huit incohérences trouvées, toutes corrigées.
 
 - [x] Consignée : Pull Requests #19 et #20, commits `60b474b` et `26d0ae1`.
 
+## Étape 11, événements xAPI et progrès, clôturée
+
+Travaux menés sur la branche `feat/etape-11-xapi`. Sous-étapes enchaînées sans
+arrêt ; les décisions prises par l'agent sont consignées dans ADR-014 et
+rappelées ci-dessous.
+
+### La question à laquelle l'étape répond
+
+Un contenu jouait, émettait des événements, et personne ne les recevait. La
+difficulté n'était pas d'ouvrir une route : c'était de dire **qui a le droit
+d'envoyer un événement**, **quel acteur écrire** quand le runtime à qui l'on ne
+dit rien en revendique un, et **qui a raison** quand le navigateur et le runtime
+décrivent la même question. Ces trois questions ne se répondent pas séparément.
+
+### 11.1, ingestion et validation, terminée
+
+- [x] Table `xapi_statements`, migration `0010_xapi_statements` réversible.
+- [x] `POST /api/v1/me/xapi/statements` exige **deux choses à la fois** : la
+      session Élève et le ticket de contenu, dans un en-tête. Le ticket n'est pas
+      une partie de l'événement, et un événement qui porterait sa propre
+      autorisation serait à une falsification près d'être sa propre permission.
+- [x] **Le client ne nomme jamais la tentative** : le serveur la déduit du
+      ticket. Un client capable de la désigner pourrait déposer une observation
+      sur un autre travail.
+- [x] La validation **refuse plutôt qu'elle ne répare**. Un identifiant d'objet
+      trop long est rejeté et non tronqué : raccourcir fusionnerait deux
+      questions en une.
+- [x] Un rejeu est reconnu, pas recompté : `(attempt_id, statement_id)` unique,
+      et l'unicité est portée par la tentative plutôt que globale, sinon une
+      famille pourrait faire taire l'événement d'une autre en réservant son
+      identifiant la première.
+- [x] Seul `answered` devient une réponse ; les sept autres verbes sont
+      conservés et ne concluent rien. Un événement ne termine pas la tentative :
+      terminer est un acte délibéré, une observation n'en est pas un.
+
+### 11.2, liaison de l'acteur pseudonyme, terminée
+
+- [x] **L'acteur revendiqué est jeté**, remplacé par
+      `HMAC-SHA256(SECRET_KEY, "xapi-actor:" + identifiant de l'enfant)`. Le
+      runtime ne reçoit aucune identité, donc rien de ce qu'il nomme là n'en est
+      une que nous lui ayons donnée ; conserver le champ laisserait un navigateur
+      écrire un vrai nom dans la base par un champ que personne ne lit.
+- [x] La clé est dérivée avec le secret pour qu'une copie de la base ne se lise
+      pas comme une liste d'enfants. Faire tourner le secret ne casse rien : le
+      lien à l'enfant est la clé étrangère, jamais ce nom.
+- [x] Dans l'autre sens, l'URL de lecture ne porte ni identifiant d'enfant, ni
+      pseudonyme, ni code famille, ni affectation. C'était vrai depuis `PRE-01` ;
+      c'est désormais **éprouvé par un test**, parce qu'une propriété d'isolation
+      que personne ne vérifie finit par ne plus être vraie.
+
+### 11.3, agrégation des progrès, terminée
+
+- [x] `GET /api/v1/me/progress` et `GET /api/v1/children/{child_id}/progress`.
+      Deux routes pour une lecture, plutôt qu'une route à identifiant facultatif
+      qui serait à un contrôle oublié près de montrer à une famille le travail
+      d'une autre.
+- [x] **Aucune table d'agrégats.** Le calcul se fait à chaque lecture : c'est ce
+      qui rend les agrégats reproductibles au sens demandé, et il n'existe pas
+      une quatrième chose capable de contredire les trois dont elle est tirée.
+- [x] **Les résultats sont sommés, jamais recalculés.** Recalculer appliquerait
+      l'attribution question-compétence d'aujourd'hui aux réponses d'hier et
+      changerait sans le dire une conclusion déjà montrée à un parent.
+- [x] Le dernier mot plutôt qu'une moyenne, les comptes cumulés, une phrase en
+      français, et **aucun ratio ni score nulle part** — vérifié sur la charge
+      utile elle-même.
+- [x] Un bloc `evidence` dit sur quoi la lecture repose : c'est ce qui fait de
+      cette agrégation une agrégation des événements **et** des résultats.
+- [x] Rien n'y diagnostique : c'est l'étape 12, et en poser une première version
+      ici ferait décider à deux endroits ce qu'est une difficulté.
+
+### La décision que l'étape 10 avait laissée ouverte
+
+- [x] **Un événement du runtime prime sur une réponse déclarée**, quel que soit
+      l'ordre d'arrivée ; entre deux sources de même nature, la plus récente
+      l'emporte toujours. Ce n'est pas que l'un serait plus dur à falsifier — les
+      deux passent par le même navigateur — mais que ce sont deux récits d'un
+      même fait, et que celui que le serveur a lui-même interprété est celui
+      qu'il garde. L'ordre inverse laisserait un client défaire un événement du
+      runtime en publiant sa propre déclaration juste après. Les deux lignes
+      restent en base : l'une n'est pas lue, aucune n'est effacée.
+
+### 11.4, clôture, terminée
+
+- [x] Séquence complète de l'API CI rejouée dans le conteneur `api`, tout vert,
+      499 tests, dont 58 pour cette étape.
+- [x] Suite complète rejouée **deux fois** : sur le schéma courant, puis sur un
+      schéma reconstruit depuis `base`.
+- [x] Rapport `rapport_2026-08-15_2030_evenements_xapi_progres.md` produit.
+- [x] ADR-014 écrite ; ADR-012 condition 6 passée à « remplie » et condition 7
+      complétée. **Plus aucune condition d'ADR-012 n'est entièrement à faire** ;
+      restent l'antivirus et la vérification de licence, partielles.
+- [x] Une seule Pull Request pour toute l'étape.
+
+### Points ouverts de l'étape 11
+
+- **Aucun client n'appelle encore la route.** Elle est éprouvée par ses tests,
+  pas par un navigateur réel. C'est le miroir exact du constat de `PRE-01` — un
+  producteur sans destinataire — et il se referme à l'étape 13, quand le web
+  parlera à l'API pour la première fois.
+- **Ce n'est pas un LRS** : ni `GET` par requête xAPI, ni `voided`, ni version de
+  spec négociée. C'est écrit dans la documentation pour ne pas laisser croire à
+  une conformité que rien ne teste.
+- Le cache local de Ruff appartient à `root` dans l'arborescence du dépôt, et le
+  `.venv` local n'a pas `argon2-cffi`. Les contrôles se rejouent donc dans le
+  conteneur `api`, ce que fait aussi la CI. Sans effet sur la CI distante.
+
+## Résultats techniques de l'étape 11
+
+```text
+Ruff       : vert, format inclus, 119 fichiers
+Mypy       : vert sur 66 fichiers
+Alembic    : 0010_xapi_statements (head), check vert, downgrade base et retour au head
+Pytest     : 499 tests réussis, dont 58 dédiés aux événements et aux progrès
+Tests      : sans ticket, ticket inconnu ou ticket d'une autre famille, même refus
+Tests      : le serveur déduit la tentative du ticket, le client ne la nomme pas
+Tests      : cinq envois du même événement laissent une seule réponse
+Tests      : l'acteur revendiqué n'est conservé nulle part
+Tests      : l'URL de lecture ne porte ni enfant, ni pseudonyme, ni code famille
+Tests      : les deux horloges d'un événement restent distinctes
+Tests      : l'événement du runtime prime, qu'il parle avant ou après
+Tests      : une tentative non terminée ne compte jamais dans les progrès
+Tests      : aucun ratio ni score dans la charge utile des progrès
+Tests      : deux lectures des progrès rendent exactement la même chose
+```
+
 ## Prochaine action
 
-Mener l'étape 11 : ingestion des événements xAPI, liaison de l'acteur pseudonyme,
-agrégation des progrès.
+Ouvrir l'étape 12, diagnostic et remédiation.

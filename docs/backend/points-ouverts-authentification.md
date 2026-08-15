@@ -34,7 +34,7 @@ personne qui lira l'ADR implémentera bcrypt.
 | Option | Contenu | Coût | Effet |
 |---|---|---|---|
 | A. Amender ADR-005 | Ajouter une sous-section « Algorithme de hachage » à la Décision, corriger l'extrait illustratif, ajouter une ligne d'historique | Faible | L'ADR dit ce que fait le code |
-| B. Nouvel ADR dédié | ADR-013 « Hachage des secrets d'authentification », ADR-005 le référence | Moyen | Traçabilité plus nette si le projet tient à des ADR immuables |
+| B. Nouvel ADR dédié | Un ADR « Hachage des secrets d'authentification » au prochain numéro libre, ADR-005 le référence | Moyen | Traçabilité plus nette si le projet tient à des ADR immuables |
 | C. Revenir à bcrypt | Remplacer `argon2-cffi` par `bcrypt`, adapter `security.py` et ses tests | Moyen | Aligne le code sur la lettre de l'extrait, mais retient l'algorithme le moins recommandé |
 
 ### Recommandation

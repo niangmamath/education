@@ -37,4 +37,4 @@ Valider sécurité, idempotence, performances, tests et CI.
 
 ## Statut
 
-À faire.
+Terminée. Preuve : rapport `rapport_2026-08-15_2030_evenements_xapi_progres.md`.
