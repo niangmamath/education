@@ -980,6 +980,15 @@ décrivent la même question. Ces trois questions ne se répondent pas séparém
       complétée. **Plus aucune condition d'ADR-012 n'est entièrement à faire** ;
       restent l'antivirus et la vérification de licence, partielles.
 - [x] Une seule Pull Request pour toute l'étape.
+- [x] Clôture distante : Pull Request #22 fusionnée le 15 août 2026, commit de
+      fusion `d27f49f`, API CI et Secret Scan verts sur la Pull Request puis sur
+      `main`.
+
+Cette dernière ligne ne peut par construction être écrite qu'après la fusion : ce
+qu'elle consigne n'existe pas encore quand la Pull Request de l'étape est
+ouverte. Elle arrive donc dans un commit séparé, et c'est la seule raison pour
+laquelle une étape en compte deux — l'audit du 15 août avait relevé qu'elle
+manquait pour l'étape 10.
 
 ### Points ouverts de l'étape 11
 
