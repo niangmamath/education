@@ -110,12 +110,13 @@ aucun identifiant qui le lui permettrait : elle remonte les événements xAPI au
 parent par `postMessage`, le seul canal que deux origines ont le droit de
 partager.
 
-## Ce que 11.0 ne fait pas
+Depuis l'étape 11, `play.html` **pose un identifiant sur chaque événement** qui
+n'en porte pas. C'est ce que le serveur lit pour reconnaître une
+retransmission ; le frapper côté serveur ferait de chaque réessai une seconde
+réponse. Voir `evenements-xapi.md`.
 
-- **Aucune ingestion des événements xAPI** : la page les remonte par
-  `postMessage`, personne ne les reçoit encore. C'est 11.1, et c'était la raison
-  de construire ceci d'abord — un récepteur sans producteur ne s'éprouve qu'avec
-  des requêtes fabriquées à la main.
+## Ce que ce prérequis ne fait pas
+
 - **Aucune intégration web** : le web n'appelle pas encore l'API, et le faire
   suppose de régler la session entre deux origines. Cela vient avec l'étape 13,
   où les dashboards sont alimentés en données réelles pour la première fois.

@@ -13,6 +13,13 @@ winner instead of failing.
 changes her mind and answers again has done two things; the reading takes her
 last answer per question, the history keeps both.
 
+**Where an answer came from outranks when it arrived.** Since step 11 the same
+question may be described twice: once by the browser, which reports its own
+conclusion, and once by the runtime, whose statement the server read itself.
+Those are two accounts of one fact, not two facts, and the reading keeps the one
+the server interpreted. Between two accounts of the same kind, the later still
+wins — answering twice really is two answers.
+
 **Finishing computes, it does not judge.** The rules of `rules.py` read counts
 and name themselves. Nothing here decides anything a parent could not be shown.
 """
@@ -37,9 +44,10 @@ from app.models.assignment import (
 )
 from app.models.attempt import (
     ATTEMPT_STATUS_ABANDONED,
-    RESPONSE_SOURCE_DECLARED,
     ATTEMPT_STATUS_COMPLETED,
     ATTEMPT_STATUS_IN_PROGRESS,
+    RESPONSE_SOURCE_DECLARED,
+    RESPONSE_SOURCE_XAPI,
     Attempt,
     AttemptResponse,
     AttemptResult,
@@ -105,10 +113,10 @@ async def record_response(
 ) -> AttemptResponse:
     """Append one answer, marked as declared by the client.
 
-    `source` says where it came from, and here it is always the browser. The
-    distinction matters enough to be stored: nothing yet proves that what the
-    client reports is what happened in the content, and step 11 will bring the
-    runtime's own statements alongside these.
+    `source` says where it came from, and here it is always the browser: the
+    client reports its own conclusion about what happened in the content. The
+    runtime's own statements arrive by the xAPI route instead, and when the two
+    describe the same question, `_prevailing` keeps the one the server read.
     """
     attempt = await _own_attempt(db, child, attempt_id)
     if attempt.status != ATTEMPT_STATUS_IN_PROGRESS:
@@ -186,9 +194,9 @@ async def list_for_child(
 async def _compute_results(db: AsyncSession, attempt: Attempt) -> list[AttemptResult]:
     """Read the responses through the rules, competency by competency.
 
-    The last answer per question is what counts, and only answers the content
-    actually judged are counted at all: a content that says nothing about an
-    answer is not made to say something.
+    One answer per question is what counts, chosen by `_prevailing`, and only
+    answers the content actually judged are counted at all: a content that says
+    nothing about an answer is not made to say something.
 
     **How answers are attributed depends on what the activity declares.** If it
     maps its questions to competencies, each question counts only towards what it
@@ -197,9 +205,7 @@ async def _compute_results(db: AsyncSession, attempt: Attempt) -> list[AttemptRe
     itself says nothing about it — every competency of the activity gets the same
     reading, which is coarse but honest and is written down as such.
     """
-    latest: dict[str, AttemptResponse] = {}
-    for response in sorted(attempt.responses, key=lambda row: row.recorded_at):
-        latest[response.question_ref] = response
+    latest = _prevailing(attempt.responses)
 
     assignment = await db.get(Assignment, attempt.assignment_id)
     if assignment is None:
@@ -250,6 +256,36 @@ async def _compute_results(db: AsyncSession, attempt: Attempt) -> list[AttemptRe
         results.append(result)
     await db.flush()
     return results
+
+
+def _prevailing(responses: Sequence[AttemptResponse]) -> dict[str, AttemptResponse]:
+    """The one answer per question the reading is entitled to use.
+
+    Two rules, and the order between them is the decision of step 11.
+
+    **A runtime statement outranks a declared answer**, whenever either arrived.
+    Both reach the server through the same browser, so this is not a claim that
+    one is harder to forge than the other; it is about who did the interpreting.
+    A declared response is the client's own conclusion about what happened; an
+    `xapi` response is the runtime's account, relayed as it stood and read by the
+    server. When both describe the same question they are two accounts of one
+    fact, and the one the server read itself is the one it keeps. Ordering it the
+    other way round would let a client undo a runtime statement simply by posting
+    its own afterwards.
+
+    **Within one source, the later answer wins**, as before: a child who changes
+    her mind has answered twice, and the second answer is the one that stands.
+    """
+    chosen: dict[str, AttemptResponse] = {}
+    for row in sorted(responses, key=lambda item: item.recorded_at):
+        held = chosen.get(row.question_ref)
+        if held is None or _rank(row) >= _rank(held):
+            chosen[row.question_ref] = row
+    return chosen
+
+
+def _rank(response: AttemptResponse) -> int:
+    return 1 if response.source == RESPONSE_SOURCE_XAPI else 0
 
 
 async def _question_attribution(

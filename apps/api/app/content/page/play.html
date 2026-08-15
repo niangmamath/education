@@ -31,6 +31,15 @@
     erreur.style.display = 'block';
   }
 
+  function uniqueId() {
+    if (window.crypto && window.crypto.randomUUID) {
+      return window.crypto.randomUUID();
+    }
+    // Older browsers only: enough to tell two statements apart within one
+    // session, which is all the server asks of this value.
+    return 'sc-' + Date.now().toString(16) + '-' + Math.random().toString(16).slice(2);
+  }
+
   if (!digest || !ticket) {
     fail("Contenu non spécifié.");
     return;
@@ -51,10 +60,18 @@
     .then(function () {
       if (window.H5P && window.H5P.externalDispatcher) {
         window.H5P.externalDispatcher.on('xAPI', function (event) {
+          var statement = event.data.statement || {};
+          // Every statement leaves here with an identifier, because the server
+          // uses it to recognise a retransmission. H5P does not always set one,
+          // and letting the server mint it instead would turn every retry into a
+          // second answer.
+          if (!statement.id) {
+            statement.id = uniqueId();
+          }
           // The parent decides what to do with it; this page never talks to the
           // API itself, and holds no credential that would let it.
           window.parent.postMessage(
-            { type: 'studentconnect:xapi', statement: event.data.statement },
+            { type: 'studentconnect:xapi', statement: statement },
             '*'
           );
         });

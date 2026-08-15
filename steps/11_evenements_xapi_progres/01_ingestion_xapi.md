@@ -37,4 +37,4 @@ Recevoir et valider les événements xAPI autorisés, avec déduplication et act
 
 ## Statut
 
-À faire.
+Terminée. Preuve : rapport `rapport_2026-08-15_2030_evenements_xapi_progres.md`.

@@ -37,4 +37,4 @@ Produire des agrégats reproductibles à partir des événements et résultats.
 
 ## Statut
 
-À faire.
+Terminée. Preuve : rapport `rapport_2026-08-15_2030_evenements_xapi_progres.md`.

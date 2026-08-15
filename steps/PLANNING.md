@@ -129,10 +129,10 @@ audit.
 
 | ID | Travail | Dépendances | Statut | Preuve |
 |---|---|---|---|---|
-| XAP-01 | Ingérer et valider les événements xAPI | AUD-01 | À faire | |
-| XAP-02 | Relier l’acteur pseudonyme à l’Élève | XAP-01 | À faire | |
-| XAP-03 | Agréger les progrès | XAP-02, TEN-03 | À faire | |
-| XAP-04 | Clôturer l’étape 11 | XAP-03 | À faire | |
+| XAP-01 | Ingérer et valider les événements xAPI | AUD-01 | Terminé | Migration `0010`, endpoint autorisé par le ticket, rejeux dédupliqués |
+| XAP-02 | Relier l’acteur pseudonyme à l’Élève | XAP-01 | Terminé | Acteur revendiqué remplacé par un pseudonyme HMAC ; URL de lecture sans identité, éprouvée |
+| XAP-03 | Agréger les progrès | XAP-02, TEN-03 | Terminé | Progrès calculés à la lecture, sans table d’agrégats, sans ratio |
+| XAP-04 | Clôturer l’étape 11 | XAP-03 | Terminé | 499 tests, rapport du 15 août 2026, ADR-014, ADR-012 condition 6 remplie |
 
 L’étape 11 **dépend de l’étape 10** : `XAP-03` produit des agrégats « à partir
 des événements et résultats », et ces résultats sont ceux de `TEN-03`. Un
@@ -140,4 +140,7 @@ décalage inverse avait été inscrit par erreur le 15 août 2026 ; il est corri
 
 ### Prochaine tâche
 
-Mener XAP-01, l’ingestion des événements xAPI.
+Ouvrir l’étape 12, diagnostic et remédiation. Les progrès livrés par XAP-03 sont
+descriptifs : nommer une difficulté et proposer une suite en est délibérément
+absent, parce que c’est le sujet de l’étape 12 et qu’en poser une première
+version ailleurs ferait décider à deux endroits ce qu’est une difficulté.

@@ -62,10 +62,10 @@ OUTCOME_PARTIAL: Final = "partial"
 OUTCOME_NOT_MASTERED: Final = "not_mastered"
 OUTCOMES: Final = (OUTCOME_MASTERED, OUTCOME_PARTIAL, OUTCOME_NOT_MASTERED)
 
-# Where a response came from. The distinction is the trust boundary made
-# visible: `declared` means the browser said so, `xapi` will mean the runtime's
-# own statement reached the server. Recording which is which now is what lets
-# step 11 decide what prevails without having to guess about existing rows.
+# Where a response came from. `declared` means the browser reported its own
+# conclusion; `xapi` means the runtime's statement reached the server and the
+# server read it. When both describe the same question, the reading keeps the
+# `xapi` one, whenever either arrived — see `attempts/service.py::_prevailing`.
 RESPONSE_SOURCE_DECLARED: Final = "declared"
 RESPONSE_SOURCE_XAPI: Final = "xapi"
 RESPONSE_SOURCES: Final = (RESPONSE_SOURCE_DECLARED, RESPONSE_SOURCE_XAPI)

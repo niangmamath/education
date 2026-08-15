@@ -17,6 +17,7 @@ from app.models.referential import (
     ReferentialVersion,
     Subject,
 )
+from app.models.xapi import XapiStatement
 
 __all__ = [
     "Activity",
@@ -35,4 +36,5 @@ __all__ = [
     "Parent",
     "ReferentialVersion",
     "Subject",
+    "XapiStatement",
 ]

@@ -18,7 +18,7 @@ Ce document est le **registre central** de toutes les Architecture Decision Reco
 
 ## Structure des dossiers
 
-Les quatorze ADR existent toutes en fichier ; ce registre les résume et ne les
+Les quinze ADR existent toutes en fichier ; ce registre les résume et ne les
 remplace pas.
 
 ```
@@ -37,7 +37,8 @@ docs/
 │   ├── ADR-010-planning-markdown.md           # Planning en Markdown
 │   ├── ADR-011-sqlalchemy-async.md            # SQLAlchemy async et asyncpg
 │   ├── ADR-012-h5p-standalone-pilote.md       # Type H5P unique, accepté sous conditions
-│   └── ADR-013-catalogue-lie-par-code.md      # Catalogue lié par code métier
+│   ├── ADR-013-catalogue-lie-par-code.md      # Catalogue lié par code métier
+│   └── ADR-014-ingestion-xapi.md              # Ingestion xAPI, acteur pseudonyme, prééminence
 └── architecture/
     └── decision-register.md                   # Ce fichier
 ```
@@ -296,22 +297,40 @@ docs/
 
 ---
 
+### ADR-014 : Ingestion xAPI, acteur pseudonyme et prééminence du runtime
+
+| Champ | Valeur |
+|-------|--------|
+| **Titre** | Ingestion xAPI liée au ticket, acteur pseudonyme, prééminence du runtime |
+| **Statut** | ✅ **Accepted** |
+| **Date** | 15 août 2026 |
+| **Auteur** | Équipe StudentConnect |
+| **Décision** | L'événement est autorisé par le ticket de contenu, l'acteur revendiqué est remplacé par un pseudonyme du serveur, et un événement du runtime prime sur une réponse déclarée |
+| **Fichier** | [docs/adr/ADR-014-ingestion-xapi.md](../adr/ADR-014-ingestion-xapi.md) |
+| **Dépendances** | ADR-012, ADR-005, ADR-013 |
+| **Impact** | Sécurité, Données |
+
+**Résumé** : Le runtime ne reçoit aucune identité, donc rien de ce qu'il nomme dans `actor` n'en est une ; le serveur écrit son propre pseudonyme. L'endpoint exige la session **et** le ticket, et déduit la tentative plutôt que de la laisser nommer. Entre deux récits d'une même question, celui que le serveur a lu lui-même l'emporte. Les agrégats de progrès ne sont pas stockés, pour qu'aucune quatrième chose ne puisse contredire les faits.
+
+---
+
 ## Statistiques
 
 | Statut | Count |
 |--------|-------|
-| ✅ Accepted | 13 |
+| ✅ Accepted | 14 |
 | ⚠️ Proposed | 1 |
 | ⏳ À créer | 0 |
 | ❌ Deprecated | 0 |
 | ⛔ Rejected | 0 |
 | 🔄 Superseeded | 0 |
-| **Total** | **14** |
+| **Total** | **15** |
 
 Une seule ADR reste ouverte, ADR-000 sur la licence du projet. ADR-012 est
 acceptée **sous conditions**, comptée ici parmi les acceptées. Ses huit conditions
-sont désormais suivies une par une dans l'ADR elle-même : cinq sont remplies, deux
-partiellement, une reste entière et relève de l'étape 11.
+sont suivies une par une dans l'ADR elle-même : six sont remplies depuis l'étape
+11, deux restent partielles — l'antivirus et la vérification de licence — et
+aucune n'est plus entièrement à faire.
 
 ---
 
@@ -319,7 +338,7 @@ partiellement, une reste entière et relève de l'étape 11.
 
 1. **Vérifier** qu'aucune décision existante ne couvre déjà le sujet
 2. **Discuter** avec l'équipe avant de rédiger
-3. **Suivre la forme des ADR existantes** : statut, date, décision, conséquences. Aucun template séparé n'est maintenu, les quatorze fichiers en tiennent lieu
+3. **Suivre la forme des ADR existantes** : statut, date, décision, conséquences. Aucun template séparé n'est maintenu, les quinze fichiers en tiennent lieu
 4. **Numérotation** : Utiliser le prochain numéro disponible
 5. **Statut initial** : `Proposed`
 6. **Créer un PR** avec le nouvel ADR

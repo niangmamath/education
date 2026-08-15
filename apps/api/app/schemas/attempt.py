@@ -36,8 +36,9 @@ class ResponsePublic(BaseModel):
     question_ref: str
     response: str | None
     is_correct: bool | None
-    # Where it came from. `declared` means the browser said so; the distinction
-    # is the trust boundary, and it travels rather than being hidden.
+    # Where it came from. `declared` means the browser reported its conclusion,
+    # `xapi` that the server read the runtime's statement; it travels rather
+    # than being hidden, because it is what decides between two accounts.
     source: str
     recorded_at: datetime
 
