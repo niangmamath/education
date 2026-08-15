@@ -3,6 +3,8 @@
 ## Statut
 
 ✅ **Accepted** — Décision validée et implémentée le 15 août 2026, étape 08.1.
+Prise par l'agent en l'absence d'arbitrage, l'enchaînement des sous-étapes ayant
+été demandé, puis **confirmée par le propriétaire le 15 août 2026**.
 
 ## Contexte
 

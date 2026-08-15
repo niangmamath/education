@@ -83,4 +83,4 @@
 
 ### Prochaine tâche
 
-Faire confirmer ADR-013, puis ouvrir l’étape 09, affectations et parcours.
+Mener l’étape 09, affectations et parcours.

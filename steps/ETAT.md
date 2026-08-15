@@ -66,7 +66,7 @@ Secret Scan: succès
 
 ## Organisation des étapes
 
-Les dossiers détaillés des étapes 09 à 16 sont temporairement retirés du dépôt. Chaque dossier rejoint le dépôt au démarrage de l’étape correspondante ; celui de l’étape 07 y est entré le 14 août 2026, celui de l’étape 08 le 15 août 2026.
+Les dossiers détaillés des étapes 10 à 16 sont temporairement retirés du dépôt. Chaque dossier rejoint le dépôt au démarrage de l’étape correspondante ; celui de l’étape 07 y est entré le 14 août 2026, celui de l’étape 08 et celui de l’étape 09 le 15 août 2026.
 
 ## Étape 04, spike H5P critique
 
@@ -483,7 +483,7 @@ l'étape a été prise par l'agent et **reste à confirmer**.
 
 ### Points ouverts de l'étape 08
 
-- **ADR-013 n'a pas été arbitrée par le propriétaire** et mérite confirmation.
+- [x] **ADR-013 confirmée par le propriétaire** le 15 août 2026, après coup.
 - Aucun antivirus dans le contrôle des paquets, exigé par ADR-012 pour la
   production ; aucun scanner disponible dans l'environnement de stage.
 - Aucune remise de paquet au navigateur : origine de contenu isolée, CSP et
@@ -496,7 +496,9 @@ l'étape a été prise par l'agent et **reste à confirmer**.
 - [x] Rapports `rapport_2026-08-15_1530_catalogue.md` et
       `rapport_2026-08-15_1545_cloture_etape_08.md` produits.
 - [x] Une seule Pull Request pour toute l'étape.
-- [ ] Clôture distante, à consigner au premier commit de l'étape 09.
+- [x] Clôture distante : Pull Request #15 fusionnée le 15 août 2026, commit de
+      fusion `b41284b`, API CI et Secret Scan verts sur la Pull Request puis sur
+      `main`.
 
 ## Résultats techniques de l'étape 08
 
@@ -514,6 +516,10 @@ Tests      : brouillon et archive répondant 404 comme une activité inexistante
 Tests      : aucune réponse ne contient de clé d'objet, d'empreinte ni de licence
 ```
 
+## Étape 09, affectations et parcours, en cours
+
+Travaux menés sur la branche `feat/etape-09-affectations`.
+
 ## Prochaine action
 
-Faire confirmer ADR-013, puis ouvrir l'étape 09, affectations et parcours.
+Mener les sous-étapes 09.1 à 09.4.
