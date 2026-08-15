@@ -254,7 +254,20 @@ class TestRegistration:
 
 
 class TestCatalogueCheck:
-    """The counterpart ADR-013 owes: find the links no foreign key protects."""
+    """The counterpart ADR-013 owes: find the links no foreign key protects.
+
+    The check looks at the whole catalogue, which is the point of it, so these
+    tests assert about their own activities rather than about global soundness:
+    the database they run against holds whatever else the project put there.
+    """
+
+    @staticmethod
+    def dangling_for(report: object, activity_code: str) -> list[str]:
+        return [
+            link.competency_code
+            for link in report.dangling  # type: ignore[attr-defined]
+            if link.activity_code == activity_code
+        ]
 
     def edition(self, session: Session, *codes: str) -> str:
         code = f"{TEST_CODE_PREFIX}{uuid.uuid4().hex}"
@@ -302,8 +315,9 @@ class TestCatalogueCheck:
         report = check_catalogue(session)
 
         assert report.edition_code == edition
-        assert report.sound is True
-        assert report.linked_codes == 1
+        assert self.dangling_for(report, activity.code) == []
+        assert activity.code not in report.activities_without_link
+        assert report.linked_codes >= 1
 
     def test_a_code_that_designates_nothing_is_named(self, session: Session) -> None:
         """A dangling link is a silence, not an error, which is why it is hunted."""
@@ -319,8 +333,7 @@ class TestCatalogueCheck:
         report = check_catalogue(session)
 
         assert report.sound is False
-        assert [link.competency_code for link in report.dangling] == ["cp-math-num-99"]
-        assert report.dangling[0].activity_code == activity.code
+        assert self.dangling_for(report, activity.code) == ["cp-math-num-99"]
 
     def test_an_activity_linked_to_nothing_is_named_too(self, session: Session) -> None:
         """It can never be recommended by step 12, which is just as silent."""
@@ -362,11 +375,11 @@ class TestCatalogueCheck:
             )
         )
         session.commit()
-        assert check_catalogue(session).sound is True
+        assert self.dangling_for(check_catalogue(session), activity.code) == []
 
         self.edition(session, "cp-math-num-01")
         session.commit()
 
         report = check_catalogue(session)
         assert report.sound is False
-        assert [link.competency_code for link in report.dangling] == ["cp-math-num-02"]
+        assert self.dangling_for(report, activity.code) == ["cp-math-num-02"]

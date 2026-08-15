@@ -34,7 +34,6 @@ from app.models.catalog import (
 )
 
 TEST_CODE_PREFIX = "test-cat-"
-DIGEST = "9914c27552f00aa91d4a29e85f6a299b11f984030c3451658fb0246f84b07f3c"
 
 
 @pytest.fixture(scope="module")
@@ -247,14 +246,20 @@ class TestH5PPackage:
             session.commit()
 
     def test_the_same_file_cannot_be_registered_twice(self, session: Session) -> None:
-        """Two activities playing the same bytes would be one activity."""
+        """Two activities playing the same bytes would be one activity.
+
+        The digest is drawn here rather than written down: a constant would
+        collide with whatever the database already holds, and this test would
+        then fail for the wrong reason.
+        """
+        digest = uuid.uuid4().hex + uuid.uuid4().hex
         first = build_activity(session)
-        build_package(session, first, sha256=DIGEST)
+        build_package(session, first, sha256=digest)
         session.commit()
 
         second = build_activity(session)
         with pytest.raises(IntegrityError):
-            build_package(session, second, sha256=DIGEST)
+            build_package(session, second, sha256=digest)
             session.commit()
 
     def test_an_activity_holds_at_most_one_package(self, session: Session) -> None:
