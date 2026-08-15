@@ -16,10 +16,10 @@ n’a pas été faite.
 
 ```bash
 # essai à blanc, rien n’est écrit
-docker compose exec -T api python -m app.referential seeds/referential/fictif-2026-01.json
+docker compose exec -T api python -m app.referential import seeds/referential/fictif-2026-01.json
 
 # écriture
-docker compose exec -T api python -m app.referential seeds/referential/fictif-2026-01.json --apply
+docker compose exec -T api python -m app.referential import seeds/referential/fictif-2026-01.json --apply
 ```
 
 L’import crée la version en `draft` si elle n’existe pas, puis réconcilie ce

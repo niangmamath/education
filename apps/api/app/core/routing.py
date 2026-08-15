@@ -6,13 +6,16 @@ Main router for all API endpoints.
 
 from fastapi import APIRouter
 
-from app.api.v1 import auth, children
+from app.api.v1 import auth, children, referential
 
 # Create the main API router
 api_router = APIRouter()
 
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(children.router, prefix="/auth", tags=["auth"])
+api_router.include_router(
+    referential.router, prefix="/referential", tags=["referential"]
+)
 
 
 # Sub-routers added as their step implements them:

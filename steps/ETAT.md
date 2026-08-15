@@ -301,6 +301,40 @@ Travaux menés sur la branche `feat/import-referentiel`, fusionnée dans `main` 
 - [x] Clôture distante : API CI et Secret Scan verts sur la Pull Request #11
       puis sur `main` après la fusion, `test` en 1 min 48 s.
 
+### 07.3, API du référentiel, en revue
+
+Travaux menés sur la branche `feat/etape-07-referentiel`.
+
+- [x] Deux décisions de conception tranchées par le propriétaire : toute session
+      authentifiée peut lire, Parent comme Enfant, et les routes servent
+      l’édition en vigueur et elle seule.
+- [x] Commande `python -m app.referential publish <code>`, décidée à la fin de
+      07.2 : le brouillon entre en vigueur et l’édition remplacée est archivée
+      **dans la même transaction**, l’ancienne étant libérée avant que la
+      nouvelle ne prenne sa place. Aucun instant à deux éditions publiées, aucun
+      sans édition.
+- [x] Republier une édition archivée est refusé : la ramener changerait le sens
+      des traces enregistrées depuis son archivage.
+- [x] Quatre routes sous `/api/v1/referential` : `edition`, `levels`, `subjects`
+      et `competencies`. Sans session, `401`.
+- [x] **Un brouillon ne sort jamais par HTTP.** Il se relit par la commande
+      d’import en essai à blanc, par qui a accès au serveur.
+- [x] **Chaque réponse nomme l’édition qu’elle a lue**, et `edition` vaut `null`
+      quand rien n’est publié, ce qui n’est pas une erreur.
+- [x] Codes métier exposés, jamais les UUID, refrappés à chaque import.
+- [x] Filtres `level`, `subject` et `domain` combinables ; un code inconnu rend
+      une page vide et non une erreur.
+- [x] Pagination plafonnée à 100, bornes refusées en `422`, **ordre total** pour
+      qu’aucune ligne ne soit vue deux fois ni jamais.
+- [x] Arbre de prérequis non exposé, il appartient à l’étape 12.
+- [x] Fragilité des tests de 07.1 et 07.2 corrigée : quatre tests publiaient une
+      édition en supposant qu’aucune ne l’était, ce qui échouait en local sans
+      jamais échouer en CI. `tests/support.py` les fait écarter l’édition en
+      place puis la remettre.
+- [x] Aucune migration : le schéma de 07.1 n’a pas bougé.
+- [x] 37 tests dédiés, tous d’intégration contre PostgreSQL réel.
+- [ ] Clôture distante, à la clôture de l’étape 07.
+
 ### Points ouverts de l’étape 07
 
 - [x] ADR-004 amendée le 14 août 2026 : son esquisse d’une table `skills` unique
@@ -320,10 +354,13 @@ Travaux menés sur la branche `feat/import-referentiel`, fusionnée dans `main` 
       ne reposent plus sur la vigilance : un test configure les mappers avec les
       avertissements de SQLAlchemy transformés en erreurs, dans un sous-processus.
       Vérifié en les retirant toutes, le test échoue.
-- **La publication d’une édition est tranchée** : commande dédiée
-  `python -m app.referential publish <code>`, qui bascule le brouillon en
-  `published` et archive dans la même transaction celle qui l’était. À
-  implémenter avec 07.3.
+- [x] La publication d’une édition, tranchée par le propriétaire, a été livrée
+      avec 07.3.
+- Aucune lecture d’une édition archivée. Les traces des étapes 10 à 12 devront
+  être relues dans le référentiel où elles ont été écrites ; il faudra alors
+  décider qui peut lire une édition retirée.
+- La publication n’est journalisée que par la sortie de la commande. Savoir qui
+  a publié quoi et quand relèvera de l’étape 15.
 
 ## Résultats techniques de l’étape 07
 
@@ -345,7 +382,7 @@ Tests      : compétence déplacée de domaine, même identifiant conservé
 
 ## Dernier rapport appliqué
 
-`steps/07_referentiel_competences/rapport_2026-08-14_2100_import_referentiel.md`.
+`steps/07_referentiel_competences/rapport_2026-08-15_1430_api_referentiel.md`.
 
 ## Historique de clôture de l’étape 06
 
@@ -359,6 +396,5 @@ Tests      : compétence déplacée de domaine, même identifiant conservé
 
 ## Prochaine action
 
-Engager la sous-étape 07.3, lectures filtrées et paginées du référentiel.
-Trancher au préalable la publication d’une édition, sans laquelle aucune lecture
-n’a d’édition en vigueur à servir.
+Engager la sous-étape 07.4, clôture de l’étape 07 : Pull Request unique portant
+07.3 et la dette résorbée, contrôles distants verts, fusion vers `main`.
