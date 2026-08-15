@@ -62,6 +62,14 @@ OUTCOME_PARTIAL: Final = "partial"
 OUTCOME_NOT_MASTERED: Final = "not_mastered"
 OUTCOMES: Final = (OUTCOME_MASTERED, OUTCOME_PARTIAL, OUTCOME_NOT_MASTERED)
 
+# Where a response came from. The distinction is the trust boundary made
+# visible: `declared` means the browser said so, `xapi` will mean the runtime's
+# own statement reached the server. Recording which is which now is what lets
+# step 11 decide what prevails without having to guess about existing rows.
+RESPONSE_SOURCE_DECLARED: Final = "declared"
+RESPONSE_SOURCE_XAPI: Final = "xapi"
+RESPONSE_SOURCES: Final = (RESPONSE_SOURCE_DECLARED, RESPONSE_SOURCE_XAPI)
+
 MAX_QUESTION_REF_LENGTH: Final = 200
 MAX_RESPONSE_LENGTH: Final = 2000
 
@@ -133,7 +141,12 @@ class AttemptResponse(Base):
     """
 
     __tablename__ = "attempt_responses"
-    __table_args__ = (Index("ix_attempt_responses_attempt", "attempt_id"),)
+    __table_args__ = (
+        CheckConstraint(
+            "source IN ('declared', 'xapi')", name="ck_attempt_responses_source"
+        ),
+        Index("ix_attempt_responses_attempt", "attempt_id"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
@@ -152,6 +165,15 @@ class AttemptResponse(Base):
     # Nullable on purpose: a content that does not say whether an answer was
     # right must not be made to say it. An unknown is recorded as unknown.
     is_correct: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    source: Mapped[str] = mapped_column(
+        String(16),
+        nullable=False,
+        default=RESPONSE_SOURCE_DECLARED,
+        server_default=RESPONSE_SOURCE_DECLARED,
+    )
+    # The server's clock, not the client's. ADR-012 asks that a server receipt
+    # date be kept distinct from whatever a source claims, and this is it: the
+    # only time here that nobody outside can choose.
     recorded_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

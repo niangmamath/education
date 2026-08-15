@@ -2,7 +2,12 @@
 
 from app.models.assignment import Assignment
 from app.models.attempt import Attempt, AttemptResponse, AttemptResult
-from app.models.catalog import Activity, ActivityCompetency, H5PPackage
+from app.models.catalog import (
+    Activity,
+    ActivityCompetency,
+    ActivityQuestion,
+    H5PPackage,
+)
 from app.models.identity import Child, Parent
 from app.models.referential import (
     Competency,
@@ -16,6 +21,7 @@ from app.models.referential import (
 __all__ = [
     "Activity",
     "ActivityCompetency",
+    "ActivityQuestion",
     "Assignment",
     "Attempt",
     "AttemptResponse",

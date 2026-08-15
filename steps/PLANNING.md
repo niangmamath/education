@@ -108,6 +108,7 @@ runtime de contenu sans qu’aucune ne le construise. Il n’est le contenu d’
 | TEN-02 | Exposer l’API des tentatives | TEN-01 | Terminé | Démarrage idempotent garanti par un index partiel |
 | TEN-03 | Calculer les résultats par règles explicites | TEN-02 | Terminé | Trois règles nommées, 15 tests isolés |
 | TEN-04 | Clôturer l’étape 10 | TEN-03 | Terminé | Séquence de l’API CI rejouée, 434 tests, PR unique |
+| TEN-05 | Résorber la dette de l’étape 10 | TEN-04 | Terminé | Attribution par question, provenance, règles publiées, 440 tests |
 
 ### Phase 7, événements xAPI et progrès
 

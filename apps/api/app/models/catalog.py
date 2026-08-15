@@ -118,6 +118,9 @@ class Activity(Base):
     competencies: Mapped[list[ActivityCompetency]] = relationship(
         back_populates="activity", cascade="all, delete-orphan", passive_deletes=True
     )
+    questions: Mapped[list[ActivityQuestion]] = relationship(
+        back_populates="activity", cascade="all, delete-orphan", passive_deletes=True
+    )
     h5p_package: Mapped[H5PPackage | None] = relationship(
         back_populates="activity", cascade="all, delete-orphan", passive_deletes=True
     )
@@ -159,6 +162,44 @@ class ActivityCompetency(Base):
     competency_code: Mapped[str] = mapped_column(String(CODE_LENGTH), nullable=False)
 
     activity: Mapped[Activity] = relationship(back_populates="competencies")
+
+
+class ActivityQuestion(Base):
+    """Which competency a given question of the content works on.
+
+    Optional, and that is the point. Without these rows the platform cannot tell
+    which question belongs to which competency — H5P does not say — so a reading
+    applies to every competency of the activity, which is coarse but honest.
+    With them, each question counts only towards what it actually works on.
+
+    They are declared by whoever registers the activity, because only that
+    person knows: nothing in a package states it.
+    """
+
+    __tablename__ = "catalog_activity_questions"
+    __table_args__ = (
+        UniqueConstraint(
+            "activity_id",
+            "question_ref",
+            "competency_code",
+            name="uq_catalog_activity_questions",
+        ),
+        Index("ix_catalog_activity_questions_activity", "activity_id"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    activity_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("catalog_activities.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    # As the content names it, exactly as in a response.
+    question_ref: Mapped[str] = mapped_column(String(200), nullable=False)
+    competency_code: Mapped[str] = mapped_column(String(CODE_LENGTH), nullable=False)
+
+    activity: Mapped[Activity] = relationship(back_populates="questions")
 
 
 class H5PPackage(Base):

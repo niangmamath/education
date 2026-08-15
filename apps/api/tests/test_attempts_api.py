@@ -25,6 +25,7 @@ from app.models.catalog import (
     ACTIVITY_STATUS_PUBLISHED,
     Activity,
     ActivityCompetency,
+    ActivityQuestion,
 )
 
 TEST_CODE_PREFIX = "test-ten-"
@@ -481,3 +482,151 @@ class TestIsolation:
         self, client: TestClient
     ) -> None:
         assert client.get(MY_ATTEMPTS_URL).status_code == 401
+
+
+class TestPerQuestionAttribution:
+    """The debt of step 10: every competency got the same reading.
+
+    It still does when the activity says nothing about its questions, because
+    H5P says nothing either. What changed is that an activity may now say.
+    """
+
+    @pytest.fixture
+    def mapped_activity(self, engine: Engine) -> str:
+        """An activity whose two questions each work on one competency."""
+        code = f"{TEST_CODE_PREFIX}{uuid.uuid4().hex[:8]}"
+        with Session(engine) as session:
+            row = Activity(
+                code=code,
+                title="Deux points distincts",
+                kind=ACTIVITY_KIND_H5P,
+                status=ACTIVITY_STATUS_PUBLISHED,
+                duration_minutes=5,
+            )
+            session.add(row)
+            session.flush()
+            session.add_all(
+                [
+                    ActivityCompetency(activity_id=row.id, competency_code=COMPETENCY),
+                    ActivityCompetency(
+                        activity_id=row.id, competency_code=OTHER_COMPETENCY
+                    ),
+                    ActivityQuestion(
+                        activity_id=row.id,
+                        question_ref="q1",
+                        competency_code=COMPETENCY,
+                    ),
+                    ActivityQuestion(
+                        activity_id=row.id,
+                        question_ref="q2",
+                        competency_code=OTHER_COMPETENCY,
+                    ),
+                ]
+            )
+            session.commit()
+        return code
+
+    def test_each_question_counts_only_towards_what_it_works_on(
+        self, family: Family, mapped_activity: str
+    ) -> None:
+        """One right, one wrong, and the two competencies part company."""
+        assignment_id = started_activity(family, mapped_activity)
+        child = family.as_child()
+        attempt = child.post(f"{MY_ACTIVITIES_URL}/{assignment_id}/attempts").json()
+        answer(child, attempt["id"], "q1", True)
+        answer(child, attempt["id"], "q2", False)
+
+        results = {
+            row["competency_code"]: row
+            for row in child.post(f"{MY_ATTEMPTS_URL}/{attempt['id']}/complete").json()[
+                "results"
+            ]
+        }
+
+        assert results[COMPETENCY]["outcome"] == "mastered"
+        assert results[COMPETENCY]["answered"] == 1
+        assert results[OTHER_COMPETENCY]["outcome"] == "not_mastered"
+        assert results[OTHER_COMPETENCY]["answered"] == 1
+
+    def test_a_competency_with_no_answer_of_its_own_gets_no_result(
+        self, family: Family, mapped_activity: str
+    ) -> None:
+        """Not a borrowed one: the absence is the honest answer, per competency."""
+        assignment_id = started_activity(family, mapped_activity)
+        child = family.as_child()
+        attempt = child.post(f"{MY_ACTIVITIES_URL}/{assignment_id}/attempts").json()
+        answer(child, attempt["id"], "q1", True)
+
+        results = child.post(f"{MY_ATTEMPTS_URL}/{attempt['id']}/complete").json()[
+            "results"
+        ]
+
+        assert [row["competency_code"] for row in results] == [COMPETENCY]
+
+    def test_without_a_mapping_the_reading_still_applies_to_all(
+        self, family: Family, activity: str
+    ) -> None:
+        """The ordinary case, unchanged and written down: H5P says nothing, so
+        the platform cannot say more than the activity does."""
+        assignment_id = started_activity(family, activity)
+        child = family.as_child()
+        attempt = child.post(f"{MY_ACTIVITIES_URL}/{assignment_id}/attempts").json()
+        answer(child, attempt["id"], "q1", True)
+
+        results = child.post(f"{MY_ATTEMPTS_URL}/{attempt['id']}/complete").json()[
+            "results"
+        ]
+
+        assert len(results) == 2
+        assert {row["outcome"] for row in results} == {"mastered"}
+
+
+class TestProvenanceAndRules:
+    def test_a_response_says_where_it_came_from(
+        self, family: Family, activity: str
+    ) -> None:
+        """The trust boundary travels rather than being hidden: nothing yet
+        proves the browser reports what happened in the content."""
+        assignment_id = started_activity(family, activity)
+        child = family.as_child()
+        attempt = child.post(f"{MY_ACTIVITIES_URL}/{assignment_id}/attempts").json()
+
+        recorded = child.post(
+            f"{MY_ATTEMPTS_URL}/{attempt['id']}/responses",
+            json={"question_ref": "q1", "response": "vrai", "is_correct": True},
+        ).json()
+
+        assert recorded["source"] == "declared"
+
+    def test_a_client_cannot_claim_another_provenance(
+        self, family: Family, activity: str
+    ) -> None:
+        """Saying "this came from the runtime" is exactly what a client must not
+        be able to do, so the field is not part of the payload at all."""
+        assignment_id = started_activity(family, activity)
+        child = family.as_child()
+        attempt = child.post(f"{MY_ACTIVITIES_URL}/{assignment_id}/attempts").json()
+
+        refused = child.post(
+            f"{MY_ATTEMPTS_URL}/{attempt['id']}/responses",
+            json={
+                "question_ref": "q1",
+                "response": "vrai",
+                "is_correct": True,
+                "source": "xapi",
+            },
+        )
+
+        assert refused.status_code == 422
+
+    def test_the_rules_can_be_read_rather_than_guessed(self, family: Family) -> None:
+        """Published rather than configurable: what a mastered competency means
+        is a decision, not a setting."""
+        published = family.as_child().get("/api/v1/attempts/rules").json()
+
+        assert [rule["code"] for rule in published] == [
+            "all-correct",
+            "majority-correct",
+            "too-few-correct",
+        ]
+        assert all(rule["condition"] and rule["description"] for rule in published)

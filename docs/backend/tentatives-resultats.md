@@ -82,13 +82,49 @@ C'est délibéré et il n'existe pas de statut pour cela : ranger un silence sou
 quelque chose a été à moitié fait. Rien n'a été observé, donc rien n'est
 enregistré, et l'absence de résultat est elle-même la réponse honnête.
 
-### Une limite écrite, non cachée
+### À quoi une réponse est attribuée
 
-Les règles s'appliquent à **toutes les compétences de l'activité**, parce que H5P
-ne dit pas quelle question relève de quelle compétence. Une activité rattachée à
-deux compétences produit donc la même lecture pour les deux. C'est une limite
-réelle du pilote ; elle se lèvera le jour où les événements xAPI de l'étape 11
-porteront de quoi distinguer les questions.
+Cela dépend de ce que l'activité déclare.
+
+**Si elle associe ses questions à des compétences**, chaque question ne compte
+que pour ce qu'elle travaille, et une compétence sans question à elle ne reçoit
+aucun résultat plutôt qu'un résultat emprunté. C'est la table
+`catalog_activity_questions`, remplie par qui enregistre l'activité — personne
+d'autre ne le sait, puisqu'un paquet H5P ne le dit pas.
+
+**Si elle ne déclare rien**, ce qui est le cas ordinaire, toutes les compétences
+de l'activité reçoivent la même lecture. C'est grossier, et c'est écrit ici
+plutôt que caché : la plateforme ne peut pas en dire plus que l'activité.
+
+### D'où vient une réponse
+
+Chaque réponse porte sa provenance. `declared` signifie que le navigateur l'a
+dite ; `xapi` signifiera que l'événement du runtime lui-même est parvenu au
+serveur.
+
+**Le champ n'est pas dans la charge utile** : un client qui pourrait déclarer
+« ceci vient du runtime » annulerait la distinction. Il est posé par le serveur,
+et une charge utile qui le mentionne est refusée.
+
+La distinction est la frontière de confiance rendue visible. Rien ne prouve
+encore que ce qu'un navigateur rapporte est ce qui s'est passé dans le contenu ;
+l'étape 11 apportera les événements du runtime à côté de ces déclarations, et il
+faudra alors décider ce qui prime. Enregistrer laquelle est laquelle dès
+maintenant est ce qui permettra de trancher sans avoir à deviner pour les lignes
+déjà écrites.
+
+`recorded_at` est l'horloge du serveur, jamais celle du client — ADR-012 demande
+qu'une date de réception serveur reste distincte de ce qu'une source prétend.
+
+### Pourquoi les seuils ne sont pas configurables
+
+Ils sont **publiés** plutôt que réglables : `GET /api/v1/attempts/rules` rend les
+trois règles, leur condition et la raison de chacune.
+
+Les rendre configurables reviendrait à décider qui peut changer ce que « acquise »
+veut dire. C'est une décision, pas un réglage, et il n'existe personne pour la
+prendre — le rôle Administrateur est l'étape 15. Publier donne la même
+transparence sans inventer une autorité.
 
 ## Les routes
 
@@ -97,6 +133,7 @@ POST /api/v1/me/activities/{assignment_id}/attempts   commencer ou reprendre
 POST /api/v1/me/attempts/{id}/responses               ajouter une réponse
 POST /api/v1/me/attempts/{id}/complete                terminer et lire
 GET  /api/v1/me/attempts                              ses tentatives
+GET  /api/v1/attempts/rules                           les règles, telles qu'appliquées
 ```
 
 Toutes appartiennent à l'espace Élève et exigent `CurrentChild`. Un parent n'a
@@ -106,8 +143,9 @@ parent répondre à sa place.
 
 ## Ce que l'étape 10 ne fait pas
 
-- Aucune ingestion xAPI : les réponses sont déclarées par le client. L'étape 11
-  les recevra du runtime lui-même, ce qui est autre chose.
+- Aucune ingestion xAPI : les réponses restent déclarées par le client, ce que
+  leur provenance dit désormais explicitement. L'étape 11 recevra celles du
+  runtime.
 - Aucun agrégat dans le temps : un résultat porte sur une tentative. L'agrégation
   est 11.3.
 - Aucun diagnostic ni recommandation : c'est l'étape 12, et une lecture par
