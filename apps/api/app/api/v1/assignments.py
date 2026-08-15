@@ -19,11 +19,16 @@ from fastapi import APIRouter, Query, status
 from app.api.deps import CurrentChild, CurrentParent, DbSession
 from app.assignments import service
 from app.models.assignment import ASSIGNMENT_STATUSES
+from app.catalog.storage import S3ObjectStore
 from app.schemas.assignment import (
+    ActivityContent,
     AssignmentCreateRequest,
     AssignmentPublic,
     ChildAssignmentPublic,
 )
+
+# Long enough to open an activity, too short to be worth keeping.
+CONTENT_LINK_TTL_SECONDS = 300
 
 router = APIRouter()
 
@@ -47,6 +52,7 @@ async def create_assignment(
         child_id=payload.child_id,
         activity_code=payload.activity_code,
         note=payload.note,
+        due_on=payload.due_on,
     )
     await db.commit()
     return _parent_view(assignment)
@@ -113,6 +119,27 @@ async def complete_my_activity(
     return _child_view(assignment)
 
 
+@router.get("/me/activities/{assignment_id}/content", response_model=ActivityContent)
+async def read_my_activity_content(
+    assignment_id: uuid.UUID, child: CurrentChild, db: DbSession
+) -> ActivityContent:
+    """A signed, short-lived link to the package of an activity under way.
+
+    The bucket stays private: nothing is readable without a signature, and the
+    signature lasts five minutes. Access follows the assignment, so a child who
+    has not started, or has finished, gets nothing.
+    """
+    _, package = await service.content_for(db, child, assignment_id)
+    return ActivityContent(
+        library_name=package.library_name,
+        library_version=package.library_version,
+        package_url=S3ObjectStore().presign(
+            package.object_key, CONTENT_LINK_TTL_SECONDS
+        ),
+        expires_in=CONTENT_LINK_TTL_SECONDS,
+    )
+
+
 @router.get("/assignments/statuses", response_model=list[str])
 async def list_statuses(parent: CurrentParent) -> list[str]:
     """The statuses an assignment may have, so a client need not hard-code them."""
@@ -126,6 +153,7 @@ def _parent_view(assignment: Any) -> AssignmentPublic:
         child_pseudonym=assignment.child.pseudonym,
         status=assignment.status,
         note=assignment.note,
+        due_on=assignment.due_on,
         activity=assignment.activity,
         assigned_at=assignment.assigned_at,
         started_at=assignment.started_at,
@@ -139,6 +167,7 @@ def _child_view(assignment: Any) -> ChildAssignmentPublic:
         id=assignment.id,
         status=assignment.status,
         note=assignment.note,
+        due_on=assignment.due_on,
         activity=assignment.activity,
         assigned_at=assignment.assigned_at,
         started_at=assignment.started_at,

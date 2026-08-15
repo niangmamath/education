@@ -22,22 +22,24 @@ from __future__ import annotations
 
 import uuid
 from collections.abc import Sequence
-from datetime import datetime, timezone
+from typing import Any
+from datetime import date, datetime, timezone
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.exceptions import ConflictException, NotFoundException
 from app.models.assignment import (
     ASSIGNMENT_OPEN_STATUSES,
+    MAX_OPEN_ASSIGNMENTS,
     ASSIGNMENT_STATUS_ASSIGNED,
     ASSIGNMENT_STATUS_CANCELLED,
     ASSIGNMENT_STATUS_COMPLETED,
     ASSIGNMENT_STATUS_IN_PROGRESS,
     Assignment,
 )
-from app.models.catalog import ACTIVITY_STATUS_PUBLISHED, Activity
+from app.models.catalog import ACTIVITY_STATUS_PUBLISHED, Activity, H5PPackage
 from app.models.identity import CHILD_STATUS_ACTIVE, Child, Parent
 
 # One message for "not yours" and for "does not exist", so the two cannot be
@@ -47,6 +49,16 @@ CHILD_NOT_FOUND_MESSAGE = "Ce profil n’existe pas"
 ACTIVITY_NOT_FOUND_MESSAGE = "Cette activité n’existe pas ou n’est pas publiée"
 
 ALREADY_ASSIGNED_MESSAGE = "Cette activité est déjà proposée à cet enfant"
+TOO_MANY_OPEN_MESSAGE = (
+    f"Cet enfant a déjà {MAX_OPEN_ASSIGNMENTS} activités en attente ; "
+    "attendez qu'il en termine avant d'en proposer d'autres"
+)
+DUE_DATE_IN_THE_PAST_MESSAGE = "Une échéance ne peut pas être déjà passée"
+CONTENT_NOT_OPEN_MESSAGE = (
+    "Commencez l’activité pour ouvrir son contenu ; une activité terminée ou "
+    "annulée n’en donne plus"
+)
+NO_CONTENT_MESSAGE = "Cette activité n’a pas de contenu H5P à jouer"
 ALREADY_CLOSED_MESSAGE = "Cette affectation est terminée ou annulée"
 NOT_YET_STARTED_MESSAGE = "Cette activité n’a pas été commencée"
 ALREADY_STARTED_MESSAGE = "Cette activité est déjà commencée"
@@ -55,6 +67,22 @@ _LOADED = (
     selectinload(Assignment.activity),
     selectinload(Assignment.child),
 )
+
+
+def _in_course_order() -> tuple[Any, ...]:
+    """The order a child is meant to work through, and a parent to read.
+
+    What is expected soonest comes first; what is expected on no particular day
+    comes after all of it, oldest first. This is the whole of the "parcours":
+    the order is a consequence of the dates a parent sets, not a list to be
+    dragged around. Reordering by hand would need a rank to maintain, and a rank
+    that nobody updates is worse than no rank at all.
+    """
+    return (
+        Assignment.due_on.asc().nulls_last(),
+        Assignment.assigned_at.asc(),
+        Assignment.id,
+    )
 
 
 def _now() -> datetime:
@@ -67,8 +95,14 @@ async def assign_activity(
     child_id: uuid.UUID,
     activity_code: str,
     note: str | None = None,
+    due_on: date | None = None,
 ) -> Assignment:
     """Give one published activity to one of this parent's children."""
+    if due_on is not None and due_on < date.today():
+        # Refused rather than accepted and shown as already late: nobody means
+        # to give a child something that was due yesterday.
+        raise ConflictException(message=DUE_DATE_IN_THE_PAST_MESSAGE)
+
     child = await _own_child(db, parent, child_id)
 
     activity = await db.scalar(
@@ -94,11 +128,24 @@ async def assign_activity(
         # turns a database error into an answer the parent can act on.
         raise ConflictException(message=ALREADY_ASSIGNED_MESSAGE)
 
+    owed = await db.scalar(
+        select(func.count())
+        .select_from(Assignment)
+        .where(
+            Assignment.child_id == child.id,
+            Assignment.status.in_(ASSIGNMENT_OPEN_STATUSES),
+        )
+    )
+    if (owed or 0) >= MAX_OPEN_ASSIGNMENTS:
+        # The ceiling counts only what is still owed, so finishing frees a slot.
+        raise ConflictException(message=TOO_MANY_OPEN_MESSAGE)
+
     assignment = Assignment(
         child_id=child.id,
         assigned_by_parent_id=parent.id,
         activity_id=activity.id,
         note=note,
+        due_on=due_on,
     )
     db.add(assignment)
     await db.flush()
@@ -173,12 +220,12 @@ async def list_for_parent(
     child_id: uuid.UUID | None = None,
     status: str | None = None,
 ) -> Sequence[Assignment]:
-    """Every assignment of this parent's family, newest first."""
+    """Every assignment of this parent's family, in the order it is expected."""
     statement = (
         select(Assignment)
         .join(Child, Child.id == Assignment.child_id)
         .where(Child.parent_id == parent.id)
-        .order_by(Assignment.assigned_at.desc(), Assignment.id)
+        .order_by(*_in_course_order())
         .options(*_LOADED)
     )
     if child_id is not None:
@@ -197,7 +244,7 @@ async def list_for_child(
     statement = (
         select(Assignment)
         .where(Assignment.child_id == child.id)
-        .order_by(Assignment.assigned_at.desc(), Assignment.id)
+        .order_by(*_in_course_order())
         .options(*_LOADED)
     )
     if status is not None:
@@ -246,3 +293,30 @@ async def _child_assignment(
     if assignment is None:
         raise NotFoundException(message=ASSIGNMENT_NOT_FOUND_MESSAGE)
     return assignment
+
+
+async def content_for(
+    db: AsyncSession, child: Child, assignment_id: uuid.UUID
+) -> tuple[Assignment, H5PPackage]:
+    """The package this child may open right now, and the reasons she may not.
+
+    Access to a content is not a property of the content: it is a property of
+    the assignment. The package is handed over only to the child it was given
+    to, and only while she is actually doing it — a link obtained before
+    starting, or kept after finishing, opens nothing.
+    """
+    assignment = await _child_assignment(db, child, assignment_id)
+    if assignment.status != ASSIGNMENT_STATUS_IN_PROGRESS:
+        raise ConflictException(message=CONTENT_NOT_OPEN_MESSAGE)
+
+    activity = await db.scalar(
+        select(Activity)
+        .where(Activity.id == assignment.activity_id)
+        .options(selectinload(Activity.h5p_package))
+    )
+    if activity is None or activity.h5p_package is None:
+        # A PhET simulation or a video has no package to hand over; that is not
+        # a failure, it is another kind of activity.
+        raise ConflictException(message=NO_CONTENT_MESSAGE)
+
+    return assignment, activity.h5p_package

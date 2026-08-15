@@ -100,13 +100,82 @@ Le refus du doublon est aussi vérifié avant l'écriture, non par méfiance env
 la base mais pour rendre au parent une réponse sur laquelle agir plutôt qu'une
 erreur d'intégrité.
 
+## Échéance et ordre du parcours
+
+Une affectation peut porter une **échéance**, une date et non un moment : la
+semaine d'un enfant se compte en jours, et une heure de la journée serait une
+précision que personne ne veut dire. Elle est facultative — la plupart des
+activités sont simplement données, sans être attendues un jour précis. Une date
+déjà passée est refusée : personne ne veut donner à un enfant quelque chose qui
+était dû hier.
+
+L'ordre du parcours en découle : **ce qui est attendu le plus tôt vient en
+premier, ce qui n'est attendu aucun jour vient après tout le reste**, du plus
+ancien au plus récent. C'est tout le « parcours ».
+
+Réordonner à la main n'a pas été retenu : cela demanderait de maintenir un rang,
+et un rang que personne ne met à jour est pire que pas de rang du tout. Le parent
+dispose des dates, qui disent la même chose et se justifient d'elles-mêmes.
+
+## Un plafond sur ce qui est dû
+
+Un enfant ne peut pas se voir donner plus de **vingt activités à la fois**. Le
+plafond compte ce qui est encore dû, jamais ce qui a été donné : terminer ou
+annuler libère une place.
+
+Il n'est pas là contre un abus mais contre un geste — une frappe de trop, un
+parent qui déroule une liste — dont la conséquence serait d'ensevelir un enfant
+de six ans.
+
+## Ouvrir le contenu d'une activité
+
+```text
+GET /api/v1/me/activities/{id}/content
+```
+
+Rend un lien **signé et de courte durée**, cinq minutes, vers le paquet H5P.
+
+**L'accès à un contenu n'est pas une propriété du contenu : c'est une propriété
+de l'affectation.** Le paquet n'est remis qu'à l'enfant à qui il a été donné, et
+seulement pendant qu'il y travaille. Un lien demandé avant d'avoir commencé, ou
+gardé après avoir terminé, n'ouvre rien.
+
+| Cas | Réponse |
+|---|---|
+| affectation en cours, activité H5P | lien signé, 200 |
+| affectation pas encore commencée, terminée ou annulée | 409 |
+| affectation d'un autre enfant | 404, comme une inexistante |
+| Parent qui demande | 403, l'espace n'est pas le sien |
+| activité PhET ou vidéo | 409, il n'y a pas de paquet à remettre |
+
+Le bucket reste privé, conformément à ADR-008 : sans signature, le stockage
+répond `403`.
+
+### Ce qui manque encore pour jouer réellement le contenu
+
+Le lien remet le fichier vérifié ; il ne le **joue** pas. Trois pièces manquent,
+et aucune n'est une ligne de code de plus dans l'API :
+
+1. **L'origine de contenu isolée**, sa CSP et son iframe, qu'ADR-012 exige à sa
+   condition 5. Servir le contenu depuis l'origine de l'API serait précisément ce
+   que cette isolation interdit ; c'est un travail d'infrastructure, un second
+   domaine servi par le reverse proxy.
+2. **Le lecteur `h5p-standalone` dans le web**, qui suppose le paquet déployé et
+   les bibliothèques préparées hors ligne, figées comme artefacts internes selon
+   la condition 3.
+3. **L'endpoint xAPI authentifié**, condition 6, qui relève de l'étape 11 par
+   construction.
+
+La dette est donc réduite à ce qu'elle est vraiment : de l'infrastructure et une
+étape à venir, plus une décision de déploiement. La part qui appartenait à l'API
+— qui peut ouvrir quoi, quand, et sous quelle preuve — est faite.
+
 ## Ce que l'étape 09 ne fait pas
 
 - Aucune tentative, aucun score, aucune preuve : c'est l'étape 10.
 - Aucune recommandation automatique : le moteur déterministe est l'étape 12. Ici,
   c'est le parent qui choisit.
-- Aucune échéance ni ordre de parcours : une affectation est donnée, pas
-  planifiée.
-- Aucune remise du contenu au navigateur : le lecteur H5P et l'origine de contenu
-  isolée restent à construire.
+- Aucun réordonnancement manuel du parcours : l'ordre découle des échéances.
+- Aucune lecture du contenu dans le navigateur : le lien est remis, l'origine
+  isolée et le lecteur restent à construire.
 - Aucun affichage : les pages web restent les maquettes de l'étape 05.

@@ -18,11 +18,12 @@ attempt of step 10 pointing at nothing. Activities are archived, not removed.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from typing import Final
 
 from sqlalchemy import (
     CheckConstraint,
+    Date,
     DateTime,
     ForeignKey,
     Index,
@@ -59,6 +60,11 @@ ASSIGNMENT_OPEN_STATUSES: Final = (
 )
 
 MAX_NOTE_LENGTH: Final = 500
+
+# A child cannot be given an unbounded pile of work. The ceiling counts only what
+# is still owed, so finishing frees a slot; it exists so that a slip of the hand,
+# or a parent working through a list, cannot bury a six-year-old.
+MAX_OPEN_ASSIGNMENTS: Final = 20
 
 
 class Assignment(Base):
@@ -129,6 +135,10 @@ class Assignment(Base):
     )
     # A word from the parent to the child, shown with the activity.
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # When it is expected, if it is expected at all. A date and not a moment: a
+    # child's week is counted in days, and an hour of the day would be a
+    # precision nobody means.
+    due_on: Mapped[date | None] = mapped_column(Date, nullable=True)
 
     assigned_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
