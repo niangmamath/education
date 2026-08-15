@@ -750,15 +750,38 @@ est une candidate explicable.
       exécution. C'est la troisième occurrence de cette famille de fragilité,
       traitée à la racine cette fois.
 
+### Dette de l'étape 10, résorbée le 15 août 2026
+
+Traitée après la clôture, sur la branche `fix/dette-etape-10`, migration
+`0009_question_attribution` réversible.
+
+- [x] **Attribution par question.** Une activité peut associer ses questions à
+      des compétences ; chaque question ne compte alors que pour ce qu'elle
+      travaille, et une compétence sans question à elle ne reçoit **aucun**
+      résultat plutôt qu'un résultat emprunté. Rien dans un paquet H5P ne dit
+      cette association : elle est déclarée par qui enregistre l'activité.
+      Sans elle, l'ancien comportement demeure — la plateforme ne peut pas en
+      dire plus que l'activité — et c'est écrit plutôt que caché.
+- [x] **Provenance des réponses.** Chaque réponse porte `declared` ou `xapi`.
+      **Le champ n'est pas dans la charge utile** : un client capable de déclarer
+      « ceci vient du runtime » annulerait la distinction, et une charge utile
+      qui le mentionne est refusée. Enregistrer laquelle est laquelle dès
+      maintenant permettra à l'étape 11 de trancher sans deviner pour les lignes
+      déjà écrites. `recorded_at` reste l'horloge du serveur, comme ADR-012 le
+      demande.
+- [x] **Seuils publiés plutôt que configurables**, `GET /api/v1/attempts/rules`.
+      Les rendre réglables reviendrait à décider qui peut changer ce que
+      « acquise » veut dire : c'est une décision, pas un réglage, et personne ne
+      peut la prendre avant le rôle Administrateur de l'étape 15. Publier donne
+      la même transparence sans inventer une autorité.
+- [x] 6 tests supplémentaires, 440 au total.
+
 ### Points ouverts de l'étape 10
 
-- **Les règles s'appliquent à toutes les compétences d'une activité**, H5P ne
-  disant pas quelle question relève de laquelle. La limite se lèvera quand les
-  événements xAPI de l'étape 11 porteront de quoi distinguer les questions.
-- Les réponses sont **déclarées par le client** ; l'étape 11 les recevra du
-  runtime, et il faudra décider ce qui prime.
+- Les réponses restent **déclarées par le client**, ce que leur provenance dit
+  désormais explicitement. L'étape 11 apportera celles du runtime, et il faudra
+  décider ce qui prime.
 - Aucun agrégat dans le temps : un résultat porte sur une tentative.
-- Les seuils sont figés dans le code.
 
 ## Résultats techniques de l'étape 10
 
