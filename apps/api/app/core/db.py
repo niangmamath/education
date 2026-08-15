@@ -1,15 +1,19 @@
 from __future__ import annotations
 
-import os
 from collections.abc import AsyncIterator
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql+asyncpg://localhost/studentconnect",
-)
+from app.core.config import settings
+
+# Read through the settings rather than from `os.environ` directly. Both work in
+# the container, where Compose injects the values as real environment variables;
+# only this one also reads `apps/api/.env`, which is what a developer running the
+# migrations or the tests from the machine has. Two ways of reaching the same
+# setting, one of which ignores a file the other honours, is how a check ends up
+# passing on one side and failing on the other.
+DATABASE_URL = settings.DATABASE_URL
 
 
 def sync_database_url(url: str = DATABASE_URL) -> str:
