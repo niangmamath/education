@@ -37,4 +37,6 @@ Créer, lister et annuler des affectations avec contrôle d’appartenance famil
 
 ## Statut
 
-À faire.
+Terminé. Création, liste filtrée et annulation, appartenance familiale portée par la
+requête, refus indistincts.
+Validation consignée dans `rapport_2026-08-15_1615_affectations.md`.

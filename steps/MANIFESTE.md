@@ -56,10 +56,10 @@ Nombre de fiches : 91
 - `08_catalogue_contenus_activites/03_api_catalogue.md`  `be87c6f564be`
 - `08_catalogue_contenus_activites/04_cloturer_etape.md`  `be7900dbe1a1`
 - `08_catalogue_contenus_activites/README.md`  `682ac653038d`
-- `09_affectations_parcours/01_modeles_affectations.md`  `5790700c737c`
-- `09_affectations_parcours/02_api_affectations_parent.md`  `bd76257c166f`
-- `09_affectations_parcours/03_api_activites_eleve.md`  `09013872c6b9`
-- `09_affectations_parcours/04_cloturer_etape.md`  `7bfc9c6862b8`
+- `09_affectations_parcours/01_modeles_affectations.md`  `92ce56b7e70f`
+- `09_affectations_parcours/02_api_affectations_parent.md`  `ecea32608b70`
+- `09_affectations_parcours/03_api_activites_eleve.md`  `3cc02249ed6a`
+- `09_affectations_parcours/04_cloturer_etape.md`  `79399f3c4586`
 - `09_affectations_parcours/README.md`  `272beb67e412`
 - `10_tentatives_resultats/01_modeles_tentatives.md`  `71c17eaee060`
 - `10_tentatives_resultats/02_api_tentatives.md`  `8a76a35fa1e4`
@@ -99,9 +99,9 @@ Nombre de fiches : 91
 - `16_validation_mvp_livraison/README.md`  `998e5bc3959d`
 - `AGENTS.md`  `d3620f0f65bb`
 - `DECISIONS_FINALES.md`  `a735c5ca2723`
-- `ETAT.md`  `a2ab1a486a05`
+- `ETAT.md`  `0086f168aac2`
 - `MODELE_RAPPORT.md`  `d391f4da239a`
-- `PLANNING.md`  `eb605f33abbb`
+- `PLANNING.md`  `5876d61a8982`
 - `PROMPT_GENERAL.md`  `d9ff17c723a2`
 - `RAPPORTS_REGLES.md`  `9c07f684b281`
 - `README.md`  `b4684411894a`

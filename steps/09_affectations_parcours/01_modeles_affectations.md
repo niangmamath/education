@@ -37,4 +37,6 @@ Modéliser l’affectation d’une activité à un Élève par un Parent autoris
 
 ## Statut
 
-À faire.
+Terminé. Table `assignments`, migration `0006_assignments` réversible, clé étrangère
+restrictive vers l'activité, index unique partiel sur les états ouverts.
+Validation consignée dans `rapport_2026-08-15_1615_affectations.md`.
