@@ -37,4 +37,6 @@ Modéliser activités, types de contenus, métadonnées, statuts et liens vers c
 
 ## Statut
 
-À faire.
+Terminé. Trois tables, migration `0005_catalog_activities` réversible,
+ADR-013 sur le lien par code métier, 27 tests de contraintes. Contrôles locaux verts.
+Validation consignée dans `rapport_2026-08-15_1530_catalogue.md`.

@@ -1,8 +1,8 @@
-# 08.3, API catalogue
+# 13.2, Dashboard Parent
 
 ## Objectif
 
-Créer les endpoints de consultation et filtres, sans affectation ni résultat.
+Alimenter le dashboard Parent avec enfants autorisés, activités, progrès et points d’attention explicables.
 
 ## Prérequis
 
@@ -37,6 +37,4 @@ Créer les endpoints de consultation et filtres, sans affectation ni résultat.
 
 ## Statut
 
-Terminé. Trois routes de lecture, activités publiées seules, filtres par
-compétence, type et durée, 23 tests. Contrôles locaux verts.
-Validation consignée dans `rapport_2026-08-15_1530_catalogue.md`.
+À faire.

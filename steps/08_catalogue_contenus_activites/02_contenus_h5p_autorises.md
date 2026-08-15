@@ -37,4 +37,6 @@ Intégrer uniquement les types validés par ADR-012, sans éditeur ni import non
 
 ## Statut
 
-À faire.
+Terminé. Vérification des paquets sans extraction, allowlist ADR-012 doublée
+par une contrainte en base, commandes `register` et `check`, 31 tests. Contrôles locaux verts.
+Validation consignée dans `rapport_2026-08-15_1530_catalogue.md`.

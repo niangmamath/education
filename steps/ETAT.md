@@ -422,10 +422,98 @@ Tests      : trois pages de deux rendent cinq compétences distinctes
   du côté de la branche, qui portait déjà ce contenu et sa suite.
 - Commit de fusion `a49ec43`, API CI et Secret Scan verts sur `main`.
 
-## Étape 08, catalogue de contenus et activités, en cours
+## Étape 08, catalogue de contenus et activités, clôturée
 
-Travaux menés sur la branche `feat/etape-08-catalogue`.
+Travaux menés sur la branche `feat/etape-08-catalogue`. Le propriétaire ayant
+demandé d'enchaîner les sous-étapes sans arrêt, la décision structurante de
+l'étape a été prise par l'agent et **reste à confirmer**.
+
+### 08.1, modèle du catalogue, terminée
+
+- [x] **ADR-013, décidée par l'agent et à confirmer** : le catalogue pointe vers
+      les compétences **par leur code métier, sans clé étrangère**. Le référentiel
+      est versionné parce que des traces le désignent ; le catalogue est un
+      travail éditorial qui doit suivre le programme sans être reconstruit à
+      chaque édition. La contrepartie, un lien que la base ne peut pas vérifier,
+      est payée par une commande dédiée.
+- [x] `catalog_activities`, `catalog_activity_competencies`,
+      `catalog_h5p_packages`, migration `0005_catalog_activities` réversible.
+- [x] La bibliothèque H5P est bornée par un `CHECK` à ce qu'autorise ADR-012 :
+      admettre un second type demande une migration et un amendement d'ADR.
+- [x] Durée bornée entre une et soixante minutes, un Quick Repair durant trois à
+      sept minutes.
+- [x] 27 tests de contraintes.
+
+### 08.2, contenus H5P autorisés, terminée
+
+- [x] Ni éditeur ni route de téléversement, par ADR-006 et ADR-012 : un paquet
+      est vérifié, stocké et enregistré par quelqu'un qui a accès au serveur.
+- [x] **L'archive est lue sans jamais être extraite.** Rien n'est écrit sur le
+      disque, donc un nom d'entrée forgé n'a nulle part où s'échapper.
+- [x] Refus des chemins remontants et absolus, des archives de plus de cinq cents
+      entrées, des bombes de décompression, des fichiers au-delà de vingt
+      mégaoctets.
+- [x] Type refusé **avant que le moindre octet n'atteigne le bucket**. Vérification,
+      stockage, écriture ; si l'écriture échoue, l'objet est retiré.
+- [x] Empreinte calculée sur les octets lus, nommant l'objet dans le bucket.
+- [x] Paquet pilote enregistré à la main : empreinte identique à celle publiée
+      par ADR-012.
+- [x] `python -m app.catalog check`, contrepartie d'ADR-013, qui nomme les liens
+      morts et les activités reliées à rien.
+- [x] 31 tests.
+
+### 08.3, API du catalogue, terminée
+
+- [x] `GET /api/v1/catalog/activities`, `.../{code}` et `/kinds`.
+- [x] **Seules les activités publiées sont servies** ; un brouillon répond comme
+      une activité inexistante.
+- [x] Toute session authentifiée peut lire, Parent comme Enfant, comme en 07.3.
+- [x] Filtres `competency`, `kind` et `max_duration` combinables, ordre total.
+- [x] **Aucune réponse ne dit où vit un paquet** : clé d'objet, empreinte, licence
+      et provenance restent côté serveur.
+- [x] 23 tests.
+
+### Dettes corrigées pendant l'étape 08
+
+- [x] Le registre des décisions annonçait dix ADR dont neuf « à créer », alors
+      que treize existaient. Reconstruit depuis les fichiers d'ADR.
+- [x] Un test portait un nom plus fort que ce qu'il prouvait, la compensation du
+      stockage n'étant jamais exercée.
+- [x] Deux tests supposaient une base vide et une empreinte libre.
+
+### Points ouverts de l'étape 08
+
+- **ADR-013 n'a pas été arbitrée par le propriétaire** et mérite confirmation.
+- Aucun antivirus dans le contrôle des paquets, exigé par ADR-012 pour la
+  production ; aucun scanner disponible dans l'environnement de stage.
+- Aucune remise de paquet au navigateur : origine de contenu isolée, CSP et
+  endpoint xAPI authentifié restent à construire.
+- Aucun import de masse du catalogue, contrairement au référentiel.
+
+### 08.4, clôture de l'étape, terminée
+
+- [x] Séquence complète de l'API CI rejouée localement, tout vert, 336 tests.
+- [x] Rapports `rapport_2026-08-15_1530_catalogue.md` et
+      `rapport_2026-08-15_1545_cloture_etape_08.md` produits.
+- [x] Une seule Pull Request pour toute l'étape.
+- [ ] Clôture distante, à consigner au premier commit de l'étape 09.
+
+## Résultats techniques de l'étape 08
+
+```text
+Ruff       : vert, format inclus
+Mypy       : vert sur 41 fichiers
+Alembic    : 0005_catalog_activities (head), check vert, downgrade base et retour au head
+Pytest     : 336 tests réussis, dont 81 dédiés au catalogue
+Catalogue  : 27 tests de contraintes, 31 sur les paquets, 23 sur les routes
+Commande   : paquet pilote enregistré, empreinte identique à celle publiée par ADR-012
+Commande   : check, catalogue cohérent avec l'édition en vigueur, code de retour 0
+Tests      : zip slip, chemin absolu, 501 entrées et bombe de décompression refusés
+Tests      : quatre autres types H5P refusés, en code et par contrainte en base
+Tests      : brouillon et archive répondant 404 comme une activité inexistante
+Tests      : aucune réponse ne contient de clé d'objet, d'empreinte ni de licence
+```
 
 ## Prochaine action
 
-Mener les sous-étapes 08.1 à 08.4.
+Faire confirmer ADR-013, puis ouvrir l'étape 09, affectations et parcours.

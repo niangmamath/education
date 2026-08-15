@@ -1,8 +1,8 @@
-# 08.3, API catalogue
+# 10.4, Clôture résultats
 
 ## Objectif
 
-Créer les endpoints de consultation et filtres, sans affectation ni résultat.
+Valider calculs, concurrence, intégrité, tests et CI.
 
 ## Prérequis
 
@@ -37,6 +37,4 @@ Créer les endpoints de consultation et filtres, sans affectation ni résultat.
 
 ## Statut
 
-Terminé. Trois routes de lecture, activités publiées seules, filtres par
-compétence, type et durée, 23 tests. Contrôles locaux verts.
-Validation consignée dans `rapport_2026-08-15_1530_catalogue.md`.
+À faire.

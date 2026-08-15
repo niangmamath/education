@@ -72,6 +72,15 @@
 | REF-03 | Exposer les lectures filtrées et paginées | REF-02 | Terminé | Commande `publish`, quatre routes, 37 tests, rapport du 15 août 2026 |
 | REF-04 | Clôturer l’étape 07 | REF-03 | Terminé | Séquence de l’API CI rejouée, 255 tests, Pull Request unique |
 
+### Phase 4, catalogue de contenus et activités
+
+| ID | Travail | Dépendances | Statut | Preuve |
+|---|---|---|---|---|
+| CAT-01 | Modéliser le catalogue et ses liens | REF-04 | Terminé | Migration `0005`, ADR-013, 27 tests de contraintes |
+| CAT-02 | N’admettre que les types H5P d’ADR-012 | CAT-01 | Terminé | Vérification sans extraction, paquet pilote enregistré, 31 tests |
+| CAT-03 | Exposer les lectures du catalogue | CAT-02 | Terminé | Trois routes, filtres, 23 tests |
+| CAT-04 | Clôturer l’étape 08 | CAT-03 | Terminé | Séquence de l’API CI rejouée, 336 tests, Pull Request unique |
+
 ### Prochaine tâche
 
-Ouvrir l’étape 08, catalogue de contenus et activités.
+Faire confirmer ADR-013, puis ouvrir l’étape 09, affectations et parcours.

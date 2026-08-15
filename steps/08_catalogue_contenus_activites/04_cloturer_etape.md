@@ -37,4 +37,6 @@ Valider sécurité des métadonnées, tests, stockage, API et CI.
 
 ## Statut
 
-À faire.
+Terminé. Séquence complète de l'API CI rejouée localement, tout vert, 336 tests.
+Étape fusionnée par une seule Pull Request. Validation consignée dans
+`rapport_2026-08-15_1545_cloture_etape_08.md`.
