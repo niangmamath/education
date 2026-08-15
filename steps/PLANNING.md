@@ -69,10 +69,9 @@
 |---|---|---|---|---|
 | REF-01 | Modéliser le référentiel scolaire | BE-05 | Terminé | Migration `0004`, 23 tests de contraintes, rapport du 14 août 2026 |
 | REF-02 | Importer un référentiel fictif de façon idempotente | REF-01 | Terminé | PR #11 fusionnée, CI verte sur `main`, rapport du 14 août 2026 |
-| REF-03 | Exposer les lectures filtrées et paginées | REF-02 | En revue | Commande `publish`, quatre routes, 37 tests, rapport du 15 août 2026 |
-| REF-04 | Clôturer l’étape 07 | REF-03 | À faire | |
+| REF-03 | Exposer les lectures filtrées et paginées | REF-02 | Terminé | Commande `publish`, quatre routes, 37 tests, rapport du 15 août 2026 |
+| REF-04 | Clôturer l’étape 07 | REF-03 | Terminé | Séquence de l’API CI rejouée, 255 tests, Pull Request unique |
 
 ### Prochaine tâche
 
-Engager REF-04, la clôture de l’étape 07 : une seule Pull Request pour toute
-l’étape, contrôles distants verts, fusion vers `main`.
+Ouvrir l’étape 08, catalogue de contenus et activités.

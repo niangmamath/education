@@ -246,7 +246,7 @@ API vivante: PIN réinitialisé 200 levant le verrou 429, PIN changé par l’en
 Alembic    : downgrade avec trois « lea » de familles différentes, deux renommées et journalisées
 ```
 
-## Étape 07, référentiel de compétences, en cours
+## Étape 07, référentiel de compétences, clôturée
 
 ### 07.1, référentiel scolaire, clôturée
 
@@ -333,7 +333,20 @@ Travaux menés sur la branche `feat/etape-07-referentiel`.
       place puis la remettre.
 - [x] Aucune migration : le schéma de 07.1 n’a pas bougé.
 - [x] 37 tests dédiés, tous d’intégration contre PostgreSQL réel.
-- [ ] Clôture distante, à la clôture de l’étape 07.
+- [x] Clôture distante, avec l’étape entière.
+
+### 07.4, clôture de l’étape, terminée
+
+- [x] Séquence complète de l’API CI rejouée localement, tout vert, 255 tests.
+- [x] Rapport d’étape `rapport_2026-08-15_1440_cloture_etape_07.md` produit.
+- [x] **Une seule Pull Request pour toute l’étape**, sur consigne du
+      propriétaire du 15 août 2026 : la fusion vers `main` n’a lieu qu’à la
+      clôture de la grande étape. Les sous-étapes 07.1 et 07.2 avaient été
+      fusionnées séparément avant cette consigne.
+- [x] Trois corrections menées en cours d’étape : ADR-004 amendée, garde-fou
+      posé sur les déclarations `overlaps`, et quatre tests qui publiaient une
+      édition en supposant qu’aucune ne l’était — ils échouaient en local en
+      passant en CI, ce qui est le pire des deux cas.
 
 ### Points ouverts de l’étape 07
 
@@ -365,10 +378,11 @@ Travaux menés sur la branche `feat/etape-07-referentiel`.
 ## Résultats techniques de l’étape 07
 
 ```text
-Ruff       : vert, format inclus, 62 fichiers
-Mypy       : vert sur 29 fichiers
+Ruff       : vert, format inclus
+Mypy       : vert sur 32 fichiers
 Alembic    : 0004_referential_competencies (head), check vert, downgrade base et retour au head
-Pytest     : 218 tests réussis, dont 54 pour l’import
+Pytest     : 255 tests réussis, dont 114 dédiés au référentiel
+Référentiel: 23 tests de contraintes, 54 pour l’import, 37 pour la publication et les routes
 Commande   : essai à blanc, 5 niveaux, 2 matières, 8 domaines, 39 compétences, 36 prérequis
 Commande   : essai à blanc annulé, version absente de la base
 Commande   : --apply, version créée en brouillon, base comptée à 5 / 2 / 8 / 39 / 36
@@ -378,11 +392,19 @@ Commande   : version publiée puis archivée refusées, code de retour 3, éditi
 Commande   : fichier absent, code de retour 1 ; JSON malformé, code de retour 2
 Tests      : cycle à deux et à trois compétences détecté, losange non confondu avec un cycle
 Tests      : compétence déplacée de domaine, même identifiant conservé
+Commande   : publish sur un brouillon, mise en vigueur ; rejoué, « déjà en vigueur »
+Commande   : publish sur un code inconnu, code de retour 3
+API vivante: sans session, 401 sur les quatre routes de lecture
+API vivante: /edition rend l’édition en vigueur, /levels les cinq niveaux en ordre
+API vivante: /competencies?level=cm1&subject=math&page_size=2 rend 2 items, total 5
+Tests      : l’édition remplacée est archivée, exactement une reste en vigueur
+Tests      : un brouillon n’est jamais servi, aucune réponse ne contient de prérequis
+Tests      : trois pages de deux rendent cinq compétences distinctes
 ```
 
 ## Dernier rapport appliqué
 
-`steps/07_referentiel_competences/rapport_2026-08-15_1430_api_referentiel.md`.
+`steps/07_referentiel_competences/rapport_2026-08-15_1440_cloture_etape_07.md`.
 
 ## Historique de clôture de l’étape 06
 
@@ -396,5 +418,6 @@ Tests      : compétence déplacée de domaine, même identifiant conservé
 
 ## Prochaine action
 
-Engager la sous-étape 07.4, clôture de l’étape 07 : Pull Request unique portant
-07.3 et la dette résorbée, contrôles distants verts, fusion vers `main`.
+Ouvrir l’étape 08, catalogue de contenus et activités, en faisant entrer son
+dossier dans le dépôt. La clôture distante de l’étape 07 sera consignée avec le
+premier commit de l’étape 08, pour ne pas ajouter une fusion à une étape close.
