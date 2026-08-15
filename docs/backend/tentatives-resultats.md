@@ -136,10 +136,16 @@ GET  /api/v1/me/attempts                              ses tentatives
 GET  /api/v1/attempts/rules                           les règles, telles qu'appliquées
 ```
 
-Toutes appartiennent à l'espace Élève et exigent `CurrentChild`. Un parent n'a
-rien à y faire — non par secret, mais parce qu'une tentative est ce qu'un enfant
-fait, et une route qui accepterait les deux serait à un oubli près de laisser un
-parent répondre à sa place.
+Les quatre premières appartiennent à l'espace Élève et exigent `CurrentChild`.
+Un parent n'a rien à y faire — non par secret, mais parce qu'une tentative est ce
+qu'un enfant fait, et une route qui accepterait les deux serait à un oubli près
+de laisser un parent répondre à sa place.
+
+`/attempts/rules` fait exception, et délibérément : elle ne touche à aucune
+tentative et ne nomme aucun enfant. Toute session authentifiée la lit, Parent
+comme Élève, comme en 07.3 et 08.3. Publier les règles pour qu'un parent puisse
+se les voir montrer, derrière une porte que seul un enfant ouvre, serait les
+publier à personne qui en a besoin.
 
 ## Ce que l'étape 10 ne fait pas
 

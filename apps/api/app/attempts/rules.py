@@ -15,10 +15,12 @@ There is no model here, opaque or otherwise. A parent must be able to be told:
 that asks for everything to be right concluded that it is not yet mastered".
 That sentence is the whole design.
 
-The rules apply to **every competency the activity works on**, because H5P does
-not say which question belongs to which competency. That is a real limitation
-and it is written down rather than hidden: an activity attached to two
-competencies produces the same reading for both.
+Nothing here decides **what** a count is about. The rules read two numbers and
+name themselves; which responses those numbers cover is the caller's business,
+and `attempts/service.py` answers it from what the activity declares — per
+question when it maps its questions to competencies, and the same reading for
+all of them when it declares nothing. Keeping that choice out of this file is
+what lets the rules stay quotable as they are.
 """
 
 from __future__ import annotations

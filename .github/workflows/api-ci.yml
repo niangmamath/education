@@ -48,7 +48,9 @@ jobs:
       - run: python -m pip install -r requirements.txt -r requirements-step03.txt
       - run: ruff format --check .
       - run: ruff check .
-      - run: mypy app --ignore-missing-imports
+      # No flag here: the configuration is in pyproject.toml, so this command is
+      # the same one a developer runs by hand and cannot drift from it.
+      - run: mypy app
       - run: alembic upgrade head
       - run: alembic check
       - run: alembic downgrade base

@@ -38,5 +38,7 @@ Valider calculs, concurrence, intégrité, tests et CI.
 ## Statut
 
 Terminé. Séquence complète de l'API CI rejouée localement, tout vert, 434 tests. Étape
-fusionnée par une seule Pull Request.
+fusionnée par une seule Pull Request, la #19, commit `60b474b`, API CI et Secret
+Scan verts sur la Pull Request puis sur `main`. La dette de l'étape a été résorbée
+ensuite par la Pull Request #20, commit `26d0ae1`.
 Validation consignée dans `rapport_2026-08-15_1820_tentatives.md`.

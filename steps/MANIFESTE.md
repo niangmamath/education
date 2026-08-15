@@ -65,7 +65,7 @@ Nombre de fiches : 92
 - `10_tentatives_resultats/01_modeles_tentatives.md`  `fb7998381b4a`
 - `10_tentatives_resultats/02_api_tentatives.md`  `729c334f5cff`
 - `10_tentatives_resultats/03_calcul_resultats.md`  `1c3bb9e0f6cf`
-- `10_tentatives_resultats/04_cloturer_etape.md`  `eed6bfc95573`
+- `10_tentatives_resultats/04_cloturer_etape.md`  `d45c91d1f4f5`
 - `10_tentatives_resultats/README.md`  `b152ab7f9762`
 - `11_evenements_xapi_progres/01_ingestion_xapi.md`  `6e0b9b2d9d42`
 - `11_evenements_xapi_progres/02_liaison_utilisateur.md`  `e04a56a57d16`
@@ -100,9 +100,9 @@ Nombre de fiches : 92
 - `16_validation_mvp_livraison/README.md`  `998e5bc3959d`
 - `AGENTS.md`  `d3620f0f65bb`
 - `DECISIONS_FINALES.md`  `a735c5ca2723`
-- `ETAT.md`  `6deb4c7843a6`
+- `ETAT.md`  `be2459f7ff0a`
 - `MODELE_RAPPORT.md`  `d391f4da239a`
-- `PLANNING.md`  `c834b970e5bd`
+- `PLANNING.md`  `0a1220b025fe`
 - `PROMPT_GENERAL.md`  `d9ff17c723a2`
 - `RAPPORTS_REGLES.md`  `9c07f684b281`
 - `README.md`  `b4684411894a`

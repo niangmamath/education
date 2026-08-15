@@ -40,13 +40,26 @@ Elle nomme les liens morts, et aussi les activités reliées à aucune compéten
 celles-là ne pourront jamais être recommandées par l'étape 12, ce qui est un
 silence du même genre. Code de retour `5` dès qu'il y a quelque chose à corriger.
 
-## Trois tables
+## Quatre tables
 
 ```text
 catalog_activities              une activité, son type, sa durée, son statut
 ├── catalog_activity_competencies  les codes de compétences qu'elle travaille
+├── catalog_activity_questions     quelle question travaille quelle compétence
 └── catalog_h5p_packages           le paquet vérifié qu'elle joue, le cas échéant
 ```
+
+`catalog_activity_questions` est arrivée après l'étape 08, avec la dette de
+l'étape 10, et elle est **facultative** — c'est tout son intérêt. Sans ses
+lignes, la plateforme ne sait pas quelle question porte quelle compétence, et la
+lecture d'une tentative vaut pour toutes les compétences de l'activité : grossier
+mais honnête. Avec elles, chaque question ne compte que pour ce qu'elle travaille,
+et une compétence sans question à elle ne reçoit aucun résultat plutôt qu'un
+résultat emprunté.
+
+Rien dans un paquet H5P ne dit cette association ; elle est donc déclarée par qui
+enregistre l'activité, seul à la connaître. La lecture qui s'en sert est décrite
+dans `tentatives-resultats.md`.
 
 Une activité est `draft`, puis `published`, puis `archived`. Elle ne disparaît
 jamais : les résultats des étapes 10 à 12 continueront de la désigner.

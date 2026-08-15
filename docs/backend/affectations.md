@@ -63,6 +63,8 @@ constater qu'une activité a été menée à son terme.
 | voir ce qu'on lui a donné | Élève | `GET /api/v1/me/activities` |
 | commencer | Élève | `POST /api/v1/me/activities/{id}/start` |
 | terminer | Élève | `POST /api/v1/me/activities/{id}/complete` |
+| ouvrir le contenu | Élève | `GET /api/v1/me/activities/{id}/content` |
+| connaître les statuts existants | Parent | `GET /api/v1/assignments/statuses` |
 
 **Les deux espaces ne se mélangent pas.** Une route Parent exige `CurrentParent`,
 une route Élève exige `CurrentChild`, et aucune n'accepte l'autre : un enfant ne

@@ -1,7 +1,7 @@
 # Registre des Décisions d'Architecture (ADR Register)
 
-> **Dernière mise à jour : 10 août 2026**
-> **Statut : En construction**
+> **Dernière mise à jour : 15 août 2026**
+> **Statut : à jour, reconstruit depuis les fichiers d'ADR**
 
 Ce document est le **registre central** de toutes les Architecture Decision Records (ADR) du projet StudentConnect. Chaque ADR documente une décision architecturale structurante prise par l'équipe.
 
@@ -18,23 +18,28 @@ Ce document est le **registre central** de toutes les Architecture Decision Reco
 
 ## Structure des dossiers
 
+Les quatorze ADR existent toutes en fichier ; ce registre les résume et ne les
+remplace pas.
+
 ```
 docs/
 ├── adr/
-│   ├── ADR-000-licence-projet.md      # Licence du projet (Proposed)
-│   ├── ADR-001-monorepo.md            # À créer
-│   ├── ADR-002-nextjs-et-tailwind.md  # À créer
-│   ├── ADR-003-fastapi-rest.md        # À créer
-│   ├── ADR-004-postgresql-et-sqlalchemy.md # À créer
-│   ├── ADR-005-sessions-familiales.md # À créer
-│   ├── ADR-006-h5p-standalone.md      # À créer
-│   ├── ADR-007-phet-iframe.md         # À créer
-│   ├── ADR-008-s3-et-urls-presignees.md # À créer
-│   ├── ADR-009-redis-et-celery.md     # À créer
-│   └── ADR-010-planning-markdown.md   # À créer
+│   ├── ADR-000-licence-projet.md              # Licence du projet
+│   ├── ADR-001-monorepo.md                    # Monorepo pnpm et Turborepo
+│   ├── ADR-002-nextjs-et-tailwind.md          # Next.js, App Router, Bootstrap
+│   ├── ADR-003-fastapi-rest.md                # FastAPI et REST
+│   ├── ADR-004-postgresql-et-sqlalchemy.md    # PostgreSQL, SQLAlchemy, référentiel
+│   ├── ADR-005-sessions-familiales.md         # Sessions Redis et unicité familiale
+│   ├── ADR-006-h5p-standalone.md              # H5P sans serveur H5P
+│   ├── ADR-007-phet-iframe.md                 # PhET en iframe
+│   ├── ADR-008-s3-et-urls-presignees.md       # Stockage privé et URLs signées
+│   ├── ADR-009-redis-et-celery.md             # Redis et Celery
+│   ├── ADR-010-planning-markdown.md           # Planning en Markdown
+│   ├── ADR-011-sqlalchemy-async.md            # SQLAlchemy async et asyncpg
+│   ├── ADR-012-h5p-standalone-pilote.md       # Type H5P unique, accepté sous conditions
+│   └── ADR-013-catalogue-lie-par-code.md      # Catalogue lié par code métier
 └── architecture/
-    ├── decision-register.md           # Ce fichier
-    └── diagrams/                       # Diagrammes d'architecture
+    └── decision-register.md                   # Ce fichier
 ```
 
 ---
@@ -304,8 +309,9 @@ docs/
 | **Total** | **14** |
 
 Une seule ADR reste ouverte, ADR-000 sur la licence du projet. ADR-012 est
-acceptée **sous conditions**, comptée ici parmi les acceptées ; ses conditions
-de production restent à remplir et sont suivies à l'étape 08.
+acceptée **sous conditions**, comptée ici parmi les acceptées. Ses huit conditions
+sont désormais suivies une par une dans l'ADR elle-même : cinq sont remplies, deux
+partiellement, une reste entière et relève de l'étape 11.
 
 ---
 
@@ -313,7 +319,7 @@ de production restent à remplir et sont suivies à l'étape 08.
 
 1. **Vérifier** qu'aucune décision existante ne couvre déjà le sujet
 2. **Discuter** avec l'équipe avant de rédiger
-3. **Utiliser le template** ADR (à créer dans docs/adr/TEMPLATE.md)
+3. **Suivre la forme des ADR existantes** : statut, date, décision, conséquences. Aucun template séparé n'est maintenu, les quatorze fichiers en tiennent lieu
 4. **Numérotation** : Utiliser le prochain numéro disponible
 5. **Statut initial** : `Proposed`
 6. **Créer un PR** avec le nouvel ADR

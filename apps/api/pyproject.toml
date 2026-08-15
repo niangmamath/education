@@ -39,6 +39,20 @@ dev = [
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[tool.mypy]
+# The configuration lives here rather than in a flag of the CI workflow. It was
+# a `--ignore-missing-imports` passed only by the workflow, so `mypy app` run by
+# hand reported two errors that CI never showed. A check that disagrees with
+# itself depending on where it runs is worse than no check.
+python_version = "3.12"
+
+# Named one by one instead of ignoring every missing import: celery and boto3
+# genuinely ship no stubs, and saying so here means the next dependency that
+# lacks them is reported rather than silently swallowed.
+[[tool.mypy.overrides]]
+module = ["celery.*", "boto3.*", "botocore.*"]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
