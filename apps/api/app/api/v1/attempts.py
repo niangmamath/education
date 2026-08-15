@@ -24,6 +24,7 @@ from app.schemas.attempt import (
     ResponsePublic,
     ResponseRequest,
     ResultPublic,
+    RulePublic,
 )
 
 router = APIRouter()
@@ -85,6 +86,17 @@ async def complete_attempt(
     attempt, _ = await service.complete(db, child, attempt_id)
     await db.commit()
     return _public(attempt)
+
+
+@router.get("/attempts/rules", response_model=list[RulePublic])
+async def list_rules(child: CurrentChild) -> list[RulePublic]:
+    """The rules that read an attempt, stated so they can be shown.
+
+    Published rather than made configurable: configuring them would mean
+    deciding who may change what a mastered competency means, which is a
+    decision and not a setting, and one with nobody to make it yet.
+    """
+    return [RulePublic(**rule) for rule in rules.published_rules()]
 
 
 @router.get("/me/attempts", response_model=list[AttemptPublic])

@@ -36,6 +36,9 @@ class ResponsePublic(BaseModel):
     question_ref: str
     response: str | None
     is_correct: bool | None
+    # Where it came from. `declared` means the browser said so; the distinction
+    # is the trust boundary, and it travels rather than being hidden.
+    source: str
     recorded_at: datetime
 
 
@@ -60,3 +63,12 @@ class AttemptPublic(BaseModel):
     completed_at: datetime | None
     responses: list[ResponsePublic] = Field(default_factory=list)
     results: list[ResultPublic] = Field(default_factory=list)
+
+
+class RulePublic(BaseModel):
+    """One reading rule, stated so it can be quoted rather than guessed."""
+
+    code: str
+    condition: str
+    outcome: str
+    description: str

@@ -95,3 +95,45 @@ def explain(reading: Reading) -> str:
         f"{counted} : moins de la moitié est juste, la compétence est considérée "
         "non acquise."
     )
+
+
+def published_rules() -> list[dict[str, str]]:
+    """The rules, as they are meant to be shown and quoted.
+
+    They are exposed rather than made configurable. Configuring them would mean
+    deciding who may change what a mastered competency means, which is not a
+    setting but a decision, and one with nobody to make it yet. Publishing them
+    gives the same transparency without inventing an authority.
+    """
+    return [
+        {
+            "code": RULE_ALL_CORRECT,
+            "condition": "toutes les réponses évaluées sont justes",
+            "outcome": OUTCOME_MASTERED,
+            "description": (
+                "La maîtrise exige tout, parce que ces activités sont courtes et "
+                "portent sur un point précis."
+            ),
+        },
+        {
+            "code": RULE_MAJORITY_CORRECT,
+            "condition": (
+                f"au moins {int(PARTIAL_THRESHOLD * 100)} % des réponses évaluées "
+                "sont justes"
+            ),
+            "outcome": OUTCOME_PARTIAL,
+            "description": (
+                "Une bande intermédiaire existe pour que « presque » ne soit pas "
+                "rangé avec « pas du tout »."
+            ),
+        },
+        {
+            "code": RULE_TOO_FEW_CORRECT,
+            "condition": (
+                f"moins de {int(PARTIAL_THRESHOLD * 100)} % des réponses évaluées "
+                "sont justes"
+            ),
+            "outcome": OUTCOME_NOT_MASTERED,
+            "description": "En dessous de la moitié, la compétence n’est pas acquise.",
+        },
+    ]

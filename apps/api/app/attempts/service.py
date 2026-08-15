@@ -37,13 +37,14 @@ from app.models.assignment import (
 )
 from app.models.attempt import (
     ATTEMPT_STATUS_ABANDONED,
+    RESPONSE_SOURCE_DECLARED,
     ATTEMPT_STATUS_COMPLETED,
     ATTEMPT_STATUS_IN_PROGRESS,
     Attempt,
     AttemptResponse,
     AttemptResult,
 )
-from app.models.catalog import Activity, ActivityCompetency
+from app.models.catalog import Activity, ActivityCompetency, ActivityQuestion
 from app.models.identity import Child
 
 ATTEMPT_NOT_FOUND_MESSAGE = "Cette tentative n’existe pas"
@@ -102,7 +103,13 @@ async def record_response(
     response: str | None,
     is_correct: bool | None,
 ) -> AttemptResponse:
-    """Append one answer. Nothing is ever replaced."""
+    """Append one answer, marked as declared by the client.
+
+    `source` says where it came from, and here it is always the browser. The
+    distinction matters enough to be stored: nothing yet proves that what the
+    client reports is what happened in the content, and step 11 will bring the
+    runtime's own statements alongside these.
+    """
     attempt = await _own_attempt(db, child, attempt_id)
     if attempt.status != ATTEMPT_STATUS_IN_PROGRESS:
         raise ConflictException(message=ATTEMPT_CLOSED_MESSAGE)
@@ -112,6 +119,7 @@ async def record_response(
         question_ref=question_ref,
         response=response,
         is_correct=is_correct,
+        source=RESPONSE_SOURCE_DECLARED,
     )
     db.add(recorded)
     await db.flush()
@@ -176,37 +184,58 @@ async def list_for_child(
 
 
 async def _compute_results(db: AsyncSession, attempt: Attempt) -> list[AttemptResult]:
-    """Read the responses through the rules, once per competency.
+    """Read the responses through the rules, competency by competency.
 
     The last answer per question is what counts, and only answers the content
     actually judged are counted at all: a content that says nothing about an
     answer is not made to say something.
+
+    **How answers are attributed depends on what the activity declares.** If it
+    maps its questions to competencies, each question counts only towards what it
+    works on, and a competency with no question of its own gets no result rather
+    than a borrowed one. If it declares no mapping — the ordinary case, since H5P
+    itself says nothing about it — every competency of the activity gets the same
+    reading, which is coarse but honest and is written down as such.
     """
     latest: dict[str, AttemptResponse] = {}
     for response in sorted(attempt.responses, key=lambda row: row.recorded_at):
         latest[response.question_ref] = response
 
-    judged = [row for row in latest.values() if row.is_correct is not None]
-    answered = len(judged)
-    correct = sum(1 for row in judged if row.is_correct)
-
-    reading = rules.read_counts(answered, correct)
-    if reading is None:
-        # No evidence yields no result. The absence is the honest answer.
-        return []
-
     assignment = await db.get(Assignment, attempt.assignment_id)
     if assignment is None:
         return []
-    codes = await db.scalars(
-        select(ActivityCompetency.competency_code)
-        .join(Activity, Activity.id == ActivityCompetency.activity_id)
-        .where(Activity.id == assignment.activity_id)
-        .order_by(ActivityCompetency.competency_code)
+
+    codes = list(
+        (
+            await db.scalars(
+                select(ActivityCompetency.competency_code)
+                .join(Activity, Activity.id == ActivityCompetency.activity_id)
+                .where(Activity.id == assignment.activity_id)
+                .order_by(ActivityCompetency.competency_code)
+            )
+        ).all()
     )
+    attribution = await _question_attribution(db, assignment.activity_id)
 
     results = []
-    for code in codes.all():
+    for code in codes:
+        if attribution:
+            judged = [
+                row
+                for ref, row in latest.items()
+                if row.is_correct is not None and code in attribution.get(ref, ())
+            ]
+        else:
+            judged = [row for row in latest.values() if row.is_correct is not None]
+
+        reading = rules.read_counts(
+            len(judged), sum(1 for row in judged if row.is_correct)
+        )
+        if reading is None:
+            # No evidence for this competency yields no result for it. The
+            # absence is the honest answer, and it is now per competency.
+            continue
+
         result = AttemptResult(
             competency_code=code,
             outcome=reading.outcome,
@@ -221,6 +250,21 @@ async def _compute_results(db: AsyncSession, attempt: Attempt) -> list[AttemptRe
         results.append(result)
     await db.flush()
     return results
+
+
+async def _question_attribution(
+    db: AsyncSession, activity_id: uuid.UUID
+) -> dict[str, set[str]]:
+    """Which competencies each question of this activity works on, if declared."""
+    rows = await db.execute(
+        select(ActivityQuestion.question_ref, ActivityQuestion.competency_code).where(
+            ActivityQuestion.activity_id == activity_id
+        )
+    )
+    attribution: dict[str, set[str]] = {}
+    for question_ref, competency_code in rows:
+        attribution.setdefault(question_ref, set()).add(competency_code)
+    return attribution
 
 
 async def _running_attempt(
