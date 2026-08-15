@@ -104,10 +104,10 @@ runtime de contenu sans qu’aucune ne le construise. Il n’est le contenu d’
 
 | ID | Travail | Dépendances | Statut | Preuve |
 |---|---|---|---|---|
-| TEN-01 | Modéliser tentatives et réponses | PRE-01 | À faire | |
-| TEN-02 | Exposer l’API des tentatives | TEN-01 | À faire | |
-| TEN-03 | Calculer les résultats par règles explicites | TEN-02 | À faire | |
-| TEN-04 | Clôturer l’étape 10 | TEN-03 | À faire | |
+| TEN-01 | Modéliser tentatives et réponses | PRE-01 | Terminé | Migration `0008`, trois tables, aucune colonne de score |
+| TEN-02 | Exposer l’API des tentatives | TEN-01 | Terminé | Démarrage idempotent garanti par un index partiel |
+| TEN-03 | Calculer les résultats par règles explicites | TEN-02 | Terminé | Trois règles nommées, 15 tests isolés |
+| TEN-04 | Clôturer l’étape 10 | TEN-03 | Terminé | Séquence de l’API CI rejouée, 434 tests, PR unique |
 
 ### Phase 7, événements xAPI et progrès
 
@@ -124,4 +124,4 @@ décalage inverse avait été inscrit par erreur le 15 août 2026 ; il est corri
 
 ### Prochaine tâche
 
-Mener TEN-01, la modélisation des tentatives.
+Mener XAP-01, l’ingestion des événements xAPI.

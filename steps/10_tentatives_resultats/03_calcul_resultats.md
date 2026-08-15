@@ -37,4 +37,6 @@ Calculer les résultats selon des règles explicites, testées et rattachées au
 
 ## Statut
 
-À faire.
+Terminé. Trois règles nommées sur des comptes, phrase explicative construite des mêmes
+valeurs que celles stockées, aucune preuve ne concluant rien.
+Validation consignée dans `rapport_2026-08-15_1820_tentatives.md`.

@@ -37,4 +37,6 @@ Démarrer, reprendre et terminer une tentative avec idempotence et autorisation.
 
 ## Statut
 
-À faire.
+Terminé. Démarrage idempotent garanti par un index unique partiel, `201` à la création
+et `200` à la reprise, achèvement terminant l'affectation.
+Validation consignée dans `rapport_2026-08-15_1820_tentatives.md`.

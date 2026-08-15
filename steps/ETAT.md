@@ -683,6 +683,99 @@ propriétaire.
       les événements xAPI par `postMessage` sans jamais parler à l'API.
 - [x] 23 tests dédiés, 397 au total. Éprouvé sur la pile vivante.
 
+## Étape 10, tentatives et résultats, clôturée
+
+Travaux menés sur la branche `feat/etape-10-tentatives`. Sous-étapes enchaînées
+sans arrêt ; les décisions prises par l'agent sont consignées ci-dessous.
+
+### La ligne qui structure l'étape
+
+Les **faits** d'un côté, la **lecture** de l'autre, portés par des tables
+distinctes plutôt que par une convention. Une tentative et une réponse sont des
+faits ; un résultat est une interprétation, rangé à part parce qu'il en est une.
+C'est ce qui rend applicables, plutôt que simplement énoncées, deux règles du
+projet : une note ne remplace jamais une compétence, et une lacune automatique
+est une candidate explicable.
+
+### 10.1, modèle, terminée
+
+- [x] `attempts`, `attempt_responses`, `attempt_results`, migration
+      `0008_attempts` réversible.
+- [x] **Aucune colonne de score, nulle part.** Un résultat porte trois mots et
+      les comptes dont ils viennent.
+- [x] Les réponses ne portent **aucune clé unique sur la question** : répondre
+      deux fois est deux faits, et le second n'efface pas le premier.
+
+### 10.2, API des tentatives, terminée
+
+- [x] **Commencer est idempotent, et c'est la base qui le garantit** : un index
+      unique partiel n'admet qu'une tentative en cours par affectation, donc deux
+      requêtes simultanées ne peuvent pas gagner toutes les deux. Le perdant est
+      renseigné sur le gagnant au lieu d'échouer.
+- [x] `201` à la création, `200` à la reprise, sans qu'aucune soit une erreur.
+- [x] Terminer la tentative termine l'affectation : les deux ne doivent pas
+      pouvoir se contredire sur le fait que le travail a été fait.
+- [x] Annuler une affectation abandonne la tentative **sans l'effacer** :
+      l'enfant avait bien commencé, et cela reste vrai.
+
+### 10.3, calcul des résultats, terminée
+
+- [x] Trois règles nommées — `all-correct`, `majority-correct`,
+      `too-few-correct` — de l'arithmétique sur des comptes, sans modèle opaque.
+- [x] La maîtrise exige **tout** : réussir la plupart d'un exercice de trois
+      questions n'est pas le maîtriser. La bande intermédiaire existe pour que
+      « presque » ne soit pas rangé avec « pas du tout ».
+- [x] Phrase explicative rendue par l'API, construite à partir des mêmes valeurs
+      que celles stockées : elle ne peut pas diverger de ce qu'elle explique.
+- [x] **Aucune preuve ne conclut rien.** Un contenu qui ne juge pas une réponse
+      n'y est pas contraint ; si rien n'a été évalué, aucun résultat n'est écrit.
+      Il n'existe volontairement pas de statut pour cela : ranger un silence sous
+      « non acquise » en ferait une accusation.
+
+### 10.4, clôture, terminée
+
+- [x] Séquence complète de l'API CI rejouée localement, tout vert, 434 tests.
+- [x] Rapport `rapport_2026-08-15_1820_tentatives.md` produit.
+- [x] Une seule Pull Request pour toute l'étape.
+- [ ] Clôture distante, à consigner au premier commit de l'étape 11.
+
+### Deux défauts trouvés pendant l'étape 10
+
+- [x] Les résultats n'apparaissaient pas dans la réponse : ils étaient écrits,
+      mais la collection de la tentative avait été chargée vide avant leur
+      création. Ils sont rattachés par la relation et non par une clé étrangère
+      posée derrière son dos.
+- [x] Deux tests supposaient qu'aucune autre activité ne citait la même
+      compétence. Les codes de compétence des tests sont désormais tirés par
+      exécution. C'est la troisième occurrence de cette famille de fragilité,
+      traitée à la racine cette fois.
+
+### Points ouverts de l'étape 10
+
+- **Les règles s'appliquent à toutes les compétences d'une activité**, H5P ne
+  disant pas quelle question relève de laquelle. La limite se lèvera quand les
+  événements xAPI de l'étape 11 porteront de quoi distinguer les questions.
+- Les réponses sont **déclarées par le client** ; l'étape 11 les recevra du
+  runtime, et il faudra décider ce qui prime.
+- Aucun agrégat dans le temps : un résultat porte sur une tentative.
+- Les seuils sont figés dans le code.
+
+## Résultats techniques de l'étape 10
+
+```text
+Ruff       : vert, format inclus
+Mypy       : vert sur 56 fichiers
+Alembic    : 0008_attempts (head), check vert, downgrade base et retour au head
+Pytest     : 434 tests réussis, dont 36 dédiés aux tentatives
+Tests      : dix demandes de démarrage laissent une seule tentative
+Tests      : deux réponses à la même question conservées, la dernière lue
+Tests      : aucune réponse évaluée, aucun résultat écrit
+Tests      : chaque résultat nomme sa règle et porte ses comptes
+Tests      : aucun résultat ne porte de score ni de pourcentage
+Tests      : annuler l'affectation abandonne la tentative sans l'effacer
+```
+
 ## Prochaine action
 
-Mener l'étape 10, tentatives et résultats, puis l'étape 11.
+Mener l'étape 11 : ingestion des événements xAPI, liaison de l'acteur pseudonyme,
+agrégation des progrès.

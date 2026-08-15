@@ -33,6 +33,10 @@ from app.models.catalog import (
 )
 
 TEST_CODE_PREFIX = "test-capi-"
+# Drawn per run: a fixed code would be shared with whatever else the database
+# happens to hold, and these tests filter on it.
+COMPETENCY = f"test-comp-{uuid.uuid4().hex[:8]}"
+OTHER_COMPETENCY = f"test-comp-{uuid.uuid4().hex[:8]}"
 PASSWORD = "correct-horse-battery"
 PIN = "428173"
 
@@ -109,19 +113,19 @@ def catalogue(engine: Engine) -> Iterator[dict[str, str]]:
             [
                 ActivityCompetency(
                     activity_id=by_code[codes["court"]].id,
-                    competency_code="cp-math-num-02",
+                    competency_code=COMPETENCY,
                 ),
                 ActivityCompetency(
                     activity_id=by_code[codes["court"]].id,
-                    competency_code="ce1-math-num-02",
+                    competency_code=OTHER_COMPETENCY,
                 ),
                 ActivityCompetency(
                     activity_id=by_code[codes["long"]].id,
-                    competency_code="cp-math-num-02",
+                    competency_code=COMPETENCY,
                 ),
                 ActivityCompetency(
                     activity_id=by_code[codes["brouillon"]].id,
-                    competency_code="cp-math-num-02",
+                    competency_code=COMPETENCY,
                 ),
             ]
         )
@@ -253,7 +257,7 @@ class TestWhatIsServed:
     ) -> None:
         body = client.get(f"{ACTIVITIES_URL}/{catalogue['court']}").json()
 
-        assert body["competencies"] == ["ce1-math-num-02", "cp-math-num-02"]
+        assert body["competencies"] == sorted([COMPETENCY, OTHER_COMPETENCY])
         assert body["duration_minutes"] == 3
 
     def test_an_h5p_activity_says_what_it_plays_and_not_where_it_lives(
@@ -289,9 +293,7 @@ class TestFilters:
         self, client: TestClient, parent: dict[str, str], catalogue: dict[str, str]
     ) -> None:
         """The question step 12 will ask, and the reason for the index on the code."""
-        body = client.get(
-            ACTIVITIES_URL, params={"competency": "cp-math-num-02"}
-        ).json()
+        body = client.get(ACTIVITIES_URL, params={"competency": COMPETENCY}).json()
 
         assert set(codes_of(body)) == {catalogue["court"], catalogue["long"]}
         assert body["total"] == 2
@@ -299,9 +301,7 @@ class TestFilters:
     def test_a_draft_is_not_found_by_a_competency_filter_either(
         self, client: TestClient, parent: dict[str, str], catalogue: dict[str, str]
     ) -> None:
-        body = client.get(
-            ACTIVITIES_URL, params={"competency": "cp-math-num-02"}
-        ).json()
+        body = client.get(ACTIVITIES_URL, params={"competency": COMPETENCY}).json()
 
         assert catalogue["brouillon"] not in codes_of(body)
 
@@ -339,7 +339,7 @@ class TestFilters:
     ) -> None:
         body = client.get(
             ACTIVITIES_URL,
-            params={"competency": "cp-math-num-02", "max_duration": 7},
+            params={"competency": COMPETENCY, "max_duration": 7},
         ).json()
 
         assert codes_of(body) == [catalogue["court"]]
@@ -375,7 +375,7 @@ class TestPagination:
         for page in (1, 2, 3, 4):
             body = client.get(
                 ACTIVITIES_URL,
-                params={"page": page, "page_size": 1, "competency": "cp-math-num-02"},
+                params={"page": page, "page_size": 1, "competency": COMPETENCY},
             ).json()
             seen += codes_of(body)
 
@@ -386,7 +386,7 @@ class TestPagination:
         self, client: TestClient, parent: dict[str, str], catalogue: dict[str, str]
     ) -> None:
         body = client.get(
-            ACTIVITIES_URL, params={"page": 99, "competency": "cp-math-num-02"}
+            ACTIVITIES_URL, params={"page": 99, "competency": COMPETENCY}
         ).json()
 
         assert body["items"] == []

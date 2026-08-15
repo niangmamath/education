@@ -37,4 +37,7 @@ Modéliser tentatives, réponses et statut de complétion sans fabriquer de scor
 
 ## Statut
 
-À faire.
+Terminé. Trois tables, `attempts`, `attempt_responses` et `attempt_results`, migration
+`0008_attempts` réversible. Aucune colonne de score. Réponses ajoutées, jamais
+remplacées.
+Validation consignée dans `rapport_2026-08-15_1820_tentatives.md`.
