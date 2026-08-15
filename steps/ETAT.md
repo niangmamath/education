@@ -66,7 +66,7 @@ Secret Scan: succès
 
 ## Organisation des étapes
 
-Les dossiers détaillés des étapes 09 à 16 sont temporairement retirés du dépôt. Chaque dossier rejoint le dépôt au démarrage de l’étape correspondante ; celui de l’étape 07 y est entré le 14 août 2026, celui de l’étape 08 le 15 août 2026.
+Les dossiers détaillés des étapes 10 à 16 sont temporairement retirés du dépôt. Chaque dossier rejoint le dépôt au démarrage de l’étape correspondante ; celui de l’étape 07 y est entré le 14 août 2026, celui de l’étape 08 et celui de l’étape 09 le 15 août 2026.
 
 ## Étape 04, spike H5P critique
 
@@ -483,7 +483,7 @@ l'étape a été prise par l'agent et **reste à confirmer**.
 
 ### Points ouverts de l'étape 08
 
-- **ADR-013 n'a pas été arbitrée par le propriétaire** et mérite confirmation.
+- [x] **ADR-013 confirmée par le propriétaire** le 15 août 2026, après coup.
 - Aucun antivirus dans le contrôle des paquets, exigé par ADR-012 pour la
   production ; aucun scanner disponible dans l'environnement de stage.
 - Aucune remise de paquet au navigateur : origine de contenu isolée, CSP et
@@ -496,7 +496,9 @@ l'étape a été prise par l'agent et **reste à confirmer**.
 - [x] Rapports `rapport_2026-08-15_1530_catalogue.md` et
       `rapport_2026-08-15_1545_cloture_etape_08.md` produits.
 - [x] Une seule Pull Request pour toute l'étape.
-- [ ] Clôture distante, à consigner au premier commit de l'étape 09.
+- [x] Clôture distante : Pull Request #15 fusionnée le 15 août 2026, commit de
+      fusion `b41284b`, API CI et Secret Scan verts sur la Pull Request puis sur
+      `main`.
 
 ## Résultats techniques de l'étape 08
 
@@ -514,6 +516,81 @@ Tests      : brouillon et archive répondant 404 comme une activité inexistante
 Tests      : aucune réponse ne contient de clé d'objet, d'empreinte ni de licence
 ```
 
+## Étape 09, affectations et parcours, clôturée
+
+Travaux menés sur la branche `feat/etape-09-affectations`. Sous-étapes enchaînées
+sans arrêt, sur consigne du propriétaire ; les décisions prises par l'agent sont
+consignées ci-dessous.
+
+### 09.1, modèle des affectations, terminée
+
+- [x] Table `assignments`, migration `0006_assignments` réversible.
+- [x] **Redonner une activité crée une seconde ligne**, décision de l'agent :
+      « elle l'a faite deux fois » et « elle l'a faite une fois » sont deux faits
+      différents. Un index unique **partiel**, sur les seuls états ouverts,
+      interdit le doublon simultané sans interdire la répétition.
+- [x] **Une activité affectée ne peut plus être supprimée** : la clé étrangère
+      restreint au lieu de cascader, sans quoi les tentatives de l'étape 10
+      pointeraient vers rien.
+- [x] Trois contraintes exigent qu'un statut porte sa date.
+
+### 09.2, API Parent, terminée
+
+- [x] `POST /api/v1/assignments`, `GET /api/v1/assignments`,
+      `POST /api/v1/assignments/{id}/cancel`.
+- [x] **Annuler n'efface pas**, décision de l'agent : la ligne reste, datée. Un
+      enfant à qui l'on a donné puis retiré quelque chose n'a pas la même
+      histoire qu'un enfant à qui l'on n'a rien donné.
+- [x] Une activité en brouillon est refusée comme une activité inexistante.
+- [x] Isolation portée par la clause `WHERE`, comme à l'étape 06 : l'affectation
+      d'une autre famille répond comme une affectation qui n'existe pas.
+
+### 09.3, API Élève, terminée
+
+- [x] `GET /api/v1/me/activities`, `.../start`, `.../complete`.
+- [x] **Terminer n'est pas réussir**, décision de l'agent : rien ne touche à une
+      compétence, conformément à la règle selon laquelle ouvrir un contenu ne
+      valide jamais une compétence à lui seul. La preuve appartient à l'étape 10.
+- [x] **Rien ne revient en arrière** : une affectation terminée ne se rouvre pas,
+      une annulée ne reprend pas, `409` dans les deux cas.
+- [x] **Les deux espaces ne se mélangent pas** : une route Parent exige
+      `CurrentParent`, une route Élève exige `CurrentChild`. Un enfant ne peut
+      pas se donner du travail, un parent ne peut pas terminer à sa place.
+- [x] La vue Élève ne répète pas de quel enfant il s'agit : tout ce qu'elle
+      montre est à lui.
+
+### 09.4, clôture de l'étape, terminée
+
+- [x] Séquence complète de l'API CI rejouée localement, tout vert, 361 tests.
+- [x] Rapport `rapport_2026-08-15_1615_affectations.md` produit.
+- [x] Une seule Pull Request pour toute l'étape.
+- [ ] Clôture distante, à consigner au premier commit de l'étape 10.
+
+### Points ouverts de l'étape 09
+
+- Aucune échéance ni ordre de parcours, alors que l'étape s'intitule
+  « affectations et parcours ». Ordonner un parcours demandera de décider ce
+  qu'il advient d'une activité sautée.
+- Rien ne plafonne le nombre d'affectations ouvertes pour un enfant.
+- **Le lecteur H5P manque toujours** : une activité peut être donnée et
+  commencée sans que le contenu puisse être joué. Dette ouverte en 08, devenue
+  visible ici.
+- Les pages web restent les maquettes de l'étape 05.
+
+## Résultats techniques de l'étape 09
+
+```text
+Ruff       : vert, format inclus
+Mypy       : vert sur 46 fichiers
+Alembic    : 0006_assignments (head), check vert, downgrade base et retour au head
+Pytest     : 361 tests réussis, dont 25 dédiés aux affectations
+Tests      : affectation d'une autre famille refusée en 404, comme une inexistante
+Tests      : enfant s'affectant une activité 403, parent terminant à sa place 403
+Tests      : même activité due deux fois à la fois 409, redonnée après achèvement 201
+Tests      : terminer avant de commencer, rouvrir, reprendre, annuler une terminée : 409
+Tests      : annulation conservant la ligne et sa date
+```
+
 ## Prochaine action
 
-Faire confirmer ADR-013, puis ouvrir l'étape 09, affectations et parcours.
+Ouvrir l'étape 10, tentatives et résultats.

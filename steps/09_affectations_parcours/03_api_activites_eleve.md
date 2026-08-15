@@ -37,4 +37,6 @@ Lister les activités disponibles, commencées et terminées du seul Élève con
 
 ## Statut
 
-À faire.
+Terminé. Liste des activités du seul Élève connecté, démarrage et achèvement, aucun
+retour en arrière.
+Validation consignée dans `rapport_2026-08-15_1615_affectations.md`.

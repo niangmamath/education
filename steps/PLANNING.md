@@ -81,6 +81,15 @@
 | CAT-03 | Exposer les lectures du catalogue | CAT-02 | Terminé | Trois routes, filtres, 23 tests |
 | CAT-04 | Clôturer l’étape 08 | CAT-03 | Terminé | Séquence de l’API CI rejouée, 336 tests, Pull Request unique |
 
+### Phase 5, affectations et parcours
+
+| ID | Travail | Dépendances | Statut | Preuve |
+|---|---|---|---|---|
+| AFF-01 | Modéliser l’affectation | CAT-04 | Terminé | Migration `0006`, index partiel, clé restrictive |
+| AFF-02 | Exposer l’API Parent | AFF-01 | Terminé | Création, liste, annulation, isolation éprouvée |
+| AFF-03 | Exposer l’API Élève | AFF-02 | Terminé | Liste, démarrage, achèvement, aucun retour arrière |
+| AFF-04 | Clôturer l’étape 09 | AFF-03 | Terminé | Séquence de l’API CI rejouée, 361 tests, PR unique |
+
 ### Prochaine tâche
 
-Faire confirmer ADR-013, puis ouvrir l’étape 09, affectations et parcours.
+Ouvrir l’étape 10, tentatives et résultats.

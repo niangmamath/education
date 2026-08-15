@@ -37,4 +37,6 @@ Valider isolation, transitions d’état, tests et CI.
 
 ## Statut
 
-À faire.
+Terminé. Séquence complète de l'API CI rejouée localement, tout vert, 361 tests.
+Étape fusionnée par une seule Pull Request.
+Validation consignée dans `rapport_2026-08-15_1615_affectations.md`.
