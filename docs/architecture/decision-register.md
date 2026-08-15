@@ -57,18 +57,16 @@ docs/
 
 | Champ | Valeur |
 |-------|--------|
-| **Titre** | Choix de la licence du projet StudentConnect |
-| **Statut** | ⚠️ Proposed |
-| **Date** | 2026-08-10 |
-| **Auteur** | Mistral Vibe |
-| **Décision** | AGPL-3.0 (en discussion) |
+| **Titre** | Licence du projet |
+| **Statut** | ⚠️ **Proposed** |
+| **Date** | 11 août 2026 |
+| **Auteur** | Équipe StudentConnect |
+| **Décision** | Licence à arrêter avant publication |
 | **Fichier** | [docs/adr/ADR-000-licence-projet.md](../adr/ADR-000-licence-projet.md) |
 | **Dépendances** | Aucune |
-| **Impact** | Projet entier |
+| **Impact** | Juridique |
 
-**Résumé** : Proposition d'utiliser la licence AGPL-3.0 pour protéger le code source tout en permettant une utilisation libre pour les établissements éducatifs.
-
-**Statut actuel** : En discussion. Décision finale à valider avec l'équipe et éventuellement un expert juridique.
+**Résumé** : Choix de la licence sous laquelle le projet est publié. Seule ADR encore ouverte.
 
 ---
 
@@ -76,47 +74,33 @@ docs/
 
 | Champ | Valeur |
 |-------|--------|
-| **Titre** | Architecture Monorepo pour StudentConnect |
-| **Statut** | ⏳ À créer |
-| **Date** | - |
-| **Auteur** | - |
-| **Décision** | À décider |
-| **Fichier** | [docs/adr/ADR-001-monorepo.md](../adr/ADR-001-monorepo.md) (à créer) |
+| **Titre** | Monorepo |
+| **Statut** | ✅ **Accepted** |
+| **Date** | 11 août 2026 |
+| **Auteur** | Équipe StudentConnect |
+| **Décision** | Monorepo pnpm et Turborepo |
+| **Fichier** | [docs/adr/ADR-001-monorepo.md](../adr/ADR-001-monorepo.md) |
 | **Dépendances** | Aucune |
-| **Impact** | Structure du projet |
+| **Impact** | Structure |
 
-**Résumé** : Décision d'utiliser une architecture monorepo avec Turborepo, pnpm ou équivalent pour gérer frontend, backend, packages et infrastructure.
-
-**Contenu prévu** :
-- Justification du choix monorepo vs polyrepo
-- Structure des dossiers (apps/, packages/, infrastructure/)
-- Outils de gestion (Turborepo, pnpm, etc.)
-- Avantages : partage de code, dépendances unifiées, CI/CD simplifiée
-- Inconvénients : complexité initiale, taille du dépôt
+**Résumé** : Un seul dépôt pour le web, l'API et les paquets partagés.
 
 ---
 
-### ADR-002 : Next.js et Tailwind
+### ADR-002 : Next.js et design system
 
 | Champ | Valeur |
 |-------|--------|
-| **Titre** | Choix de Next.js 16 et Tailwind CSS 4 pour le frontend |
-| **Statut** | ⏳ À créer |
-| **Date** | - |
-| **Auteur** | - |
-| **Décision** | À décider |
-| **Fichier** | [docs/adr/ADR-002-nextjs-et-tailwind.md](../adr/ADR-002-nextjs-et-tailwind.md) (à créer) |
-| **Dépendances** | Aucune |
+| **Titre** | Next.js et design system |
+| **Statut** | ✅ **Accepted** |
+| **Date** | 11 août 2026 |
+| **Auteur** | Équipe StudentConnect |
+| **Décision** | Next.js 16, App Router |
+| **Fichier** | [docs/adr/ADR-002-nextjs-et-tailwind.md](../adr/ADR-002-nextjs-et-tailwind.md) |
+| **Dépendances** | ADR-001 |
 | **Impact** | Frontend |
 
-**Résumé** : Décision d'utiliser Next.js 16 avec App Router et Tailwind CSS 4 pour le développement frontend.
-
-**Contenu prévu** :
-- Justification de Next.js vs autres frameworks (React seul, Vue, Svelte, etc.)
-- Avantages de l'App Router
-- Choix de Tailwind CSS vs autres solutions (Bootstrap, Chakra, etc.)
-- Stack complémentaire : React, TypeScript, Radix UI, etc.
-- Bibliothèques additionnelles : TanStack Query, Zustand, React Hook Form, Zod
+**Résumé** : Next.js et App Router. Tailwind, retenu à l'origine, a été remplacé par Bootstrap 5.3.8 à l'étape 05.
 
 ---
 
@@ -124,23 +108,16 @@ docs/
 
 | Champ | Valeur |
 |-------|--------|
-| **Titre** | Choix de FastAPI pour le backend avec architecture REST |
-| **Statut** | ⏳ À créer |
-| **Date** | - |
-| **Auteur** | - |
-| **Décision** | À décider |
-| **Fichier** | [docs/adr/ADR-003-fastapi-rest.md](../adr/ADR-003-fastapi-rest.md) (à créer) |
-| **Dépendances** | Aucune |
+| **Titre** | FastAPI REST |
+| **Statut** | ✅ **Accepted** |
+| **Date** | 11 août 2026 |
+| **Auteur** | Équipe StudentConnect |
+| **Décision** | FastAPI, REST, monolithe modulaire |
+| **Fichier** | [docs/adr/ADR-003-fastapi-rest.md](../adr/ADR-003-fastapi-rest.md) |
+| **Dépendances** | ADR-001 |
 | **Impact** | Backend |
 
-**Résumé** : Décision d'utiliser FastAPI avec Python pour le backend, avec une architecture REST plutôt que GraphQL.
-
-**Contenu prévu** :
-- Justification de FastAPI vs Django, Flask, etc.
-- Avantages de FastAPI : performance, typage, documentation auto
-- Choix de REST vs GraphQL
-- Structure du backend (modular monolith)
-- Pydantic pour la validation
+**Résumé** : API REST servie par un monolithe modulaire FastAPI, sans GraphQL ni microservices.
 
 ---
 
@@ -148,33 +125,16 @@ docs/
 
 | Champ | Valeur |
 |-------|--------|
-| **Titre** | Choix de PostgreSQL avec SQLAlchemy 2 et Alembic |
-| **Statut** | ✅ Accepted, amendée le 2026-08-14 |
-| **Date** | 2026-08-10, amendement 2026-08-14 |
+| **Titre** | PostgreSQL et SQLAlchemy |
+| **Statut** | ✅ **Accepted** |
+| **Date** | 11 août 2026, amendée le 14 août 2026 |
 | **Auteur** | Équipe StudentConnect |
-| **Décision** | PostgreSQL, SQLAlchemy 2 et Alembic pour toute la persistance |
+| **Décision** | PostgreSQL 17, SQLAlchemy 2, Alembic |
 | **Fichier** | [docs/adr/ADR-004-postgresql-et-sqlalchemy.md](../adr/ADR-004-postgresql-et-sqlalchemy.md) |
 | **Dépendances** | ADR-003 |
-| **Impact** | Persistance |
+| **Impact** | Données |
 
-**Résumé** : Décision d'utiliser PostgreSQL comme base de données principale avec SQLAlchemy 2 comme ORM et Alembic pour les migrations.
-
-**Contenu** :
-- Justification de PostgreSQL vs MySQL, MongoDB, Neo4j, etc.
-- Avantages de SQLAlchemy 2
-- Configuration d'Alembic pour les migrations
-
-**Amendement du 2026-08-14**, après la sous-étape 07.1. Le choix du SGBD et de
-l'ORM n'est pas touché ; seule l'esquisse du modèle de compétences est corrigée :
-
-- le référentiel n'est pas une table `skills` unique auto-référencée, mais quatre
-  tables explicites, niveaux, matières, domaines et compétences, plus une table de
-  liens pour l'arbre de prérequis ;
-- il est versionné dans son ensemble, une seule édition publiée à la fois ;
-- l'appartenance à une édition est garantie par des clés étrangères composites, et
-  non par le code d'import ;
-- les libellés sont du texte simple, le MVP étant francophone.
-- Schéma de base de données
+**Résumé** : Amendée à l'étape 07 : l'esquisse d'une table `skills` unique auto-référencée est remplacée par quatre tables explicites et un référentiel versionné.
 
 ---
 
@@ -182,32 +142,16 @@ l'ORM n'est pas touché ; seule l'esquisse du modèle de compétences est corrig
 
 | Champ | Valeur |
 |-------|--------|
-| **Titre** | Gestion des sessions familiales (Parent + Enfants) |
-| **Statut** | ✅ Accepted, amendée le 2026-08-14 |
-| **Date** | 2026-08-13, amendement 2026-08-14 |
+| **Titre** | Sessions familiales |
+| **Statut** | ✅ **Accepted** |
+| **Date** | 11 août 2026, amendée le 14 août 2026 |
 | **Auteur** | Équipe StudentConnect |
-| **Décision** | Sessions opaques en Redis, comptes Parent et profils Enfant |
+| **Décision** | Sessions opaques en Redis, jamais en SQL |
 | **Fichier** | [docs/adr/ADR-005-sessions-familiales.md](../adr/ADR-005-sessions-familiales.md) |
-| **Dépendances** | ADR-003, ADR-004 |
-| **Impact** | Authentification |
+| **Dépendances** | ADR-003, ADR-009 |
+| **Impact** | Sécurité |
 
-**Résumé** : Décision sur le système d'authentification et de gestion des sessions pour les familles (parents et enfants).
-
-**Contenu** :
-- Modèle de données : Parent, Enfant, Famille
-- Authentification parent : email + mot de passe + vérification email
-- Authentification enfant : profil rattaché + pseudonyme + PIN haché
-- Sessions : cookies opaques, HttpOnly, Secure, SameSite
-- Stockage des sessions : Redis
-
-**Amendement du 2026-08-14**, après l'implémentation de l'étape 06 :
-- le pseudonyme d'un Enfant est unique dans sa famille et non sur la plateforme ;
-- chaque Parent porte un code famille, que l'Enfant saisit pour se connecter ou
-  pour demander un profil, lequel reste en attente jusqu'à activation ;
-- Argon2id remplace bcrypt pour les mots de passe et les PIN ;
-- les tentatives de PIN sont plafonnées par un compteur d'échecs par enfant ;
-- aucune table SQL de session, et un index Redis par compte permet de révoquer
-  toutes les sessions d'un profil d'un seul coup.
+**Résumé** : Amendée à l'étape 06 : unicité familiale du pseudonyme, code famille, Argon2id au lieu de bcrypt, plafond sur les tentatives de PIN.
 
 ---
 
@@ -215,47 +159,33 @@ l'ORM n'est pas touché ; seule l'esquisse du modèle de compétences est corrig
 
 | Champ | Valeur |
 |-------|--------|
-| **Titre** | Intégration de H5P via h5p-standalone avec origine isolée |
-| **Statut** | ⏳ À créer |
-| **Date** | - |
-| **Auteur** | - |
-| **Décision** | À décider |
-| **Fichier** | [docs/adr/ADR-006-h5p-standalone.md](../adr/ADR-006-h5p-standalone.md) (à créer) |
-| **Dépendances** | Aucune |
+| **Titre** | H5P Standalone et origine isolée |
+| **Statut** | ✅ **Accepted** |
+| **Date** | 11 août 2026 |
+| **Auteur** | Équipe StudentConnect |
+| **Décision** | `h5p-standalone`, origine de contenu isolée |
+| **Fichier** | [docs/adr/ADR-006-h5p-standalone.md](../adr/ADR-006-h5p-standalone.md) |
+| **Dépendances** | ADR-008 |
 | **Impact** | Contenus |
 
-**Résumé** : Décision d'utiliser h5p-standalone pour la lecture de H5P avec une origine de contenu isolée.
-
-**Contenu prévu** :
-- Justification de h5p-standalone vs éditeur H5P complet
-- Architecture : lecture native sans redirection
-- Pipeline : upload, quarantaine, scan, validation, extraction versionnée
-- Capture xAPI via dispatcher et bridge postMessage
-- Types H5P autorisés dans le MVP
+**Résumé** : Lecture H5P native, sans serveur H5P complet ni éditeur.
 
 ---
 
-### ADR-007 : PhET iframe
+### ADR-007 : PhET en iframe
 
 | Champ | Valeur |
 |-------|--------|
-| **Titre** | Intégration des simulations PhET via iframe |
-| **Statut** | ⏳ À créer |
-| **Date** | - |
-| **Auteur** | - |
-| **Décision** | À décider |
-| **Fichier** | [docs/adr/ADR-007-phet-iframe.md](../adr/ADR-007-phet-iframe.md) (à créer) |
-| **Dépendances** | Aucune |
+| **Titre** | PhET en iframe |
+| **Statut** | ✅ **Accepted** |
+| **Date** | 11 août 2026 |
+| **Auteur** | Équipe StudentConnect |
+| **Décision** | Simulations PhET françaises en iframe isolée |
+| **Fichier** | [docs/adr/ADR-007-phet-iframe.md](../adr/ADR-007-phet-iframe.md) |
+| **Dépendances** | ADR-006 |
 | **Impact** | Contenus |
 
-**Résumé** : Décision d'intégrer les simulations PhET via des iframes sécurisées.
-
-**Contenu prévu** :
-- Justification de l'approche iframe
-- Sélection des simulations : HTML5 françaises uniquement
-- Vérification de l'attribution et de la licence
-- Isolation de l'origine de contenu
-- Preuve finale via mini-test StudentConnect
+**Résumé** : PhET consommé dans la plateforme, sans redirection.
 
 ---
 
@@ -263,23 +193,16 @@ l'ORM n'est pas touché ; seule l'esquisse du modèle de compétences est corrig
 
 | Champ | Valeur |
 |-------|--------|
-| **Titre** | Stockage compatible S3 avec URLs présignées |
-| **Statut** | ⏳ À créer |
-| **Date** | - |
-| **Auteur** | - |
-| **Décision** | À décider |
-| **Fichier** | [docs/adr/ADR-008-s3-et-urls-presignees.md](../adr/ADR-008-s3-et-urls-presignees.md) (à créer) |
-| **Dépendances** | Aucune |
+| **Titre** | S3 et URLs présignées |
+| **Statut** | ✅ **Accepted** |
+| **Date** | 11 août 2026 |
+| **Auteur** | Équipe StudentConnect |
+| **Décision** | Stockage objet compatible S3, URLs présignées |
+| **Fichier** | [docs/adr/ADR-008-s3-et-urls-presignees.md](../adr/ADR-008-s3-et-urls-presignees.md) |
+| **Dépendances** | ADR-003 |
 | **Impact** | Stockage |
 
-**Résumé** : Décision d'utiliser un stockage compatible S3 avec des URLs présignées pour l'accès aux fichiers.
-
-**Contenu prévu** :
-- Justification du stockage objet vs filesystem
-- Choix de S3 compatible (AWS S3, DigitalOcean Spaces, MinIO, etc.)
-- Architecture : CDN ou origine de contenu dédiée
-- Sécurité : URLs présignées avec durée limitée
-- Gestion des paquets H5P versionnés
+**Résumé** : Cinq buckets privés, aucun accès public direct.
 
 ---
 
@@ -287,47 +210,84 @@ l'ORM n'est pas touché ; seule l'esquisse du modèle de compétences est corrig
 
 | Champ | Valeur |
 |-------|--------|
-| **Titre** | Utilisation de Redis et Celery pour les tâches asynchrones |
-| **Statut** | ⏳ À créer |
-| **Date** | - |
-| **Auteur** | - |
-| **Décision** | À décider |
-| **Fichier** | [docs/adr/ADR-009-redis-et-celery.md](../adr/ADR-009-redis-et-celery.md) (à créer) |
+| **Titre** | Redis et Celery |
+| **Statut** | ✅ **Accepted** |
+| **Date** | 11 août 2026 |
+| **Auteur** | Équipe StudentConnect |
+| **Décision** | Redis pour le cache et les sessions, Celery pour l'asynchrone |
+| **Fichier** | [docs/adr/ADR-009-redis-et-celery.md](../adr/ADR-009-redis-et-celery.md) |
 | **Dépendances** | ADR-003 |
-| **Impact** | Tâches asynchrones |
+| **Impact** | Infrastructure |
 
-**Résumé** : Décision d'utiliser Redis comme broker et Celery pour la gestion des tâches asynchrones.
-
-**Contenu prévu** :
-- Justification de Celery vs autres solutions (RQ, huey, etc.)
-- Architecture : worker(s) Celery avec Redis comme broker
-- Cas d'usage : upload H5P, processing,antaine, etc.
-- Configuration : queues, retry, scheduling
-- Monitoring : Flower ou équivalent
+**Résumé** : Redis porte les sessions et le cache, Celery les tâches de fond.
 
 ---
 
-### ADR-010 : Planning Markdown sans GitHub Project
+### ADR-010 : Planning Markdown
 
 | Champ | Valeur |
 |-------|--------|
-| **Titre** | Pilotage via planning Markdown plutôt que GitHub Project |
-| **Statut** | ⏳ À créer |
-| **Date** | - |
-| **Auteur** | - |
-| **Décision** | À décider |
-| **Fichier** | [docs/adr/ADR-010-planning-markdown.md](../adr/ADR-010-planning-markdown.md) (à créer) |
+| **Titre** | Planning Markdown |
+| **Statut** | ✅ **Accepted** |
+| **Date** | 11 août 2026 |
+| **Auteur** | Équipe StudentConnect |
+| **Décision** | Planning Markdown plutôt que GitHub Project |
+| **Fichier** | [docs/adr/ADR-010-planning-markdown.md](../adr/ADR-010-planning-markdown.md) |
 | **Dépendances** | Aucune |
 | **Impact** | Pilotage |
 
-**Résumé** : Décision de ne pas utiliser GitHub Project mais un planning Markdown simple pour le suivi des tâches.
+**Résumé** : Suivi versionné, lisible et indépendant des outils.
 
-**Contenu prévu** :
-- Justification du choix (simplicité, transparence, contrôle)
-- Avantages : versionnable, lisible, indépendant des outils
-- Inconvénients : moins visuel, pas de drag-and-drop
-- Structure du fichier PLANNING.md
-- Processus de mise à jour
+---
+
+### ADR-011 : SQLAlchemy async
+
+| Champ | Valeur |
+|-------|--------|
+| **Titre** | SQLAlchemy async |
+| **Statut** | ✅ **Accepted** |
+| **Date** | 11 août 2026 |
+| **Auteur** | Équipe StudentConnect |
+| **Décision** | Engine asynchrone et asyncpg |
+| **Fichier** | [docs/adr/ADR-011-sqlalchemy-async.md](../adr/ADR-011-sqlalchemy-async.md) |
+| **Dépendances** | ADR-004 |
+| **Impact** | Backend |
+
+**Résumé** : L'API sert ses requêtes sur une boucle d'événements ; les commandes en ligne empruntent psycopg2.
+
+---
+
+### ADR-012 : H5P Standalone pour le pilote
+
+| Champ | Valeur |
+|-------|--------|
+| **Titre** | H5P Standalone pour le pilote |
+| **Statut** | ✅ **Accepted sous conditions** |
+| **Date** | 13 août 2026 |
+| **Auteur** | Équipe StudentConnect |
+| **Décision** | `H5P.TrueFalse 1.8` seul type autorisé |
+| **Fichier** | [docs/adr/ADR-012-h5p-standalone-pilote.md](../adr/ADR-012-h5p-standalone-pilote.md) |
+| **Dépendances** | ADR-006 |
+| **Impact** | Contenus |
+
+**Résumé** : Tout autre type est refusé par défaut jusqu'à un test et une décision explicites. La contrainte est portée par la base depuis l'étape 08.2.
+
+---
+
+### ADR-013 : Catalogue lié par code métier
+
+| Champ | Valeur |
+|-------|--------|
+| **Titre** | Catalogue lié par code métier |
+| **Statut** | ✅ **Accepted** |
+| **Date** | 15 août 2026 |
+| **Auteur** | Équipe StudentConnect |
+| **Décision** | Le catalogue pointe vers les codes de compétences, pas vers leurs lignes |
+| **Fichier** | [docs/adr/ADR-013-catalogue-lie-par-code.md](../adr/ADR-013-catalogue-lie-par-code.md) |
+| **Dépendances** | ADR-004 |
+| **Impact** | Données |
+
+**Résumé** : Le catalogue est un travail éditorial et non une trace : il doit survivre à la publication d'une nouvelle édition du référentiel. Le prix en est un lien sans clé étrangère, contrôlé par une commande dédiée.
 
 ---
 
@@ -335,13 +295,17 @@ l'ORM n'est pas touché ; seule l'esquisse du modèle de compétences est corrig
 
 | Statut | Count |
 |--------|-------|
-| ✅ Accepted | 0 |
+| ✅ Accepted | 13 |
 | ⚠️ Proposed | 1 |
-| ⏳ À créer | 9 |
+| ⏳ À créer | 0 |
 | ❌ Deprecated | 0 |
 | ⛔ Rejected | 0 |
 | 🔄 Superseeded | 0 |
-| **Total** | **10** |
+| **Total** | **14** |
+
+Une seule ADR reste ouverte, ADR-000 sur la licence du projet. ADR-012 est
+acceptée **sous conditions**, comptée ici parmi les acceptées ; ses conditions
+de production restent à remplir et sont suivies à l'étape 08.
 
 ---
 
