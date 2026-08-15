@@ -1,0 +1,214 @@
+"""The catalogue of activities a child can be given to do.
+
+An activity is a piece of teaching material — an H5P exercise, a PhET
+simulation, a video — together with what it is for: the competencies it works
+on, roughly how long it takes, and whether it may be served at all.
+
+The catalogue is **not** versioned the way the referential is. A referential
+edition is frozen because traces point at it; a catalogue is editorial work that
+should follow the programme in force rather than fork with every re-edition.
+That is why an activity names the competencies it works on **by their business
+code** and not by their row: `cm1-math-num-01` designates the same competency
+from one edition to the next, so the catalogue survives a new edition instead of
+being rebuilt with it. See ADR-013.
+
+The price of that choice is that a link is not enforced by a foreign key. A code
+that matches nothing is a dangling link, and `python -m app.catalog check` is
+what finds them.
+"""
+
+from __future__ import annotations
+
+import uuid
+from datetime import datetime
+from typing import Final
+
+from sqlalchemy import (
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+)
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.core.db import Base
+from app.models.referential import CODE_LENGTH, LABEL_LENGTH
+
+# What an activity is made of. Only these three exist for the MVP, and each is
+# rendered by a player the platform already owns.
+ACTIVITY_KIND_H5P: Final = "h5p"
+ACTIVITY_KIND_PHET: Final = "phet"
+ACTIVITY_KIND_VIDEO: Final = "video"
+ACTIVITY_KINDS: Final = (ACTIVITY_KIND_H5P, ACTIVITY_KIND_PHET, ACTIVITY_KIND_VIDEO)
+
+# An activity is prepared, then may be served, then stops being offered without
+# ever disappearing: results of steps 10 to 12 will keep pointing at it.
+ACTIVITY_STATUS_DRAFT: Final = "draft"
+ACTIVITY_STATUS_PUBLISHED: Final = "published"
+ACTIVITY_STATUS_ARCHIVED: Final = "archived"
+ACTIVITY_STATUSES: Final = (
+    ACTIVITY_STATUS_DRAFT,
+    ACTIVITY_STATUS_PUBLISHED,
+    ACTIVITY_STATUS_ARCHIVED,
+)
+
+# A Quick Repair lasts three to seven minutes, which is a product rule and not a
+# guess. Nothing in the catalogue may claim to be shorter than a minute, and an
+# activity longer than an hour is a course, not an activity.
+MIN_DURATION_MINUTES: Final = 1
+MAX_DURATION_MINUTES: Final = 60
+
+
+class Activity(Base):
+    """One thing a child can be asked to do."""
+
+    __tablename__ = "catalog_activities"
+    __table_args__ = (
+        UniqueConstraint("code", name="uq_catalog_activities_code"),
+        CheckConstraint(
+            "kind IN ('h5p', 'phet', 'video')",
+            name="ck_catalog_activities_kind",
+        ),
+        CheckConstraint(
+            "status IN ('draft', 'published', 'archived')",
+            name="ck_catalog_activities_status",
+        ),
+        CheckConstraint(
+            f"duration_minutes BETWEEN {MIN_DURATION_MINUTES} AND {MAX_DURATION_MINUTES}",
+            name="ck_catalog_activities_duration",
+        ),
+        # The reading routes serve published activities and filter on nothing
+        # else half as often.
+        Index("ix_catalog_activities_status", "status"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    # The stable identifier the rest of the platform quotes. Unlike a
+    # referential code, it is unique outright: there is one catalogue.
+    code: Mapped[str] = mapped_column(String(CODE_LENGTH), nullable=False)
+    title: Mapped[str] = mapped_column(String(LABEL_LENGTH), nullable=False)
+    summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    kind: Mapped[str] = mapped_column(String(16), nullable=False)
+    status: Mapped[str] = mapped_column(
+        String(16),
+        nullable=False,
+        default=ACTIVITY_STATUS_DRAFT,
+        server_default=ACTIVITY_STATUS_DRAFT,
+    )
+    duration_minutes: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    competencies: Mapped[list[ActivityCompetency]] = relationship(
+        back_populates="activity", cascade="all, delete-orphan", passive_deletes=True
+    )
+    h5p_package: Mapped[H5PPackage | None] = relationship(
+        back_populates="activity", cascade="all, delete-orphan", passive_deletes=True
+    )
+
+
+class ActivityCompetency(Base):
+    """What an activity works on, named by the competency's business code.
+
+    No foreign key points at `ref_competencies`, and that is the decision of
+    ADR-013 rather than an omission: a competency row belongs to one edition of
+    the referential, so a real reference would have to be rewritten every time an
+    edition is published. The code outlives editions, which is exactly the
+    property the catalogue needs.
+    """
+
+    __tablename__ = "catalog_activity_competencies"
+    __table_args__ = (
+        UniqueConstraint(
+            "activity_id",
+            "competency_code",
+            name="uq_catalog_activity_competencies",
+        ),
+        # Step 12 asks the reverse question — which activities repair this
+        # competency — far more often than it asks this one.
+        Index(
+            "ix_catalog_activity_competencies_code",
+            "competency_code",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    activity_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("catalog_activities.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    competency_code: Mapped[str] = mapped_column(String(CODE_LENGTH), nullable=False)
+
+    activity: Mapped[Activity] = relationship(back_populates="competencies")
+
+
+class H5PPackage(Base):
+    """The vetted H5P file an activity of kind `h5p` plays.
+
+    ADR-012 allows exactly one library for the pilot and refuses everything else
+    by default. That refusal is a check constraint rather than an application
+    rule: adding a type then requires a migration and an amended ADR, which is
+    the deliberate friction the decision asked for.
+
+    The digest and the size are recorded because a package is vetted once and
+    served many times; anything that no longer matches its digest is no longer
+    the file that was vetted.
+    """
+
+    __tablename__ = "catalog_h5p_packages"
+    __table_args__ = (
+        UniqueConstraint("activity_id", name="uq_catalog_h5p_packages_activity"),
+        UniqueConstraint("sha256", name="uq_catalog_h5p_packages_sha256"),
+        CheckConstraint(
+            "library_name = 'H5P.TrueFalse' AND library_version = '1.8'",
+            name="ck_catalog_h5p_packages_allowed_library",
+        ),
+        CheckConstraint("size_bytes > 0", name="ck_catalog_h5p_packages_size"),
+        CheckConstraint(
+            "char_length(sha256) = 64", name="ck_catalog_h5p_packages_digest"
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    activity_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("catalog_activities.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    library_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    library_version: Mapped[str] = mapped_column(String(20), nullable=False)
+    # Where the file sits in the private bucket. Never served directly: the
+    # runtime origin is isolated, per ADR-012.
+    object_key: Mapped[str] = mapped_column(String(500), nullable=False)
+    sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
+    # ADR-012, condition 8: licence and provenance checked before publication.
+    licence: Mapped[str] = mapped_column(String(100), nullable=False)
+    source: Mapped[str] = mapped_column(String(500), nullable=False)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    activity: Mapped[Activity] = relationship(back_populates="h5p_package")
