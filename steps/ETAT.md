@@ -566,16 +566,43 @@ consignées ci-dessous.
 - [x] Une seule Pull Request pour toute l'étape.
 - [ ] Clôture distante, à consigner au premier commit de l'étape 10.
 
-### Points ouverts de l'étape 09
+### Dette de l'étape 09, résorbée le 15 août 2026
 
-- Aucune échéance ni ordre de parcours, alors que l'étape s'intitule
-  « affectations et parcours ». Ordonner un parcours demandera de décider ce
-  qu'il advient d'une activité sautée.
-- Rien ne plafonne le nombre d'affectations ouvertes pour un enfant.
-- **Le lecteur H5P manque toujours** : une activité peut être donnée et
-  commencée sans que le contenu puisse être joué. Dette ouverte en 08, devenue
-  visible ici.
-- Les pages web restent les maquettes de l'étape 05.
+Les trois points ouverts à la clôture ont été traités après elle, sur la branche
+`fix/dette-affectations-et-lecteur`.
+
+- [x] **Échéance et ordre de parcours.** Une affectation porte une date
+      facultative — une date et non un moment, la semaine d'un enfant se comptant
+      en jours. Une échéance déjà passée est refusée. L'ordre en découle : ce qui
+      est attendu le plus tôt d'abord, ce qui n'est attendu aucun jour ensuite.
+      Le réordonnancement manuel a été écarté : il demanderait un rang à
+      maintenir, et un rang que personne ne met à jour est pire que pas de rang.
+- [x] **Plafond de vingt activités dues à la fois.** Il compte ce qui est encore
+      dû, jamais ce qui a été donné : terminer ou annuler libère une place. Il
+      n'est pas là contre un abus mais contre un geste, dont la conséquence
+      serait d'ensevelir un enfant de six ans.
+- [x] **Ouverture du contenu**, `GET /api/v1/me/activities/{id}/content` : lien
+      signé de cinq minutes vers le paquet. **L'accès n'est pas une propriété du
+      contenu mais de l'affectation** — rien avant d'avoir commencé, rien après
+      avoir terminé, rien pour un autre enfant, rien pour le Parent. Le bucket
+      reste privé : sans signature, le stockage répond `403`.
+- [x] Migration `0007_assignment_due_date`, réversible.
+- [x] 14 tests supplémentaires, 375 au total.
+
+### Ce qui reste pour jouer réellement un contenu
+
+Le lien remet le fichier vérifié ; il ne le **joue** pas. Aucune des trois pièces
+manquantes n'est une ligne de code de plus dans l'API :
+
+- **l'origine de contenu isolée**, sa CSP et son iframe, exigées par ADR-012
+  condition 5 — servir le contenu depuis l'origine de l'API serait précisément ce
+  que cette isolation interdit, c'est un travail d'infrastructure ;
+- **le lecteur `h5p-standalone` dans le web**, qui suppose les bibliothèques
+  préparées hors ligne et figées comme artefacts internes, condition 3 ;
+- **l'endpoint xAPI authentifié**, condition 6, qui relève de l'étape 11 par
+  construction.
+
+Les pages web restent les maquettes de l'étape 05.
 
 ## Résultats techniques de l'étape 09
 

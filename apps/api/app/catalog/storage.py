@@ -19,11 +19,13 @@ from app.core.config import settings
 
 
 class ObjectStore(Protocol):
-    """What registration needs from storage, and nothing more."""
+    """What the catalogue needs from storage, and nothing more."""
 
     def put(self, key: str, path: Path) -> None: ...
 
     def remove(self, key: str) -> None: ...
+
+    def presign(self, key: str, expires_in: int) -> str: ...
 
 
 class S3ObjectStore:
@@ -50,3 +52,27 @@ class S3ObjectStore:
 
     def remove(self, key: str) -> None:
         self._client.delete_object(Bucket=self.bucket, Key=key)
+
+    def presign(self, key: str, expires_in: int) -> str:
+        """A link that opens this object, for a short while and for no other.
+
+        The bucket stays private, per ADR-008: nothing is ever readable without
+        a signature, and a signature that outlived the session it was handed to
+        would be a permanent link with extra steps.
+
+        The public endpoint is what goes into the signature, because the address
+        the API reaches the storage on is not the address a browser can.
+        """
+        client = boto3.client(
+            "s3",
+            endpoint_url=settings.S3_PUBLIC_ENDPOINT_URL,
+            aws_access_key_id=settings.S3_ACCESS_KEY,
+            aws_secret_access_key=settings.S3_SECRET_KEY,
+            region_name=settings.S3_REGION,
+        )
+        url: str = client.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": self.bucket, "Key": key},
+            ExpiresIn=expires_in,
+        )
+        return url

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import uuid
 from collections.abc import Iterator
+from datetime import date, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
@@ -20,11 +21,13 @@ from sqlalchemy.orm import Session
 
 from app.core.db import sync_database_url
 from app.main import app
+from app.models.assignment import MAX_OPEN_ASSIGNMENTS
 from app.models.catalog import (
     ACTIVITY_KIND_H5P,
     ACTIVITY_STATUS_DRAFT,
     ACTIVITY_STATUS_PUBLISHED,
     Activity,
+    H5PPackage,
 )
 
 TEST_CODE_PREFIX = "test-asg-"
@@ -88,6 +91,36 @@ def activities(engine: Engine) -> Iterator[dict[str, str]]:
             text("DELETE FROM catalog_activities WHERE code LIKE :pattern"),
             {"pattern": f"{TEST_CODE_PREFIX}%"},
         )
+
+
+@pytest.fixture
+def package_activity(engine: Engine, activities: dict[str, str]) -> str:
+    """A published activity that really has a vetted package behind it."""
+    code = f"{TEST_CODE_PREFIX}avecpaquet"
+    with Session(engine) as session:
+        activity = Activity(
+            code=code,
+            title="Vrai ou faux",
+            kind=ACTIVITY_KIND_H5P,
+            status=ACTIVITY_STATUS_PUBLISHED,
+            duration_minutes=4,
+        )
+        session.add(activity)
+        session.flush()
+        session.add(
+            H5PPackage(
+                activity_id=activity.id,
+                library_name="H5P.TrueFalse",
+                library_version="1.8",
+                object_key="packages/essai-affectation.h5p",
+                sha256=uuid.uuid4().hex + uuid.uuid4().hex,
+                size_bytes=4096,
+                licence="CC BY 4.0",
+                source="https://example.com/essai",
+            )
+        )
+        session.commit()
+    return code
 
 
 @pytest.fixture
@@ -483,3 +516,224 @@ def child_start(family: Family, assignment_id: str) -> int:
     return (
         family.as_child().post(f"{MY_ACTIVITIES_URL}/{assignment_id}/start").status_code
     )
+
+
+class TestDueDateAndCourseOrder:
+    """The debt of step 09: an assignment could be given but never expected."""
+
+    def test_an_activity_may_be_expected_by_a_day(
+        self, family: Family, activities: dict[str, str]
+    ) -> None:
+        due = (date.today() + timedelta(days=3)).isoformat()
+
+        body = assign(family, activities["un"], due_on=due)
+
+        assert body["due_on"] == due
+
+    def test_an_activity_may_still_be_given_without_a_date(
+        self, family: Family, activities: dict[str, str]
+    ) -> None:
+        """Most activities are simply given, not expected by any particular day."""
+        assert assign(family, activities["un"])["due_on"] is None
+
+    def test_a_date_already_past_is_refused(
+        self, family: Family, activities: dict[str, str]
+    ) -> None:
+        """Nobody means to give a child something that was due yesterday."""
+        refused = family.as_parent().post(
+            ASSIGNMENTS_URL,
+            json={
+                "child_id": family.child_id,
+                "activity_code": activities["un"],
+                "due_on": (date.today() - timedelta(days=1)).isoformat(),
+            },
+        )
+
+        assert refused.status_code == 409
+
+    def test_what_is_expected_soonest_comes_first(
+        self, family: Family, activities: dict[str, str]
+    ) -> None:
+        """The whole of the course order: a consequence of the dates, not a list
+        to be dragged around."""
+        assign(
+            family,
+            activities["un"],
+            due_on=(date.today() + timedelta(days=9)).isoformat(),
+        )
+        soon = assign(
+            family,
+            activities["deux"],
+            due_on=(date.today() + timedelta(days=1)).isoformat(),
+        )
+
+        listed = family.as_child().get(MY_ACTIVITIES_URL).json()
+
+        assert listed[0]["id"] == soon["id"]
+
+    def test_what_is_expected_on_no_day_comes_after_what_is(
+        self, family: Family, activities: dict[str, str]
+    ) -> None:
+        undated = assign(family, activities["un"])
+        dated = assign(
+            family,
+            activities["deux"],
+            due_on=(date.today() + timedelta(days=30)).isoformat(),
+        )
+
+        listed = [row["id"] for row in family.as_child().get(MY_ACTIVITIES_URL).json()]
+
+        assert listed.index(dated["id"]) < listed.index(undated["id"])
+
+
+class TestCeilingOnOpenWork:
+    """The other debt: nothing stopped a child being buried in work."""
+
+    def test_a_child_cannot_be_given_more_than_the_ceiling(
+        self, family: Family, engine: Engine, activities: dict[str, str]
+    ) -> None:
+        codes = _many_activities(engine, MAX_OPEN_ASSIGNMENTS + 1)
+
+        for code in codes[:MAX_OPEN_ASSIGNMENTS]:
+            assign(family, code)
+        refused = family.as_parent().post(
+            ASSIGNMENTS_URL,
+            json={"child_id": family.child_id, "activity_code": codes[-1]},
+        )
+
+        assert refused.status_code == 409
+        assert "attente" in refused.json()["error"]["message"]
+
+    def test_finishing_one_frees_a_slot(
+        self, family: Family, engine: Engine, activities: dict[str, str]
+    ) -> None:
+        """The ceiling counts what is owed, not what has ever been given."""
+        codes = _many_activities(engine, MAX_OPEN_ASSIGNMENTS + 1)
+        given = [assign(family, code) for code in codes[:MAX_OPEN_ASSIGNMENTS]]
+
+        child = family.as_child()
+        child.post(f"{MY_ACTIVITIES_URL}/{given[0]['id']}/start")
+        child.post(f"{MY_ACTIVITIES_URL}/{given[0]['id']}/complete")
+
+        accepted = family.as_parent().post(
+            ASSIGNMENTS_URL,
+            json={"child_id": family.child_id, "activity_code": codes[-1]},
+        )
+
+        assert accepted.status_code == 201
+
+    def test_cancelling_one_frees_a_slot_too(
+        self, family: Family, engine: Engine, activities: dict[str, str]
+    ) -> None:
+        codes = _many_activities(engine, MAX_OPEN_ASSIGNMENTS + 1)
+        given = [assign(family, code) for code in codes[:MAX_OPEN_ASSIGNMENTS]]
+        family.as_parent().post(f"{ASSIGNMENTS_URL}/{given[0]['id']}/cancel")
+
+        accepted = family.as_parent().post(
+            ASSIGNMENTS_URL,
+            json={"child_id": family.child_id, "activity_code": codes[-1]},
+        )
+
+        assert accepted.status_code == 201
+
+
+class TestOpeningTheContent:
+    """The third debt: an activity could be started with nothing to play."""
+
+    def test_a_child_doing_an_activity_gets_a_signed_link(
+        self, family: Family, package_activity: str
+    ) -> None:
+        given = assign(family, package_activity)
+        child = family.as_child()
+        child.post(f"{MY_ACTIVITIES_URL}/{given['id']}/start")
+
+        body = child.get(f"{MY_ACTIVITIES_URL}/{given['id']}/content").json()
+
+        assert body["library_name"] == "H5P.TrueFalse"
+        assert body["expires_in"] == 300
+        # Signed and dated, therefore not a plain address anyone could keep.
+        # The signature version is MinIO's business, so only its presence is
+        # asserted; pinning it would test boto3 rather than this route.
+        assert "Signature=" in body["package_url"]
+        assert "Expires=" in body["package_url"]
+
+    def test_nothing_opens_before_the_activity_is_started(
+        self, family: Family, package_activity: str
+    ) -> None:
+        """Access follows the assignment, not the content."""
+        given = assign(family, package_activity)
+
+        refused = family.as_child().get(f"{MY_ACTIVITIES_URL}/{given['id']}/content")
+
+        assert refused.status_code == 409
+
+    def test_nothing_opens_once_it_is_finished(
+        self, family: Family, package_activity: str
+    ) -> None:
+        given = assign(family, package_activity)
+        child = family.as_child()
+        child.post(f"{MY_ACTIVITIES_URL}/{given['id']}/start")
+        child.post(f"{MY_ACTIVITIES_URL}/{given['id']}/complete")
+
+        assert (
+            child.get(f"{MY_ACTIVITIES_URL}/{given['id']}/content").status_code == 409
+        )
+
+    def test_another_child_cannot_open_it(
+        self, client: TestClient, package_activity: str
+    ) -> None:
+        theirs = Family(client)
+        given = assign(theirs, package_activity)
+        theirs.as_child().post(f"{MY_ACTIVITIES_URL}/{given['id']}/start")
+        ours = Family(client)
+
+        refused = ours.as_child().get(f"{MY_ACTIVITIES_URL}/{given['id']}/content")
+
+        assert refused.status_code == 404
+
+    def test_a_parent_cannot_open_it_either(
+        self, family: Family, package_activity: str
+    ) -> None:
+        given = assign(family, package_activity)
+        family.as_child().post(f"{MY_ACTIVITIES_URL}/{given['id']}/start")
+
+        refused = family.as_parent().get(f"{MY_ACTIVITIES_URL}/{given['id']}/content")
+
+        assert refused.status_code == 403
+
+    def test_an_activity_without_a_package_says_so(
+        self, family: Family, activities: dict[str, str]
+    ) -> None:
+        """A PhET simulation or a video is another kind of activity, not a failure."""
+        given = assign(family, activities["un"])
+        child = family.as_child()
+        child.post(f"{MY_ACTIVITIES_URL}/{given['id']}/start")
+
+        refused = child.get(f"{MY_ACTIVITIES_URL}/{given['id']}/content")
+
+        assert refused.status_code == 409
+        assert "H5P" in refused.json()["error"]["message"]
+
+
+def _many_activities(engine: Engine, count: int) -> list[str]:
+    """More published activities than a child may be given at once.
+
+    They carry the test prefix, so the `activities` fixture removes them: any
+    test calling this must depend on that fixture for its teardown.
+    """
+    codes = [f"{TEST_CODE_PREFIX}m{index:03d}" for index in range(count)]
+    with Session(engine) as session:
+        session.add_all(
+            [
+                Activity(
+                    code=code,
+                    title=f"Activité {code}",
+                    kind=ACTIVITY_KIND_H5P,
+                    status=ACTIVITY_STATUS_PUBLISHED,
+                    duration_minutes=5,
+                )
+                for code in codes
+            ]
+        )
+        session.commit()
+    return codes
