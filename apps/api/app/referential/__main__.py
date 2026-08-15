@@ -1,15 +1,21 @@
-"""Import a referential file from the command line.
+"""Manage referential editions from the command line.
 
-    python -m app.referential <fichier.json>            essai à blanc
-    python -m app.referential <fichier.json> --apply    écriture
+    python -m app.referential import <fichier.json>            essai à blanc
+    python -m app.referential import <fichier.json> --apply    écriture
+    python -m app.referential publish <code>                   mise en vigueur
 
-A dry run is the default because an import rewrites a whole edition, deletions
-included. The dry run does the entire work inside a transaction it then rolls
-back, so what it reports is what `--apply` will do, constraint failures
-included.
+Importing corrects a draft and may be run twenty times while a programme is
+being written. Publishing is a single decision that changes what every reader
+sees. They are two verbs so that a mistyped import can never put an edition in
+force.
 
-The import is a command and not a route: it writes a whole edition at once, and
-the Administrator role that would guard such a route belongs to step 15.
+An import is a dry run by default, because it rewrites a whole edition,
+deletions included. The dry run does the entire work inside a transaction it
+then rolls back, so what it reports is what `--apply` will do, constraint
+failures included.
+
+These are commands and not routes: they write a whole edition at once, and the
+Administrator role that would guard such a route belongs to step 15.
 """
 
 from __future__ import annotations
@@ -17,6 +23,8 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Final
 
@@ -37,6 +45,7 @@ from app.referential.importer import (
     ImportReport,
     reconcile,
 )
+from app.referential.publication import PublicationRefused, publish
 from app.referential.validation import (
     ImportIssue,
     issues_from_validation_error,
@@ -63,22 +72,62 @@ COLUMN: Final = max(len(name) for name, _ in ENTITY_NAMES.values())
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="python -m app.referential",
-        description="Importe une édition du référentiel scolaire depuis un fichier JSON.",
+        description="Gère les éditions du référentiel scolaire.",
     )
-    parser.add_argument("fichier", type=Path, help="fichier JSON décrivant l’édition")
-    parser.add_argument(
+    verbs = parser.add_subparsers(dest="verbe", required=True)
+
+    importer = verbs.add_parser(
+        "import", help="importer une édition depuis un fichier JSON"
+    )
+    importer.add_argument("fichier", type=Path, help="fichier JSON décrivant l’édition")
+    importer.add_argument(
         "--apply",
         action="store_true",
         help="écrire réellement ; sans ce drapeau, rien n’est enregistré",
     )
-    parser.add_argument(
-        "--database-url",
-        default=DATABASE_URL,
-        help="base cible ; par défaut celle de la configuration",
+    importer.add_argument(
+        "--database-url", default=DATABASE_URL, help=argparse.SUPPRESS
     )
-    arguments = parser.parse_args(argv)
 
-    document, issues = _read(arguments.fichier)
+    publisher = verbs.add_parser("publish", help="mettre une édition en vigueur")
+    publisher.add_argument("code", help="code de l’édition à publier")
+    publisher.add_argument(
+        "--database-url", default=DATABASE_URL, help=argparse.SUPPRESS
+    )
+
+    arguments = parser.parse_args(argv)
+    if arguments.verbe == "publish":
+        return _publish(arguments.code, arguments.database_url)
+    return _import(arguments.fichier, arguments.database_url, arguments.apply)
+
+
+@contextmanager
+def _database(url: str) -> Iterator[Session]:
+    """One session, one engine, disposed whatever happens."""
+    engine = create_engine(sync_database_url(url))
+    try:
+        with Session(engine) as session:
+            yield session
+    finally:
+        engine.dispose()
+
+
+def _guarded(session: Session, work: Callable[[], int]) -> int:
+    """Run a command, turning the two expected refusals into exit codes."""
+    try:
+        return work()
+    except (ImportRefused, PublicationRefused) as refusal:
+        session.rollback()
+        print(str(refusal), file=sys.stderr)
+        return EXIT_REFUSED
+    except SQLAlchemyError as error:
+        session.rollback()
+        print(f"Refus de la base de données : {error}", file=sys.stderr)
+        return EXIT_DATABASE
+
+
+def _import(path: Path, url: str, apply: bool) -> int:
+    document, issues = _read(path)
     if document is None:
         return _report_issues(issues) if issues else EXIT_UNREADABLE
 
@@ -86,7 +135,39 @@ def main(argv: list[str] | None = None) -> int:
     if issues:
         return _report_issues(issues)
 
-    return _import(document, arguments.fichier, arguments.database_url, arguments.apply)
+    with _database(url) as session:
+
+        def work() -> int:
+            report = reconcile(session, document)
+            if apply:
+                session.commit()
+                report.applied = True
+            else:
+                session.rollback()
+            _print_import(report, path)
+            return EXIT_OK
+
+        return _guarded(session, work)
+
+
+def _publish(code: str, url: str) -> int:
+    with _database(url) as session:
+
+        def work() -> int:
+            report = publish(session, code)
+            session.commit()
+
+            if report.was_already_published:
+                print(f"{report.code} « {report.label} » est déjà en vigueur.")
+                return EXIT_OK
+
+            print(f"{report.code} « {report.label} »")
+            print("  brouillon → en vigueur")
+            if report.archived_code is not None:
+                print(f"  {report.archived_code} : en vigueur → archivée")
+            return EXIT_OK
+
+        return _guarded(session, work)
 
 
 def _read(path: Path) -> tuple[ReferentialDocument | None, list[ImportIssue]]:
@@ -105,33 +186,6 @@ def _read(path: Path) -> tuple[ReferentialDocument | None, list[ImportIssue]]:
         return None, issues_from_validation_error(error)
 
 
-def _import(document: ReferentialDocument, path: Path, url: str, apply: bool) -> int:
-    engine = create_engine(sync_database_url(url))
-    try:
-        with Session(engine) as session:
-            try:
-                report = reconcile(session, document)
-            except ImportRefused as refusal:
-                session.rollback()
-                print(str(refusal), file=sys.stderr)
-                return EXIT_REFUSED
-            except SQLAlchemyError as error:
-                session.rollback()
-                print(f"Refus de la base de données : {error}", file=sys.stderr)
-                return EXIT_DATABASE
-
-            if apply:
-                session.commit()
-                report.applied = True
-            else:
-                session.rollback()
-    finally:
-        engine.dispose()
-
-    _print_report(report, path)
-    return EXIT_OK
-
-
 def _report_issues(issues: list[ImportIssue]) -> int:
     plural = "s" if len(issues) > 1 else ""
     print(f"Fichier refusé, {len(issues)} erreur{plural} :", file=sys.stderr)
@@ -140,7 +194,7 @@ def _report_issues(issues: list[ImportIssue]) -> int:
     return EXIT_INVALID
 
 
-def _print_report(report: ImportReport, path: Path) -> None:
+def _print_import(report: ImportReport, path: Path) -> None:
     print(f"Fichier   : {path}")
     print(
         f"Version   : {report.version_code} « {report.version_label} », "

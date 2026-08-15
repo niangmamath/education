@@ -11,7 +11,7 @@ import uuid
 from collections.abc import Iterator
 
 import pytest
-from sqlalchemy import Engine, create_engine, text
+from sqlalchemy import Engine, create_engine
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -27,6 +27,7 @@ from app.models.referential import (
     ReferentialVersion,
     Subject,
 )
+from tests.support import no_edition_in_force
 
 TEST_CODE_PREFIX = "test-ref-"
 
@@ -43,14 +44,12 @@ def engine() -> Iterator[Engine]:
 
 @pytest.fixture
 def session(engine: Engine) -> Iterator[Session]:
-    with Session(engine) as session:
-        yield session
-        session.rollback()
-    with engine.begin() as connection:
-        connection.execute(
-            text("DELETE FROM ref_versions WHERE code LIKE :pattern"),
-            {"pattern": f"{TEST_CODE_PREFIX}%"},
-        )
+    """A session with the field cleared: one test here publishes a version, and
+    only one version may be published at a time."""
+    with no_edition_in_force(engine, TEST_CODE_PREFIX):
+        with Session(engine) as session:
+            yield session
+            session.rollback()
 
 
 def build_version(

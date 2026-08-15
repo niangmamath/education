@@ -37,4 +37,7 @@ Valider migration, import, API, tests, documentation et CI.
 
 ## Statut
 
-À faire.
+Terminé. Séquence complète de l'API CI rejouée localement, tout vert, 255 tests.
+Étape fusionnée par une seule Pull Request, sur consigne du propriétaire du
+15 août 2026. Validation consignée dans
+`rapport_2026-08-15_1440_cloture_etape_07.md`.

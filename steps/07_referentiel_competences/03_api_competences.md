@@ -37,4 +37,8 @@ Exposer des lectures filtrées et paginées des niveaux, matières et compétenc
 
 ## Statut
 
-À faire.
+En revue. Commande `publish` mettant une édition en vigueur, quatre routes de
+lecture servant l'édition en vigueur seule, filtres par niveau, matière et
+domaine, pagination plafonnée, et 37 tests dédiés livrés, contrôles locaux
+verts. Aucune migration, le schéma n'ayant pas changé. Validation consignée dans
+`rapport_2026-08-15_1430_api_referentiel.md`.

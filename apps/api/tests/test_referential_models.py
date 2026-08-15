@@ -1,5 +1,10 @@
 """Static contract tests for the school referential models."""
 
+import subprocess
+import sys
+import textwrap
+from pathlib import Path
+
 from sqlalchemy import CheckConstraint, ForeignKeyConstraint, UniqueConstraint, inspect
 
 from app.core.db import Base
@@ -111,3 +116,40 @@ def test_the_version_status_is_closed_to_three_values() -> None:
         if isinstance(constraint, CheckConstraint)
     }
     assert "ck_ref_versions_status" in checks
+
+
+def test_mapping_the_models_raises_no_relationship_warning() -> None:
+    """The `overlaps` declarations must stay true, and this is what checks them.
+
+    Four relationships write `version_id`, which SQLAlchemy reports as an
+    overlap unless it is declared. The declaration is the documented remedy, but
+    it is a promise made in a docstring: change one relationship and the promise
+    can quietly stop holding. Here SQLAlchemy is asked to configure the mappers
+    with its own warnings turned into errors, in a subprocess so that nothing
+    already imported hides the first configuration. Whatever SQLAlchemy would
+    object to now fails a test instead of waiting to surprise someone.
+
+    Removing one declaration of a declared pair stays silent, and rightly so:
+    SQLAlchemy is satisfied once either side names the overlap.
+    """
+    check = textwrap.dedent(
+        """
+        import warnings
+        from sqlalchemy.exc import SAWarning
+
+        warnings.simplefilter("error", SAWarning)
+
+        import app.models  # noqa: F401
+        from sqlalchemy.orm import configure_mappers
+
+        configure_mappers()
+        """
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", check],
+        cwd=Path(__file__).resolve().parents[1],
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr

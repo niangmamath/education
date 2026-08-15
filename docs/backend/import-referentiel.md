@@ -2,10 +2,10 @@
 
 ## Périmètre
 
-Cette page décrit la sous-étape 07.2 : comment une édition du référentiel entre
-dans la base, ce que l'import vérifie avant d'écrire, et pourquoi le rejouer ne
-produit pas de doublon. La modélisation relève de 07.1, décrite dans
-`referentiel-competences.md`, et les lectures filtrées de 07.3.
+Cette page décrit comment une édition du référentiel entre dans la base, ce que
+l'import vérifie avant d'écrire, pourquoi le rejouer ne produit pas de doublon,
+et comment une édition est mise en vigueur. La modélisation est décrite dans
+`referentiel-competences.md`, les lectures dans `api-referentiel.md`.
 
 ## Ce qu'« idempotent » veut dire ici
 
@@ -47,7 +47,7 @@ sens de traces déjà écrites. Un programme corrigé s'importe sous un **nouvea
 code de version**, que l'on publie ensuite à la place de l'ancienne.
 
 L'import ne publie jamais. Mettre une édition en vigueur est un acte distinct,
-qui n'appartient pas à 07.2.
+décrit plus bas.
 
 ## Le fichier
 
@@ -113,10 +113,10 @@ Fichier refusé, 3 erreurs :
 
 ```bash
 # essai à blanc, rien n’est écrit
-docker compose exec -T api python -m app.referential seeds/referential/fictif-2026-01.json
+docker compose exec -T api python -m app.referential import seeds/referential/fictif-2026-01.json
 
 # écriture
-docker compose exec -T api python -m app.referential seeds/referential/fictif-2026-01.json --apply
+docker compose exec -T api python -m app.referential import seeds/referential/fictif-2026-01.json --apply
 ```
 
 ```text
@@ -145,6 +145,41 @@ serait pire que pas d'essai du tout.
 | 3 | version publiée ou archivée, donc immuable |
 | 4 | refus de la base de données |
 
+## Publier une édition
+
+L'import s'arrête au brouillon. Mettre une édition en vigueur est un second
+verbe :
+
+```bash
+docker compose exec -T api python -m app.referential publish fictif-2026-01
+```
+
+```text
+fictif-2026-01 « Référentiel fictif 2026-01 »
+  brouillon → en vigueur
+  fictif-2025-09 : en vigueur → archivée
+```
+
+Deux verbes plutôt qu'un drapeau, parce que les deux actes n'ont pas la même
+portée : un import corrige un brouillon et peut être rejoué vingt fois pendant
+qu'un programme s'écrit, une publication change ce que voit chaque lecteur. Une
+frappe de trop à l'import ne peut donc rien mettre en vigueur.
+
+L'édition remplacée est archivée **dans la même transaction**. Il n'existe aucun
+instant où deux éditions sont publiées, ni aucun où il n'y en a plus.
+
+| Cas | Réponse |
+|---|---|
+| brouillon nommé | publié, l'édition précédente est archivée |
+| édition déjà en vigueur | rien à faire, la commande le dit et rend `0` |
+| code inconnu | refus, code de retour 3 |
+| édition archivée | refus, code de retour 3 |
+
+Le dernier refus est délibéré. Remettre en vigueur une édition retirée
+changerait le sens de toutes les traces enregistrées depuis son archivage ;
+c'est une décision à part entière, pas le comportement par défaut d'une
+commande.
+
 ## Pourquoi une commande et non une route
 
 Un import écrit une édition entière d'un coup. La route d'administration qui
@@ -168,11 +203,9 @@ Ce fichier est **entièrement fictif**. Ses intitulés s'inspirent de l'école
 primaire française pour rester plausibles, mais il ne reproduit aucun programme
 officiel et n'en tient pas lieu.
 
-## Ce que 07.2 ne fait pas
+## Ce que cette page ne couvre pas
 
-- Aucune route : les lectures filtrées et paginées arrivent en 07.3.
-- Aucune publication : mettre une édition en vigueur est un acte distinct de
-  l'import, et la décision reste à prendre.
+- Les lectures filtrées et paginées, décrites dans `api-referentiel.md`.
 - Aucune comparaison entre deux éditions : le code métier stable la rendra
   possible, rien ne la demande encore.
 - Aucun lien vers les activités H5P, qui relève de l'étape 08.

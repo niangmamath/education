@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from sqlalchemy import Engine, create_engine, select, text
+from sqlalchemy import Engine, create_engine, select
 from sqlalchemy.orm import Session
 
 from app.core.db import sync_database_url
@@ -41,6 +41,7 @@ from app.referential.importer import (
     reconcile,
 )
 from app.referential.validation import validate_document
+from tests.support import no_edition_in_force
 
 TEST_CODE_PREFIX = "test-import-"
 SHIPPED_FILE = (
@@ -60,14 +61,15 @@ def engine() -> Iterator[Engine]:
 
 @pytest.fixture
 def session(engine: Engine) -> Iterator[Session]:
-    with Session(engine) as session:
-        yield session
-        session.rollback()
-    with engine.begin() as connection:
-        connection.execute(
-            text("DELETE FROM ref_versions WHERE code LIKE :pattern"),
-            {"pattern": f"{TEST_CODE_PREFIX}%"},
-        )
+    """A session with the field cleared: no edition in force, none left behind.
+
+    Two of these tests publish an edition to prove it becomes immutable, and
+    only one edition may be published at a time.
+    """
+    with no_edition_in_force(engine, TEST_CODE_PREFIX):
+        with Session(engine) as session:
+            yield session
+            session.rollback()
 
 
 @pytest.fixture
