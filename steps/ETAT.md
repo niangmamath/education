@@ -644,6 +644,38 @@ L'étape 10, tentatives et résultats, est décalée après l'étape 11 : une te
 n'a de sens qu'une fois qu'un contenu peut réellement être joué et qu'il émet des
 événements.
 
+### 11.0, runtime de contenu, terminée
+
+- [x] **Une seconde origine, servie par nginx.** Un contenu H5P est du
+      JavaScript tiers qui a besoin d'`eval` et de scripts en ligne pour
+      fonctionner. Le servir depuis l'origine de l'application lui donnerait
+      accès aux cookies de session, et aucune CSP ne rattrape cela puisque le
+      navigateur le considérerait comme faisant partie du site. **La séparation
+      est la mesure elle-même**, et c'est aussi ce qui rend acceptables les
+      `unsafe-inline` et `unsafe-eval` de sa CSP : ils ne coûtent rien là où il
+      n'y a rien à prendre.
+- [x] **Un ticket remplace le cookie**, qui ne voyage pas jusqu'à l'autre
+      origine. Valeur opaque frappée quand un enfant ouvre une activité en
+      cours, gardée trente minutes dans Redis, vérifiée par `auth_request` à
+      chaque fichier. Il ne porte aucune identité : il nomme une affectation et
+      le contenu qu'il ouvre. Rangé sous son empreinte comme une session, donc
+      qui lit Redis apprend quels contenus sont ouverts, jamais les tickets.
+- [x] Un ticket pour un autre contenu est refusé comme un ticket absent.
+- [x] **Le déploiement est l'endroit où l'archive est enfin ouverte**, après
+      avoir été vérifiée en 08.2. Elle est relue depuis le bucket, jamais depuis
+      une copie sur disque, et les contrôles de chemin sont rejoués à l'écriture
+      — non par méfiance envers le premier contrôle, mais envers l'intervalle
+      entre les deux.
+- [x] L'empreinte nomme le dossier : redéployer est idempotent, deux paquets ne
+      peuvent pas se télescoper. Volume monté **en lecture seule** dans
+      l'origine.
+- [x] Inventaire des empreintes des bibliothèques, condition 3 d'ADR-012 : un
+      artefact que personne ne peut nommer n'est pas figé.
+- [x] `play.html`, seule partie de cette origine que nous ayons écrite, remonte
+      les événements xAPI par `postMessage` sans jamais parler à l'API.
+- [x] 23 tests dédiés, 397 au total. Éprouvé sur la pile vivante.
+
 ## Prochaine action
 
-Mener la sous-étape 11.0, runtime de contenu, puis 11.1 à 11.4.
+Mener 11.1 à 11.4 : ingestion des événements xAPI, liaison de l'acteur
+pseudonyme, agrégation des progrès, clôture de l'étape.

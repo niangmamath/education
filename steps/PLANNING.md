@@ -94,8 +94,8 @@
 
 | ID | Travail | Dépendances | Statut | Preuve |
 |---|---|---|---|---|
-| XAP-00 | Construire le runtime de contenu isolé | AFF-04 | En cours | |
-| XAP-01 | Ingérer et valider les événements xAPI | XAP-00 | À faire | |
+| XAP-00 | Construire le runtime de contenu isolé | AFF-04 | Terminé | Origine isolée, tickets, déploiement, 23 tests |
+| XAP-01 | Ingérer et valider les événements xAPI | XAP-00 | En cours | |
 | XAP-02 | Relier l’acteur pseudonyme à l’Élève | XAP-01 | À faire | |
 | XAP-03 | Agréger les progrès | XAP-02 | À faire | |
 | XAP-04 | Clôturer l’étape 11 | XAP-03 | À faire | |
@@ -107,4 +107,4 @@ après l’étape 11, une tentative n’ayant de sens qu’une fois un contenu j
 
 ### Prochaine tâche
 
-Mener XAP-00, le runtime de contenu isolé.
+Mener XAP-01, l’ingestion des événements xAPI.

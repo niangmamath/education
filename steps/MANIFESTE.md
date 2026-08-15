@@ -12,7 +12,7 @@ Régénérer après toute création, suppression ou renommage de fiche :
 cd steps && find . -type f -name '*.md' ! -name 'MANIFESTE.md' ! -name 'rapport_*.md' -printf '%P\n' | LC_ALL=C sort | while read -r f; do printf -- '- `%s`  `%s`\n' "$f" "$(sha256sum "$f" | cut -c1-12)"; done
 ```
 
-Nombre de fiches : 91
+Nombre de fiches : 92
 
 - `01_gouvernance_et_audit/01_verifier_depot_vide.md`  `0397b9fe23e4`
 - `01_gouvernance_et_audit/02_creer_fichiers_racine.md`  `e0bae8ab81a1`
@@ -66,6 +66,7 @@ Nombre de fiches : 91
 - `10_tentatives_resultats/03_calcul_resultats.md`  `a698f3bf31f6`
 - `10_tentatives_resultats/04_cloturer_etape.md`  `16c9e9934971`
 - `10_tentatives_resultats/README.md`  `b152ab7f9762`
+- `11_evenements_xapi_progres/00_runtime_contenu.md`  `95e5b8c033e9`
 - `11_evenements_xapi_progres/01_ingestion_xapi.md`  `6e0b9b2d9d42`
 - `11_evenements_xapi_progres/02_liaison_utilisateur.md`  `e04a56a57d16`
 - `11_evenements_xapi_progres/03_agregation_progres.md`  `46f07db45504`
@@ -99,9 +100,9 @@ Nombre de fiches : 91
 - `16_validation_mvp_livraison/README.md`  `998e5bc3959d`
 - `AGENTS.md`  `d3620f0f65bb`
 - `DECISIONS_FINALES.md`  `a735c5ca2723`
-- `ETAT.md`  `88211f6f5900`
+- `ETAT.md`  `8ccb9f137da7`
 - `MODELE_RAPPORT.md`  `d391f4da239a`
-- `PLANNING.md`  `5876d61a8982`
+- `PLANNING.md`  `828c4e5b8861`
 - `PROMPT_GENERAL.md`  `d9ff17c723a2`
 - `RAPPORTS_REGLES.md`  `9c07f684b281`
 - `README.md`  `b4684411894a`
