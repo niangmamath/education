@@ -66,7 +66,7 @@ Secret Scan: succès
 
 ## Organisation des étapes
 
-Les dossiers détaillés des étapes 10 à 16 sont temporairement retirés du dépôt. Chaque dossier rejoint le dépôt au démarrage de l’étape correspondante ; celui de l’étape 07 y est entré le 14 août 2026, celui de l’étape 08 et celui de l’étape 09 le 15 août 2026.
+Les dossiers détaillés des étapes 12 à 16 sont temporairement retirés du dépôt. Chaque dossier rejoint le dépôt au démarrage de l’étape correspondante ; celui de l’étape 07 y est entré le 14 août 2026, ceux des étapes 08, 09, 10 et 11 le 15 août 2026.
 
 ## Étape 04, spike H5P critique
 
@@ -564,7 +564,9 @@ consignées ci-dessous.
 - [x] Séquence complète de l'API CI rejouée localement, tout vert, 361 tests.
 - [x] Rapport `rapport_2026-08-15_1615_affectations.md` produit.
 - [x] Une seule Pull Request pour toute l'étape.
-- [ ] Clôture distante, à consigner au premier commit de l'étape 10.
+- [x] Clôture distante : Pull Request #16 fusionnée le 15 août 2026, commit de
+      fusion `71af66e`. Dette résorbée ensuite par la Pull Request #17, commit
+      `5bf1df0`, contrôles verts sur les deux.
 
 ### Dette de l'étape 09, résorbée le 15 août 2026
 
@@ -618,6 +620,30 @@ Tests      : terminer avant de commencer, rouvrir, reprendre, annuler une termin
 Tests      : annulation conservant la ligne et sa date
 ```
 
+## Étape 11, événements xAPI et progrès, en cours
+
+Travaux menés sur la branche `feat/etape-11-runtime-xapi`.
+
+### Un trou du découpage initial, comblé par une sous-étape 11.0
+
+Trois étapes présupposent un **runtime de contenu** sans qu'aucune ne le
+construise : 11.2 parle de « ne pas exposer l'identité au runtime de contenu »,
+13.1 d'une « activité à reprendre », et 16.1 teste les activités de bout en bout.
+Le propriétaire a validé le 15 août 2026 de le rattacher au début de l'étape 11,
+avant 11.1, pour trois raisons :
+
+- l'endpoint xAPI de 11.1 n'a **aucun producteur** tant que rien ne joue de
+  contenu ; le construire d'abord reviendrait à écrire un récepteur qu'on ne peut
+  éprouver qu'avec des requêtes fabriquées à la main ;
+- 11.2 parle déjà du runtime comme d'une chose existante ;
+- les conditions 3, 5 et 6 d'ADR-012 forment un bloc — bibliothèques figées,
+  origine isolée avec CSP, endpoint authentifié — et les séparer reviendrait à
+  valider trois fois la même chose.
+
+L'étape 10, tentatives et résultats, est décalée après l'étape 11 : une tentative
+n'a de sens qu'une fois qu'un contenu peut réellement être joué et qu'il émet des
+événements.
+
 ## Prochaine action
 
-Ouvrir l'étape 10, tentatives et résultats.
+Mener la sous-étape 11.0, runtime de contenu, puis 11.1 à 11.4.

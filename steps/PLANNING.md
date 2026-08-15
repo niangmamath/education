@@ -90,6 +90,21 @@
 | AFF-03 | Exposer l’API Élève | AFF-02 | Terminé | Liste, démarrage, achèvement, aucun retour arrière |
 | AFF-04 | Clôturer l’étape 09 | AFF-03 | Terminé | Séquence de l’API CI rejouée, 361 tests, PR unique |
 
+### Phase 6, runtime de contenu, événements xAPI et progrès
+
+| ID | Travail | Dépendances | Statut | Preuve |
+|---|---|---|---|---|
+| XAP-00 | Construire le runtime de contenu isolé | AFF-04 | En cours | |
+| XAP-01 | Ingérer et valider les événements xAPI | XAP-00 | À faire | |
+| XAP-02 | Relier l’acteur pseudonyme à l’Élève | XAP-01 | À faire | |
+| XAP-03 | Agréger les progrès | XAP-02 | À faire | |
+| XAP-04 | Clôturer l’étape 11 | XAP-03 | À faire | |
+
+`XAP-00` comble un trou du découpage initial : trois étapes présupposent un
+runtime de contenu sans qu’aucune ne le construise. Rattachement validé par le
+propriétaire le 15 août 2026. L’étape 10, tentatives et résultats, est décalée
+après l’étape 11, une tentative n’ayant de sens qu’une fois un contenu jouable.
+
 ### Prochaine tâche
 
-Ouvrir l’étape 10, tentatives et résultats.
+Mener XAP-00, le runtime de contenu isolé.
