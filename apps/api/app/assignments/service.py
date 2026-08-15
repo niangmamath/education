@@ -29,6 +29,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.attempts.service import abandon_running_attempt
 from app.core.exceptions import ConflictException, NotFoundException
 from app.models.assignment import (
     ASSIGNMENT_OPEN_STATUSES,
@@ -168,6 +169,9 @@ async def cancel_assignment(
 
     assignment.status = ASSIGNMENT_STATUS_CANCELLED
     assignment.cancelled_at = _now()
+    # Whatever she had under way stops with it, without being erased: she did
+    # start, and that stays true.
+    await abandon_running_attempt(db, assignment.id)
     await db.flush()
     return assignment
 

@@ -1,0 +1,264 @@
+"""Starting, resuming, recording and finishing an attempt.
+
+Three properties are carried here, and each is worth naming.
+
+**Starting is idempotent.** A child who reloads the page, or whose network
+hiccups, must not end up with two attempts. Asking to start when one is already
+running returns that one. The database guarantees it rather than the code: a
+partial unique index allows a single attempt in progress per assignment, so two
+requests arriving together cannot both win, and the loser is told about the
+winner instead of failing.
+
+**Recording never overwrites.** Every response is appended. A child who answers,
+changes her mind and answers again has done two things; the reading takes her
+last answer per question, the history keeps both.
+
+**Finishing computes, it does not judge.** The rules of `rules.py` read counts
+and name themselves. Nothing here decides anything a parent could not be shown.
+"""
+
+from __future__ import annotations
+
+import uuid
+from collections.abc import Sequence
+from datetime import datetime, timezone
+
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
+from app.attempts import rules
+from app.core.exceptions import ConflictException, NotFoundException
+from app.models.assignment import (
+    ASSIGNMENT_STATUS_COMPLETED,
+    ASSIGNMENT_STATUS_IN_PROGRESS,
+    Assignment,
+)
+from app.models.attempt import (
+    ATTEMPT_STATUS_ABANDONED,
+    ATTEMPT_STATUS_COMPLETED,
+    ATTEMPT_STATUS_IN_PROGRESS,
+    Attempt,
+    AttemptResponse,
+    AttemptResult,
+)
+from app.models.catalog import Activity, ActivityCompetency
+from app.models.identity import Child
+
+ATTEMPT_NOT_FOUND_MESSAGE = "Cette tentative n’existe pas"
+ASSIGNMENT_NOT_OPEN_MESSAGE = (
+    "Commencez l’activité avant d’en faire une tentative ; une activité terminée "
+    "ou annulée n’en accepte plus"
+)
+ATTEMPT_CLOSED_MESSAGE = "Cette tentative est terminée"
+
+_LOADED = (selectinload(Attempt.responses), selectinload(Attempt.results))
+
+
+def _now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+async def start_or_resume(
+    db: AsyncSession, child: Child, assignment_id: uuid.UUID
+) -> tuple[Attempt, bool]:
+    """The attempt under way for that assignment, starting one if there is none.
+
+    Returns the attempt and whether it was created. Idempotent by design: a
+    reload, a retry, a flaky connection must not leave two attempts behind.
+    """
+    assignment = await _own_assignment(db, child, assignment_id)
+    if assignment.status != ASSIGNMENT_STATUS_IN_PROGRESS:
+        raise ConflictException(message=ASSIGNMENT_NOT_OPEN_MESSAGE)
+
+    running = await _running_attempt(db, assignment_id)
+    if running is not None:
+        return running, False
+
+    attempt = Attempt(assignment_id=assignment.id)
+    db.add(attempt)
+    try:
+        await db.flush()
+    except IntegrityError:
+        # Two requests arrived together and the index refused the second. The
+        # loser is told about the winner rather than shown an error: from the
+        # child's side, both asked the same thing and both get the same answer.
+        await db.rollback()
+        existing = await _running_attempt(db, assignment_id)
+        if existing is None:
+            raise
+        return existing, False
+
+    await db.refresh(attempt, ["responses", "results"])
+    return attempt, True
+
+
+async def record_response(
+    db: AsyncSession,
+    child: Child,
+    attempt_id: uuid.UUID,
+    question_ref: str,
+    response: str | None,
+    is_correct: bool | None,
+) -> AttemptResponse:
+    """Append one answer. Nothing is ever replaced."""
+    attempt = await _own_attempt(db, child, attempt_id)
+    if attempt.status != ATTEMPT_STATUS_IN_PROGRESS:
+        raise ConflictException(message=ATTEMPT_CLOSED_MESSAGE)
+
+    recorded = AttemptResponse(
+        attempt_id=attempt.id,
+        question_ref=question_ref,
+        response=response,
+        is_correct=is_correct,
+    )
+    db.add(recorded)
+    await db.flush()
+    return recorded
+
+
+async def complete(
+    db: AsyncSession, child: Child, attempt_id: uuid.UUID
+) -> tuple[Attempt, list[AttemptResult]]:
+    """Close the attempt, read what it holds, and finish the assignment.
+
+    Completing twice returns the same attempt and the same results rather than
+    computing them again: an attempt is finished once, and a second request is
+    the same request.
+    """
+    attempt = await _own_attempt(db, child, attempt_id)
+    if attempt.status == ATTEMPT_STATUS_COMPLETED:
+        return attempt, list(attempt.results)
+    if attempt.status == ATTEMPT_STATUS_ABANDONED:
+        raise ConflictException(message=ATTEMPT_CLOSED_MESSAGE)
+
+    results = await _compute_results(db, attempt)
+    attempt.status = ATTEMPT_STATUS_COMPLETED
+    attempt.completed_at = _now()
+
+    assignment = await db.get(Assignment, attempt.assignment_id)
+    if assignment is not None and assignment.status == ASSIGNMENT_STATUS_IN_PROGRESS:
+        # Finishing the attempt is what finishes the assignment: the two would
+        # otherwise be able to disagree about whether the work was done.
+        assignment.status = ASSIGNMENT_STATUS_COMPLETED
+        assignment.completed_at = attempt.completed_at
+
+    await db.flush()
+    return attempt, results
+
+
+async def abandon_running_attempt(db: AsyncSession, assignment_id: uuid.UUID) -> None:
+    """Close whatever was under way when an assignment is called off.
+
+    The attempt is not deleted: she did start, and that stays true.
+    """
+    running = await _running_attempt(db, assignment_id)
+    if running is not None:
+        running.status = ATTEMPT_STATUS_ABANDONED
+        await db.flush()
+
+
+async def list_for_child(
+    db: AsyncSession, child: Child, assignment_id: uuid.UUID | None = None
+) -> Sequence[Attempt]:
+    statement = (
+        select(Attempt)
+        .join(Assignment, Assignment.id == Attempt.assignment_id)
+        .where(Assignment.child_id == child.id)
+        .order_by(Attempt.started_at.desc(), Attempt.id)
+        .options(*_LOADED)
+    )
+    if assignment_id is not None:
+        statement = statement.where(Attempt.assignment_id == assignment_id)
+    rows = await db.scalars(statement)
+    return rows.all()
+
+
+async def _compute_results(db: AsyncSession, attempt: Attempt) -> list[AttemptResult]:
+    """Read the responses through the rules, once per competency.
+
+    The last answer per question is what counts, and only answers the content
+    actually judged are counted at all: a content that says nothing about an
+    answer is not made to say something.
+    """
+    latest: dict[str, AttemptResponse] = {}
+    for response in sorted(attempt.responses, key=lambda row: row.recorded_at):
+        latest[response.question_ref] = response
+
+    judged = [row for row in latest.values() if row.is_correct is not None]
+    answered = len(judged)
+    correct = sum(1 for row in judged if row.is_correct)
+
+    reading = rules.read_counts(answered, correct)
+    if reading is None:
+        # No evidence yields no result. The absence is the honest answer.
+        return []
+
+    assignment = await db.get(Assignment, attempt.assignment_id)
+    if assignment is None:
+        return []
+    codes = await db.scalars(
+        select(ActivityCompetency.competency_code)
+        .join(Activity, Activity.id == ActivityCompetency.activity_id)
+        .where(Activity.id == assignment.activity_id)
+        .order_by(ActivityCompetency.competency_code)
+    )
+
+    results = []
+    for code in codes.all():
+        result = AttemptResult(
+            competency_code=code,
+            outcome=reading.outcome,
+            answered=reading.answered,
+            correct=reading.correct,
+            rule_code=reading.rule_code,
+        )
+        # Appended through the relationship rather than added with a foreign
+        # key: the collection was loaded before this ran, and a row inserted
+        # behind its back would leave the attempt in hand still showing none.
+        attempt.results.append(result)
+        results.append(result)
+    await db.flush()
+    return results
+
+
+async def _running_attempt(
+    db: AsyncSession, assignment_id: uuid.UUID
+) -> Attempt | None:
+    return await db.scalar(
+        select(Attempt)
+        .where(
+            Attempt.assignment_id == assignment_id,
+            Attempt.status == ATTEMPT_STATUS_IN_PROGRESS,
+        )
+        .options(*_LOADED)
+    )
+
+
+async def _own_assignment(
+    db: AsyncSession, child: Child, assignment_id: uuid.UUID
+) -> Assignment:
+    assignment = await db.scalar(
+        select(Assignment).where(
+            Assignment.id == assignment_id, Assignment.child_id == child.id
+        )
+    )
+    if assignment is None:
+        raise NotFoundException(message=ATTEMPT_NOT_FOUND_MESSAGE)
+    return assignment
+
+
+async def _own_attempt(
+    db: AsyncSession, child: Child, attempt_id: uuid.UUID
+) -> Attempt:
+    """One attempt of this child, or a refusal that says nothing more."""
+    attempt = await db.scalar(
+        select(Attempt)
+        .join(Assignment, Assignment.id == Attempt.assignment_id)
+        .where(Attempt.id == attempt_id, Assignment.child_id == child.id)
+        .options(*_LOADED)
+    )
+    if attempt is None:
+        raise NotFoundException(message=ATTEMPT_NOT_FOUND_MESSAGE)
+    return attempt

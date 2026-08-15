@@ -37,4 +37,6 @@ Valider calculs, concurrence, intégrité, tests et CI.
 
 ## Statut
 
-À faire.
+Terminé. Séquence complète de l'API CI rejouée localement, tout vert, 434 tests. Étape
+fusionnée par une seule Pull Request.
+Validation consignée dans `rapport_2026-08-15_1820_tentatives.md`.
