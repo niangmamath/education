@@ -66,7 +66,7 @@ Secret Scan: succès
 
 ## Organisation des étapes
 
-Les dossiers détaillés des étapes 08 à 16 sont temporairement retirés du dépôt. Chaque dossier rejoint le dépôt au démarrage de l’étape correspondante ; celui de l’étape 07 y est entré le 14 août 2026.
+Les dossiers détaillés des étapes 09 à 16 sont temporairement retirés du dépôt. Chaque dossier rejoint le dépôt au démarrage de l’étape correspondante ; celui de l’étape 07 y est entré le 14 août 2026, celui de l’étape 08 le 15 août 2026.
 
 ## Étape 04, spike H5P critique
 
@@ -248,6 +248,12 @@ Alembic    : downgrade avec trois « lea » de familles différentes, deux renom
 
 ## Étape 07, référentiel de compétences, clôturée
 
+Étape fusionnée dans `main` le 15 août 2026 par la Pull Request #14, commit de
+fusion `9567240`. API CI et Secret Scan verts sur la Pull Request puis sur
+`main`. Les sous-étapes 07.1 et 07.2 avaient été fusionnées séparément, par les
+Pull Requests #9 et #11, avant la consigne du propriétaire de ne fusionner qu'à
+la clôture d'une étape.
+
 ### 07.1, référentiel scolaire, clôturée
 
 Travaux menés sur la branche `feat/referentiel-competences`, fusionnée dans
@@ -416,8 +422,10 @@ Tests      : trois pages de deux rendent cinq compétences distinctes
   du côté de la branche, qui portait déjà ce contenu et sa suite.
 - Commit de fusion `a49ec43`, API CI et Secret Scan verts sur `main`.
 
+## Étape 08, catalogue de contenus et activités, en cours
+
+Travaux menés sur la branche `feat/etape-08-catalogue`.
+
 ## Prochaine action
 
-Ouvrir l’étape 08, catalogue de contenus et activités, en faisant entrer son
-dossier dans le dépôt. La clôture distante de l’étape 07 sera consignée avec le
-premier commit de l’étape 08, pour ne pas ajouter une fusion à une étape close.
+Mener les sous-étapes 08.1 à 08.4.
