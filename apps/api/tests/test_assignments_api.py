@@ -19,6 +19,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.db import sync_database_url
 from app.main import app
 from app.models.assignment import MAX_OPEN_ASSIGNMENTS
@@ -640,9 +641,11 @@ class TestCeilingOnOpenWork:
 class TestOpeningTheContent:
     """The third debt: an activity could be started with nothing to play."""
 
-    def test_a_child_doing_an_activity_gets_a_signed_link(
+    def test_a_child_doing_an_activity_is_sent_to_the_content_origin(
         self, family: Family, package_activity: str
     ) -> None:
+        """Not to the API: the runtime is isolated behind its own origin, which
+        is the whole of ADR-012's fifth condition."""
         given = assign(family, package_activity)
         child = family.as_child()
         child.post(f"{MY_ACTIVITIES_URL}/{given['id']}/start")
@@ -650,12 +653,10 @@ class TestOpeningTheContent:
         body = child.get(f"{MY_ACTIVITIES_URL}/{given['id']}/content").json()
 
         assert body["library_name"] == "H5P.TrueFalse"
-        assert body["expires_in"] == 300
-        # Signed and dated, therefore not a plain address anyone could keep.
-        # The signature version is MinIO's business, so only its presence is
-        # asserted; pinning it would test boto3 rather than this route.
-        assert "Signature=" in body["package_url"]
-        assert "Expires=" in body["package_url"]
+        assert body["play_url"].startswith(settings.CONTENT_ORIGIN_URL)
+        # A ticket, and the content it opens; nothing else travels in the URL.
+        assert "c=" in body["play_url"] and "t=" in body["play_url"]
+        assert body["expires_in"] > 0
 
     def test_nothing_opens_before_the_activity_is_started(
         self, family: Family, package_activity: str

@@ -82,6 +82,7 @@ services:
       - "127.0.0.1:${API_PORT:-8000}:8000"
     volumes:
       - ./apps/api:/app
+      - content_runtime:/srv/content
     depends_on:
       postgres:
         condition: service_healthy
@@ -96,6 +97,25 @@ services:
       timeout: 5s
       retries: 20
       start_period: 20s
+    networks: [studentconnect_network]
+
+  content:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${CONTENT_PORT:-8081}:80"
+    volumes:
+      - ./infrastructure/nginx/content-origin.conf:/etc/nginx/conf.d/default.conf:ro
+      # Read-only: the origin serves what the API laid out, and can add nothing.
+      - content_runtime:/srv/content:ro
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     networks: [studentconnect_network]
 
   worker:
@@ -128,3 +148,5 @@ volumes:
     name: studentconnect_redis_data
   storage_data:
     name: studentconnect_storage_data
+  content_runtime:
+    name: studentconnect_content_runtime
