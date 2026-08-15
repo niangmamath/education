@@ -110,11 +110,26 @@ runtime de contenu sans qu’aucune ne le construise. Il n’est le contenu d’
 | TEN-04 | Clôturer l’étape 10 | TEN-03 | Terminé | Séquence de l’API CI rejouée, 434 tests, PR unique |
 | TEN-05 | Résorber la dette de l’étape 10 | TEN-04 | Terminé | Attribution par question, provenance, règles publiées, 440 tests |
 
+### Audit transversal
+
+| ID | Travail | Dépendances | Statut | Preuve |
+|---|---|---|---|---|
+| AUD-01 | Auditer la cohérence avant l’étape 11 | TEN-05 | Terminé | Huit incohérences corrigées, détaillées dans `ETAT.md` ; 441 tests |
+
+`AUD-01` a relu le code, la documentation, les ADR, le registre, les fiches et
+l’état du dépôt les uns contre les autres. Une seule des huit trouvailles était
+un défaut de conception — les règles de lecture publiées n’étaient lisibles que
+par l’Élève, alors qu’elles sont publiées pour le Parent. Une autre était un
+contrôle qui ne disait pas la même chose en local et en CI. Les six dernières
+étaient des documents décrivant un état révolu, ce qui est le mode de
+vieillissement normal d’un projet mené par étapes et la raison d’être de cet
+audit.
+
 ### Phase 7, événements xAPI et progrès
 
 | ID | Travail | Dépendances | Statut | Preuve |
 |---|---|---|---|---|
-| XAP-01 | Ingérer et valider les événements xAPI | TEN-04 | À faire | |
+| XAP-01 | Ingérer et valider les événements xAPI | AUD-01 | À faire | |
 | XAP-02 | Relier l’acteur pseudonyme à l’Élève | XAP-01 | À faire | |
 | XAP-03 | Agréger les progrès | XAP-02, TEN-03 | À faire | |
 | XAP-04 | Clôturer l’étape 11 | XAP-03 | À faire | |

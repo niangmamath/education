@@ -1,9 +1,14 @@
 """Doing an activity: starting, answering, finishing.
 
-Every route belongs to the Élève space and takes `CurrentChild`. A parent has
-nothing to do here — not out of secrecy, but because an attempt is something a
-child does, and a route that accepted either would be one forgotten check away
-from letting a parent answer in her place.
+Every route that touches an attempt belongs to the Élève space and takes
+`CurrentChild`. A parent has nothing to do there — not out of secrecy, but
+because an attempt is something a child does, and a route that accepted either
+would be one forgotten check away from letting a parent answer in her place.
+
+`GET /attempts/rules` is the exception, and deliberately so: it touches no
+attempt and names no child. It states how any attempt is read, and the whole
+point of publishing the rules is that a parent can be shown them. Any
+authenticated session may read it, as for the referential and the catalogue.
 
 The Parent side reads the results through the assignment listing of step 09 and,
 later, through the dashboards of step 13.
@@ -16,7 +21,7 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, Query, Response, status
 
-from app.api.deps import CurrentChild, DbSession
+from app.api.deps import CurrentChild, CurrentSession, DbSession
 from app.attempts import rules, service
 from app.models.attempt import Attempt, AttemptResult
 from app.schemas.attempt import (
@@ -89,12 +94,16 @@ async def complete_attempt(
 
 
 @router.get("/attempts/rules", response_model=list[RulePublic])
-async def list_rules(child: CurrentChild) -> list[RulePublic]:
+async def list_rules(session: CurrentSession) -> list[RulePublic]:
     """The rules that read an attempt, stated so they can be shown.
 
     Published rather than made configurable: configuring them would mean
     deciding who may change what a mastered competency means, which is a
     decision and not a setting, and one with nobody to make it yet.
+
+    Readable by **any authenticated session**, Parent as well as Élève. Rules
+    published so that a parent can be shown them, behind a door only a child may
+    open, would be published to nobody who needs them.
     """
     return [RulePublic(**rule) for rule in rules.published_rules()]
 

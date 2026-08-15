@@ -630,3 +630,17 @@ class TestProvenanceAndRules:
             "too-few-correct",
         ]
         assert all(rule["condition"] and rule["description"] for rule in published)
+
+    def test_a_parent_can_read_the_rules_that_judge_her_child(
+        self, family: Family
+    ) -> None:
+        """The rules are published so a parent can be shown them; behind a door
+        only a child may open, they would be published to nobody who needs them."""
+        answered = family.as_parent().get("/api/v1/attempts/rules")
+
+        assert answered.status_code == 200
+        assert [rule["code"] for rule in answered.json()] == [
+            "all-correct",
+            "majority-correct",
+            "too-few-correct",
+        ]

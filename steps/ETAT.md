@@ -3,7 +3,7 @@
 ## Référence
 
 - Projet : StudentConnect
-- Date : 13 août 2026
+- Date : 15 août 2026
 - Dépôt : `Tidianesarrndiaye/StudentConnect`
 - Branche : `main`
 - Version cible : `V0.1`
@@ -66,7 +66,26 @@ Secret Scan: succès
 
 ## Organisation des étapes
 
-Les dossiers détaillés des étapes 12 à 16 sont temporairement retirés du dépôt. Chaque dossier rejoint le dépôt au démarrage de l’étape correspondante ; celui de l’étape 07 y est entré le 14 août 2026, ceux des étapes 08, 09, 10 et 11 le 15 août 2026.
+**Les seize dossiers d’étape sont dans le dépôt**, et la règle antérieure — un
+dossier rejoint le dépôt au démarrage de son étape — est abandonnée le 15 août
+2026, à l’audit de cohérence.
+
+Elle contredisait `MANIFESTE.md`, qui inventorie les quatre-vingt-douze fiches
+avec leur empreinte SHA-256, celles des étapes non ouvertes comprises. Une
+empreinte sert à détecter qu’une fiche a changé sans qu’on le dise ; une
+empreinte portant sur un fichier absent du dépôt ne vérifie rien du tout. Les
+deux règles ne pouvaient pas tenir ensemble, et c’est l’inventaire qui a une
+utilité.
+
+Les dossiers des étapes 12 à 16 avaient d’ailleurs été réintroduits sans
+intention, par un `git add steps` trop large lors de la clôture de l’étape 08,
+commit `fc1c103` — la même erreur que celle corrigée par la Pull Request #13.
+Constater qu’une règle est enfreinte deux fois sans que personne s’en aperçoive
+est aussi un argument contre elle.
+
+Ce qui reste vrai : une fiche d’étape non ouverte est un **brouillon**. Elle
+décrit ce qui est prévu, pas ce qui est décidé, et l’ouverture de l’étape la
+réécrit souvent.
 
 ## Étape 04, spike H5P critique
 
@@ -108,7 +127,7 @@ le 14 août 2026 par la Pull Request #4, commit de fusion `a49ec43`.
 - [x] `alembic check` et le cycle downgrade puis upgrade ajoutés à l’API CI.
 - [x] Validation indépendante rejouée localement le 14 août 2026 : `alembic check`
       vert, cycle downgrade base puis upgrade head rejoué, aucune dérive.
-- [ ] Clôture distante.
+- [x] Clôture distante avec l’étape, Pull Request #4, commit `a49ec43`.
 
 ### 06.2, authentification Parent et sessions, validée localement
 
@@ -122,7 +141,7 @@ le 14 août 2026 par la Pull Request #4, commit de fusion `a49ec43`.
 - [x] Validation indépendante rejouée localement le 14 août 2026 : parcours complet
       sur l’API vivante, mot de passe erroné et adresse inconnue rendant une réponse
       identique, session Redis créée puis supprimée à la déconnexion.
-- [ ] Clôture distante.
+- [x] Clôture distante avec l’étape, Pull Request #4, commit `a49ec43`.
 
 ### 06.3, création et accès Enfant, validée localement
 
@@ -163,7 +182,7 @@ le 14 août 2026 par la Pull Request #4, commit de fusion `a49ec43`.
       elle s’arrête avec un message plutôt que de renommer des profils.
 - [x] Validation indépendante rejouée localement le 14 août 2026, consignée dans
       `rapport_2026-08-14_cloture_etape_06.md`.
-- [ ] Clôture distante.
+- [x] Clôture distante avec l’étape, Pull Request #4, commit `a49ec43`.
 
 ### 06.4, clôture de l’étape, terminée
 
@@ -307,7 +326,7 @@ Travaux menés sur la branche `feat/import-referentiel`, fusionnée dans `main` 
 - [x] Clôture distante : API CI et Secret Scan verts sur la Pull Request #11
       puis sur `main` après la fusion, `test` en 1 min 48 s.
 
-### 07.3, API du référentiel, en revue
+### 07.3, API du référentiel, clôturée
 
 Travaux menés sur la branche `feat/etape-07-referentiel`.
 
@@ -410,7 +429,7 @@ Tests      : trois pages de deux rendent cinq compétences distinctes
 
 ## Dernier rapport appliqué
 
-`steps/07_referentiel_competences/rapport_2026-08-15_1440_cloture_etape_07.md`.
+`steps/10_tentatives_resultats/rapport_2026-08-15_1820_tentatives.md`.
 
 ## Historique de clôture de l’étape 06
 
@@ -737,7 +756,10 @@ est une candidate explicable.
 - [x] Séquence complète de l'API CI rejouée localement, tout vert, 434 tests.
 - [x] Rapport `rapport_2026-08-15_1820_tentatives.md` produit.
 - [x] Une seule Pull Request pour toute l'étape.
-- [ ] Clôture distante, à consigner au premier commit de l'étape 11.
+- [x] Clôture distante : Pull Request #19 fusionnée le 15 août 2026, commit de
+      fusion `60b474b`, API CI et Secret Scan verts sur la Pull Request puis sur
+      `main`. Dette résorbée ensuite par la Pull Request #20, commit `26d0ae1`,
+      contrôles verts sur les deux.
 
 ### Deux défauts trouvés pendant l'étape 10
 
@@ -788,8 +810,8 @@ Traitée après la clôture, sur la branche `fix/dette-etape-10`, migration
 ```text
 Ruff       : vert, format inclus
 Mypy       : vert sur 56 fichiers
-Alembic    : 0008_attempts (head), check vert, downgrade base et retour au head
-Pytest     : 434 tests réussis, dont 36 dédiés aux tentatives
+Alembic    : 0009_question_attribution (head), check vert, downgrade base et retour au head
+Pytest     : 441 tests réussis, dont 42 dédiés aux tentatives
 Tests      : dix demandes de démarrage laissent une seule tentative
 Tests      : deux réponses à la même question conservées, la dernière lue
 Tests      : aucune réponse évaluée, aucun résultat écrit
@@ -797,6 +819,74 @@ Tests      : chaque résultat nomme sa règle et porte ses comptes
 Tests      : aucun résultat ne porte de score ni de pourcentage
 Tests      : annuler l'affectation abandonne la tentative sans l'effacer
 ```
+
+## Audit de cohérence du 15 août 2026
+
+Audit transversal demandé par le propriétaire avant d'ouvrir l'étape 11 : code,
+documentation, ADR, registre, fiches et état du dépôt relus les uns contre les
+autres. Huit incohérences trouvées, toutes corrigées.
+
+### Un contrôle qui ne disait pas la même chose selon l'endroit
+
+- [x] **`mypy` n'était pas vert en local**, contrairement à ce que ce fichier
+      affirmait. Le `--ignore-missing-imports` n'existait que dans le workflow
+      d'API CI : `mypy app` lancé à la main rendait deux erreurs que la CI ne
+      montrait jamais. La configuration est passée dans `pyproject.toml` et le
+      workflow appelle désormais `mypy app` tout court, si bien que la commande
+      d'un développeur et celle de la CI ne peuvent plus diverger.
+      `celery` et `boto3` y sont nommés un par un plutôt que d'ignorer tout
+      import manquant : la prochaine dépendance sans stubs sera signalée au lieu
+      d'être avalée en silence.
+
+      C'est la quatrième fois sur ce projet qu'un contrôle passe d'un côté et
+      échoue de l'autre. Les trois précédentes venaient de tests qui
+      présupposaient une base vide ; celle-ci vient d'un réglage écrit à un seul
+      des deux endroits qui l'exécutent.
+
+### Un défaut de conception, et non de rédaction
+
+- [x] **`GET /api/v1/attempts/rules` n'était lisible que par l'Élève.** Les
+      règles sont publiées précisément pour qu'un parent puisse se les voir
+      montrer — c'est la raison écrite dans le code même. Derrière une porte que
+      seul un enfant ouvre, elles étaient publiées à personne qui en a besoin.
+      La route accepte désormais toute session authentifiée, comme les lectures
+      du référentiel et du catalogue. Les quatre routes qui touchent réellement à
+      une tentative restent réservées à `CurrentChild`.
+
+### Cinq documents qui décrivaient un état révolu
+
+- [x] **`attempts/rules.py`** affirmait encore que la lecture vaut pour toutes
+      les compétences « parce que H5P ne dit pas quelle question appartient à
+      quelle compétence » — ce que l'attribution par question avait démenti la
+      veille. Le fichier ne prétend plus décider à quoi un compte se rapporte :
+      cette question appartient au service, et le dire ainsi empêche l'écart de
+      se reformer.
+- [x] **`catalogue-activites.md`** annonçait « trois tables » depuis que
+      `catalog_activity_questions` en faisait quatre. La table y est maintenant
+      décrite, avec la raison de sa facultativité.
+- [x] **`affectations.md`** omettait deux routes livrées avec la dette de
+      l'étape 09, dont l'ouverture du contenu.
+- [x] **Le registre des décisions** se disait « en construction » au 10 août et
+      affichait un arbre où onze ADR restaient « à créer », alors que sa propre
+      liste en détaille quatorze et que les quatorze fichiers existent. Il
+      renvoyait aussi vers un dossier de diagrammes et un template inexistants.
+- [x] **`ETAT.md`** portait la date du 13 août, trois sous-étapes de l'étape 06
+      encore en attente de clôture distante alors que l'étape est fusionnée
+      depuis le 14, l'étape 07.3 « en revue » dans une étape clôturée, et le
+      rapport de l'étape 07 comme dernier rapport appliqué.
+
+### ADR-012 acceptée sous conditions, sans suivi de ses conditions
+
+- [x] Ses huit conditions n'étaient suivies nulle part, et ses conséquences
+      exigeaient encore une isolation livrée par `PRE-01`. Une ADR acceptée sous
+      conditions dont personne ne suit les conditions n'est plus qu'une ADR
+      acceptée. Un tableau de suivi y figure désormais : cinq conditions
+      remplies, deux partielles — l'antivirus et la vérification de licence —,
+      une entière à faire, l'endpoint xAPI de l'étape 11.
+
+### La clôture distante de l'étape 10, à consigner
+
+- [x] Consignée : Pull Requests #19 et #20, commits `60b474b` et `26d0ae1`.
 
 ## Prochaine action
 
