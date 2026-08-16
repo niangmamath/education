@@ -147,10 +147,14 @@ décalage inverse avait été inscrit par erreur le 15 août 2026 ; il est corri
 | DIA-03 | Exposer le diagnostic et les prochaines actions | DIA-02 | Terminé | Diagnostic au Parent, actions à l’Élève, deux routes distinctes |
 | DIA-04 | Clôturer l’étape 12 | DIA-03 | Terminé | 544 tests, rapport du 16 août 2026, ADR-015 |
 
-L’étape 12 n’ajoute **aucune migration** : le diagnostic se calcule à chaque
-lecture, ce qui rend vraie par construction la règle « une cause racine reste une
-hypothèse jusqu’à la réévaluation ». C’est une décision consignée dans ADR-015,
-pas un oubli.
+| DIA-05 | Rendre l’automatisation réglable et reporter derrière le prérequis | DIA-04 | Terminé | Migration `0011`, mode par enfant, `origin` sur l’affectation, 568 tests |
+
+Le diagnostic lui-même se calcule à chaque lecture et ne se stocke pas, ce qui
+rend vraie par construction la règle « une cause racine reste une hypothèse
+jusqu’à la réévaluation ». `DIA-05` corrige deux décisions infirmées par le
+propriétaire : l’automatisation devient un **réglage du parent** avec un défaut
+prudent, et une compétence dont le prérequis est en lacune n’est plus proposée du
+tout. ADR-015 amendée en conséquence.
 
 ### Prochaine tâche
 

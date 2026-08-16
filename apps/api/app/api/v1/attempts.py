@@ -23,6 +23,7 @@ from fastapi import APIRouter, Query, Response, status
 
 from app.api.deps import CurrentChild, CurrentSession, DbSession
 from app.attempts import rules, service
+from app.diagnostic import service as diagnostic_service
 from app.models.attempt import Attempt, AttemptResult
 from app.schemas.attempt import (
     AttemptPublic,
@@ -87,8 +88,16 @@ async def complete_attempt(
     """Finish the attempt and read what it holds.
 
     Completing twice returns the same results rather than computing them again.
+
+    This is also the moment the diagnostic can change, so it is where an
+    automatic remediation is given — **if** the parent has set this child to
+    `automatic`, which is not the default. The call is made here rather than
+    inside the attempt service because a service that assigned work as a side
+    effect of finishing an activity would be doing two things at once, and only
+    one of them would be in its name.
     """
     attempt, _ = await service.complete(db, child, attempt_id)
+    await diagnostic_service.assign_automatically(db, child.id)
     await db.commit()
     return _public(attempt)
 

@@ -13,8 +13,9 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class LocalizedGap(BaseModel):
@@ -33,6 +34,13 @@ class LocalizedGap(BaseModel):
     rule_code: str
     explanation: str
     last_seen_at: datetime
+    # The prerequisite this gap is waiting on, when it has one that is itself a
+    # gap. While it is set, nothing is proposed for this competency: working on
+    # what buts rather than on what blocks would settle neither.
+    blocked_by: str | None = None
+    # Why nothing is proposed yet. Shown rather than left to be inferred from an
+    # absence.
+    deferral: str | None = None
 
 
 class GeneralGap(BaseModel):
@@ -69,6 +77,9 @@ class Health(BaseModel):
     score: int
     rule_code: str
     observed: int
+    # The total the weighting divides by. A weighted average whose denominator
+    # is hidden cannot be checked by whoever is shown it.
+    attempts: int
     mastered: int
     partial: int
     not_mastered: int
@@ -97,6 +108,10 @@ class ChildDiagnostic(BaseModel):
     """What the platform proposes about one child, for her parent."""
 
     child_id: uuid.UUID
+    # How far this parent lets the platform act for this child. Returned with the
+    # diagnostic so that a client showing recommendations can say whether they
+    # will be acted on, without a second call.
+    remediation_mode: str
     # Absent when nothing has been observed. There is no zero for it: zero would
     # say the work went badly, and nothing went at all.
     health: Health | None = None
@@ -130,6 +145,30 @@ class NextSteps(BaseModel):
 
     steps: list[NextStep] = Field(default_factory=list)
     computed_at: datetime
+
+
+class RemediationModeRequest(BaseModel):
+    """How far the parent lets the platform act for one child."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    mode: Literal["proposed", "automatic"]
+
+
+class RemediationModePublic(BaseModel):
+    """The setting as it now stands."""
+
+    child_id: uuid.UUID
+    mode: str
+
+
+class AppliedRemediation(BaseModel):
+    """What was given after a parent accepted the platform's proposals."""
+
+    assigned: list[str] = Field(default_factory=list)
+    # Proposals that were not given, and why: already waiting, ceiling reached.
+    skipped: list[str] = Field(default_factory=list)
+    reason: str
 
 
 class DiagnosticRulePublic(BaseModel):

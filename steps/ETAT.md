@@ -429,7 +429,7 @@ Tests      : trois pages de deux rendent cinq compétences distinctes
 
 ## Dernier rapport appliqué
 
-`steps/12_diagnostic_remediation/rapport_2026-08-16_1030_diagnostic_remediation.md`.
+`steps/12_diagnostic_remediation/rapport_2026-08-16_1600_remediation_reglable.md`.
 
 ## Historique de clôture de l’étape 06
 
@@ -1103,17 +1103,45 @@ explication. **Aucune migration** : le diagnostic se calcule à chaque lecture.
       fusion `01a259a`, API CI et Secret Scan verts sur la Pull Request puis sur
       `main`.
 
+### Deux décisions infirmées par le propriétaire, corrigées le 16 août 2026
+
+Travaux menés après la clôture, sur la branche `feat/remediation-reglable`,
+migration `0011_remediation_settings` réversible. ADR-015 amendée.
+
+- [x] **L'automatisation est un réglage du parent**, ni imposée ni absente.
+      L'agent avait tranché qu'il n'y aurait aucune assignation automatique ; le
+      propriétaire a infirmé : « le système doit pouvoir faciliter la tâche au
+      parent […] mais tout ça doit être réglable par le parent ».
+      `auth_children.remediation_mode` vaut `proposed`, le défaut prudent, ou
+      `automatic`. Porté par l'**enfant** et non par le parent : la confiance
+      accordée à une automatisation dépend de la situation d'un enfant.
+- [x] `POST /children/{id}/remediation` donne les propositions sur la parole du
+      parent, dans les deux modes. En mode `automatic`, **une seule** activité est
+      donnée à la clôture d'une tentative — remettre cinq réparations parce que
+      cinq compétences ont glissé transformerait un coup de main en punition.
+- [x] `assignments.origin` distingue `parent` de `system`. Sans elle, un parent
+      ne pourrait plus dire le lendemain ce qu'il a choisi de ce qui a été fait en
+      son nom. C'est la trace sur laquelle s'appuiera l'avertissement du parent,
+      dont la remise appartient à l'étape 14.
+- [x] **Une compétence dont le prérequis est en lacune n'est plus proposée du
+      tout**, au lieu d'être proposée en second. Le propriétaire a rappelé
+      l'intention : « ne pas lui demander d'assurer des opérations mathématiques
+      alors que le vrai problème c'est le comptage, lui demander de conjuguer
+      alors qu'il peine à reconnaître les groupes de verbes ». Sixième règle
+      publiée, `defer-behind-prerequisite`. La lacune reportée **reste affichée**,
+      avec ce qu'elle attend : reporter ce qu'on fait travailler n'est pas cacher
+      ce qu'on a trouvé.
+- [x] **Le score est pondéré par le nombre de tentatives terminées.** Une
+      compétence reprise dix fois pèse dix fois une compétence vue une seule. Le
+      coût est écrit : ce qui a été le plus refait porte le plus de poids, et ce
+      n'est pas toujours ce qui compte le plus.
+- [x] 24 tests supplémentaires, 568 au total.
+
 ### Points ouverts de l'étape 12
 
-- **Aucune assignation automatique.** Une recommandation reste une proposition,
-  et la donner reste un geste du parent. C'est délibéré — automatiser déciderait
-  à la place d'un adulte — mais la boucle du MVP demande donc encore une action
-  humaine entre la recommandation et l'activité.
-- **Le score suppose que les compétences observées se valent.** Une compétence
-  travaillée une fois pèse autant qu'une travaillée dix fois. Pondérer par le
-  nombre de tentatives donnerait plus de poids à ce qui a été le plus refait, ce
-  qui n'est pas la même chose que ce qui compte le plus. Laissé simple et écrit
-  plutôt qu'arbitré en silence.
+- **Aucune notification.** Le mode automatique laisse une trace lisible, mais
+  rien ne va encore chercher le parent : le « puis aviser le parent » demandé
+  attend les notifications de l'étape 14.
 - Sans édition du référentiel en vigueur, les lacunes sont rendues mais ni
   regroupées ni expliquées par un prérequis ; `tree_available` le dit, pour
   qu'une réponse courte ne se lise pas « aucune difficulté ».
@@ -1123,8 +1151,8 @@ explication. **Aucune migration** : le diagnostic se calcule à chaque lecture.
 ```text
 Ruff       : vert, format inclus
 Mypy       : vert sur 72 fichiers
-Alembic    : 0010_xapi_statements (head), aucune migration ajoutée par l'étape
-Pytest     : 544 tests réussis, dont 45 dédiés au diagnostic
+Alembic    : 0011_remediation_settings (head), check vert, downgrade base et retour au head
+Pytest     : 568 tests réussis, dont 69 dédiés au diagnostic
 Tests      : une compétence jamais travaillée n'est jamais une lacune
 Tests      : une lecture intermédiaire seule n'est pas une lacune, deux le sont
 Tests      : les lacunes regroupées restent listées une par une
@@ -1137,6 +1165,13 @@ Tests      : rien d'observé ne rend aucun score
 Tests      : le score porte chacun de ses termes et ne compare à personne
 Tests      : l'Élève ne reçoit ni score, ni lacune, ni code de règle
 Tests      : réparer le prérequis fait disparaître l'hypothèse, sans rafraîchir
+Tests      : une compétence dont le prérequis est en lacune n'est pas proposée
+Tests      : la lacune reportée reste affichée, avec ce qu'elle attend
+Tests      : une compétence reprise dix fois pèse dix fois celle vue une seule
+Tests      : lire le diagnostic n'affecte rien
+Tests      : le mode par défaut ne donne rien de lui-même
+Tests      : le mode automatique donne une activité, et une seule
+Tests      : ce que la plateforme donne se distingue de ce que le parent donne
 ```
 
 ## Prochaine action

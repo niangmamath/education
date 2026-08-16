@@ -70,45 +70,69 @@ class TestTheSentencesSayWhatTheCountsSay:
 class TestTheHealthScore:
     def test_nothing_observed_yields_no_score(self) -> None:
         """Zero would say the work went badly; nothing went at all."""
-        assert rules.health(0, 0, 0) is None
+        assert rules.health([]) is None
+
+    def test_a_competency_with_no_completed_attempt_does_not_count(self) -> None:
+        assert rules.health([("not_mastered", 0)]) is None
 
     def test_everything_mastered_is_a_hundred(self) -> None:
-        reading = rules.health(mastered=4, partial=0, not_mastered=0)
+        reading = rules.health([("mastered", 1), ("mastered", 3)])
 
         assert reading is not None and reading.score == 100
 
     def test_nothing_mastered_is_zero(self) -> None:
-        reading = rules.health(mastered=0, partial=0, not_mastered=3)
+        reading = rules.health([("not_mastered", 2), ("not_mastered", 1)])
 
         assert reading is not None and reading.score == 0
 
     def test_in_progress_counts_half(self) -> None:
-        reading = rules.health(mastered=1, partial=2, not_mastered=1)
+        reading = rules.health([("mastered", 1), ("partial", 2), ("not_mastered", 1)])
 
-        # (1 + 1 + 0) / 4
+        # (1×1 + 0,5×2 + 0×1) / 4
         assert reading is not None and reading.score == 50
 
+    def test_a_competency_worked_ten_times_weighs_ten_times_one_worked_once(
+        self,
+    ) -> None:
+        """The weighting the owner asked for, and the whole of what it changes."""
+        light = rules.health([("mastered", 1), ("not_mastered", 1)])
+        heavy = rules.health([("mastered", 1), ("not_mastered", 9)])
+
+        assert light is not None and light.score == 50
+        assert heavy is not None and heavy.score == 10
+
     def test_every_term_travels_with_the_score(self) -> None:
-        reading = rules.health(mastered=2, partial=1, not_mastered=1)
+        reading = rules.health(
+            [("mastered", 2), ("mastered", 1), ("partial", 1), ("not_mastered", 4)]
+        )
 
         assert reading is not None
         assert (
             reading.observed,
+            reading.attempts,
             reading.mastered,
             reading.partial,
             reading.not_mastered,
-        ) == (
-            4,
-            2,
-            1,
-            1,
-        )
+        ) == (4, 8, 2, 1, 1)
 
-    def test_the_sentence_refuses_comparison(self) -> None:
-        reading = rules.health(1, 1, 1)
+    def test_the_sentence_says_what_the_weighting_is(self) -> None:
+        reading = rules.health([("mastered", 1), ("partial", 1), ("not_mastered", 1)])
 
         assert reading is not None
-        assert "ne compare cet enfant à personne" in rules.explain_health(reading)
+        sentence = rules.explain_health(reading)
+        assert "ne compare cet enfant à personne" in sentence
+        assert "nombre de tentatives" in sentence
+        assert "3 tentatives terminées" in sentence
+
+
+class TestADependentCompetencyIsNotAsked:
+    def test_the_deferral_names_what_it_waits_on(self) -> None:
+        """Working on what buts rather than on what blocks settles neither."""
+        sentence = rules.explain_deferral("conjugaison", "groupes-de-verbes")
+
+        assert "conjugaison" in sentence
+        assert "groupes-de-verbes" in sentence
+        assert "prérequis" in sentence
 
 
 class TestThePublishedRules:
@@ -121,6 +145,7 @@ class TestThePublishedRules:
             rules.RULE_GAP_PARTIAL_PERSISTS,
             rules.RULE_GENERAL_GAP_SAME_DOMAIN,
             rules.RULE_ROOT_CAUSE_PREREQUISITE,
+            rules.RULE_DEFER_BEHIND_PREREQUISITE,
             rules.RULE_HEALTH_WEIGHTED,
         }
 

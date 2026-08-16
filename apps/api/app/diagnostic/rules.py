@@ -24,6 +24,7 @@ them out is what lets these rules stay quotable as they are.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Final
 
@@ -34,6 +35,7 @@ RULE_GAP_NOT_MASTERED: Final = "gap-not-mastered"
 RULE_GAP_PARTIAL_PERSISTS: Final = "gap-partial-persists"
 RULE_GENERAL_GAP_SAME_DOMAIN: Final = "general-gap-same-domain"
 RULE_ROOT_CAUSE_PREREQUISITE: Final = "root-cause-prerequisite"
+RULE_DEFER_BEHIND_PREREQUISITE: Final = "defer-behind-prerequisite"
 RULE_HEALTH_WEIGHTED: Final = "health-weighted-outcomes"
 
 # One `partial` is not a difficulty: it is what learning something looks like on
@@ -74,6 +76,9 @@ class HealthReading:
     score: int
     rule_code: str
     observed: int
+    # The total the weighting divides by, published like every other term: a
+    # weighted average whose denominator is hidden cannot be checked.
+    attempts: int
     mastered: int
     partial: int
     not_mastered: int
@@ -126,6 +131,21 @@ def explain_gap(reading: GapReading, competency_code: str) -> str:
     )
 
 
+def explain_deferral(competency_code: str, prerequisite_code: str) -> str:
+    """Why nothing is proposed yet for a competency that is genuinely in gap.
+
+    The deferral is shown rather than silently applied. A parent who sees a gap
+    with no repair beside it must be told it is on purpose, and which competency
+    it is waiting on.
+    """
+    return (
+        f"Rien n’est proposé pour « {competency_code} » tant que « "
+        f"{prerequisite_code} », qui en est un prérequis, reste en lacune : "
+        "faire travailler ce qui bute plutôt que ce qui bloque ne réglerait ni "
+        "l’un ni l’autre."
+    )
+
+
 def explain_general_gap(domain_label: str, count: int) -> str:
     """Why several localized gaps are also read together.
 
@@ -151,16 +171,25 @@ def explain_root_cause(cause_code: str, dependent_codes: list[str]) -> str:
     )
 
 
-def health(mastered: int, partial: int, not_mastered: int) -> HealthReading | None:
+def health(readings: Sequence[tuple[str, int]]) -> HealthReading | None:
     """State academic health from the competencies actually observed.
 
-    **Explainable**: the score is a weighted count divided by the number of
-    observed competencies, and every term travels beside it. Anyone can redo the
-    arithmetic.
+    Each entry is one competency: its latest outcome, and how many completed
+    attempts it was read from.
 
-    **Non comparative**: it is computed over what this child has worked on and
-    nothing else. Not over the programme, which would read as "how far behind",
-    and not against other children, which the platform never computes at all.
+    **Weighted by attempts.** A competency worked on ten times weighs ten times
+    a competency worked on once. The alternative — every observed competency
+    counting the same — let a single attempt on something barely touched move the
+    score as much as a competency the child has come back to again and again.
+    The cost is stated rather than hidden: what has been repeated most now
+    carries the most weight, and that is not always what matters most.
+
+    **Explainable**: a weighted sum over a total of attempts, with every term
+    beside it. Anyone can redo the arithmetic.
+
+    **Non comparative**: computed over what this child has worked on and nothing
+    else. Not over the programme, which would read as "how far behind", and not
+    against other children, which the platform never computes at all.
 
     **Not a mark on a competency**: it appears once, for a child, next to the
     full per-competency reading it summarises — never in place of one. A project
@@ -170,22 +199,24 @@ def health(mastered: int, partial: int, not_mastered: int) -> HealthReading | No
     Nothing observed yields no score. There is deliberately no zero for it: zero
     would say the work went badly, and nothing went at all.
     """
-    observed = mastered + partial + not_mastered
-    if observed <= 0:
+    counted = [(outcome, attempts) for outcome, attempts in readings if attempts > 0]
+    if not counted:
         return None
 
-    weighted = (
-        mastered * HEALTH_WEIGHTS[OUTCOME_MASTERED]
-        + partial * HEALTH_WEIGHTS[OUTCOME_PARTIAL]
-        + not_mastered * HEALTH_WEIGHTS[OUTCOME_NOT_MASTERED]
+    total = sum(attempts for _, attempts in counted)
+    weighted = sum(
+        HEALTH_WEIGHTS.get(outcome, 0.0) * attempts for outcome, attempts in counted
     )
     return HealthReading(
-        score=round(weighted / observed * 100),
+        score=round(weighted / total * 100),
         rule_code=RULE_HEALTH_WEIGHTED,
-        observed=observed,
-        mastered=mastered,
-        partial=partial,
-        not_mastered=not_mastered,
+        observed=len(counted),
+        attempts=total,
+        mastered=sum(1 for outcome, _ in counted if outcome == OUTCOME_MASTERED),
+        partial=sum(1 for outcome, _ in counted if outcome == OUTCOME_PARTIAL),
+        not_mastered=sum(
+            1 for outcome, _ in counted if outcome == OUTCOME_NOT_MASTERED
+        ),
     )
 
 
@@ -194,12 +225,15 @@ def explain_health(reading: HealthReading) -> str:
     observed = (
         "compétence observée" if reading.observed == 1 else "compétences observées"
     )
+    tries = "tentative terminée" if reading.attempts == 1 else "tentatives terminées"
     return (
         f"{reading.observed} {observed} : {reading.mastered} acquise"
         f"{'s' if reading.mastered > 1 else ''}, {reading.partial} en cours "
         f"d’acquisition, {reading.not_mastered} non acquise"
-        f"{'s' if reading.not_mastered > 1 else ''}. Le score résume ces comptes "
-        "et ne compare cet enfant à personne."
+        f"{'s' if reading.not_mastered > 1 else ''}, sur {reading.attempts} "
+        f"{tries}. Chaque compétence pèse le nombre de tentatives qu’elle a "
+        "demandées. Le score résume ces comptes et ne compare cet enfant à "
+        "personne."
     )
 
 
@@ -259,16 +293,31 @@ def published_rules() -> list[dict[str, str]]:
             ),
         },
         {
+            "code": RULE_DEFER_BEHIND_PREREQUISITE,
+            "condition": ("une compétence en lacune a un prérequis lui-même en lacune"),
+            "produces": "lacune reportée, aucune remédiation proposée",
+            "description": (
+                "Demander d’assurer les opérations quand le vrai problème est le "
+                "comptage, ou de conjuguer quand les groupes de verbes ne sont pas "
+                "reconnus, c’est faire travailler l’enfant sur ce qui bute plutôt "
+                "que sur ce qui bloque. Tant que le prérequis est en lacune, la "
+                "compétence qui en dépend n’est pas proposée du tout. Elle reste "
+                "affichée au parent, avec la raison de son report."
+            ),
+        },
+        {
             "code": RULE_HEALTH_WEIGHTED,
             "condition": (
                 "moyenne pondérée des compétences observées, une acquise comptant "
-                "1, une en cours 0,5, une non acquise 0"
+                "1, une en cours 0,5, une non acquise 0, chacune pesant son nombre "
+                "de tentatives terminées"
             ),
             "produces": "score de santé académique",
             "description": (
                 "Calculé sur ce que l’enfant a travaillé, et sur rien d’autre : "
-                "ni sur le programme, ni contre d’autres enfants. Il résume les "
-                "lectures par compétence, il ne les remplace pas."
+                "ni sur le programme, ni contre d’autres enfants. Une compétence "
+                "reprise dix fois pèse dix fois une compétence vue une seule. Il "
+                "résume les lectures par compétence, il ne les remplace pas."
             ),
         },
     ]

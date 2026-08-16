@@ -431,19 +431,16 @@ class TestQuickRepairsAreShortAndProvable:
         assert recommendation["duration_minutes"] == SHORT_A
         assert recommendation["already_done"] is False
 
-    def test_the_root_cause_is_proposed_first(
+    def test_only_the_root_cause_is_proposed(
         self, family: Family, catalogue: dict[str, str]
     ) -> None:
-        """Starting underneath is the whole point of having looked."""
+        """Asking her to secure B while A is broken makes her work on what buts."""
         work_through(family, catalogue["b_source"], correct=False)
         work_through(family, catalogue["a_source"], correct=False)
 
         body = family.as_parent().get(family.diagnostic_url).json()
 
-        assert [row["competency_code"] for row in body["recommendations"]] == [
-            COMP_A,
-            COMP_B,
-        ]
+        assert [row["competency_code"] for row in body["recommendations"]] == [COMP_A]
 
     def test_an_activity_already_waiting_is_not_proposed_again(
         self, family: Family, catalogue: dict[str, str]
@@ -475,6 +472,256 @@ class TestQuickRepairsAreShortAndProvable:
         assert "seconde passe" in recommendation["reason"]
 
 
+class TestADependentGapIsDeferredBehindItsPrerequisite:
+    def test_the_dependent_gap_says_what_it_waits_on(
+        self, family: Family, catalogue: dict[str, str]
+    ) -> None:
+        work_through(family, catalogue["a_source"], correct=False)
+        work_through(family, catalogue["b_source"], correct=False)
+
+        body = family.as_parent().get(family.diagnostic_url).json()
+
+        dependent = gap_for(body, COMP_B)
+        assert dependent is not None
+        assert dependent["blocked_by"] == COMP_A
+        assert dependent["deferral"] is not None and COMP_A in dependent["deferral"]
+
+    def test_the_prerequisite_itself_waits_on_nothing(
+        self, family: Family, catalogue: dict[str, str]
+    ) -> None:
+        work_through(family, catalogue["a_source"], correct=False)
+        work_through(family, catalogue["b_source"], correct=False)
+
+        cause = gap_for(family.as_parent().get(family.diagnostic_url).json(), COMP_A)
+
+        assert cause is not None
+        assert cause["blocked_by"] is None and cause["deferral"] is None
+
+    def test_the_deferred_gap_is_still_shown(
+        self, family: Family, catalogue: dict[str, str]
+    ) -> None:
+        """Deferring what to work on is not hiding what was found."""
+        work_through(family, catalogue["a_source"], correct=False)
+        work_through(family, catalogue["b_source"], correct=False)
+
+        body = family.as_parent().get(family.diagnostic_url).json()
+
+        assert gap_for(body, COMP_B) is not None
+
+    def test_repairing_the_prerequisite_releases_the_dependent(
+        self, family: Family, catalogue: dict[str, str]
+    ) -> None:
+        work_through(family, catalogue["a_source"], correct=False)
+        work_through(family, catalogue["b_source"], correct=False)
+
+        work_through(family, catalogue["a_repair"], correct=True)
+
+        body = family.as_parent().get(family.diagnostic_url).json()
+        released = gap_for(body, COMP_B)
+        assert released is not None and released["blocked_by"] is None
+        assert [row["competency_code"] for row in body["recommendations"]] == [COMP_B]
+
+    def test_a_gap_with_no_prerequisite_gap_is_never_deferred(
+        self, family: Family, catalogue: dict[str, str]
+    ) -> None:
+        work_through(family, catalogue["c_source"], correct=False)
+
+        gap = gap_for(family.as_parent().get(family.diagnostic_url).json(), COMP_C)
+
+        assert gap is not None and gap["blocked_by"] is None
+
+
+class TestTheParentSetsHowFarThePlatformMayGo:
+    def test_the_cautious_mode_is_the_default(self, family: Family) -> None:
+        """A parent who never opens the setting is never acted for."""
+        body = family.as_parent().get(family.diagnostic_url).json()
+
+        assert body["remediation_mode"] == "proposed"
+
+    def test_a_parent_may_switch_to_automatic_and_back(self, family: Family) -> None:
+        parent = family.as_parent()
+        url = f"/api/v1/children/{family.child_id}/remediation-mode"
+
+        assert parent.put(url, json={"mode": "automatic"}).json()["mode"] == "automatic"
+        assert parent.put(url, json={"mode": "proposed"}).json()["mode"] == "proposed"
+
+    def test_an_unknown_mode_is_refused(self, family: Family) -> None:
+        refused = family.as_parent().put(
+            f"/api/v1/children/{family.child_id}/remediation-mode",
+            json={"mode": "whatever"},
+        )
+
+        assert refused.status_code == 422
+
+    def test_a_child_may_not_set_it(self, family: Family) -> None:
+        refused = family.as_child().put(
+            f"/api/v1/children/{family.child_id}/remediation-mode",
+            json={"mode": "automatic"},
+        )
+
+        assert refused.status_code == 403
+
+    def test_another_familys_child_does_not_exist(self, client: TestClient) -> None:
+        first = Family(client)
+        second = Family(client)
+
+        refused = second.as_parent().put(
+            f"/api/v1/children/{first.child_id}/remediation-mode",
+            json={"mode": "automatic"},
+        )
+
+        assert refused.status_code == 404
+
+
+class TestNothingIsGivenUntilSomebodySaysSo:
+    def test_reading_the_diagnostic_assigns_nothing(
+        self, family: Family, catalogue: dict[str, str]
+    ) -> None:
+        """A read must never create work; that is the whole reason apply exists."""
+        work_through(family, catalogue["a_source"], correct=False)
+        parent = family.as_parent()
+        parent.get(family.diagnostic_url)
+
+        owed = parent.get(ASSIGNMENTS_URL, params={"child_id": family.child_id}).json()
+        assert catalogue["a_repair"] not in [row["activity"]["code"] for row in owed]
+
+    def test_a_parent_may_give_the_proposals_in_one_call(
+        self, family: Family, catalogue: dict[str, str]
+    ) -> None:
+        work_through(family, catalogue["a_source"], correct=False)
+
+        applied = family.as_parent().post(
+            f"/api/v1/children/{family.child_id}/remediation"
+        )
+
+        assert applied.status_code == 200
+        assert applied.json()["assigned"] == [catalogue["a_repair"]]
+
+    def test_what_is_given_that_way_is_marked_as_the_parents(
+        self, family: Family, catalogue: dict[str, str]
+    ) -> None:
+        """She called the route, so it is her decision and it says so."""
+        work_through(family, catalogue["a_source"], correct=False)
+        parent = family.as_parent()
+        parent.post(f"/api/v1/children/{family.child_id}/remediation")
+
+        owed = parent.get(ASSIGNMENTS_URL, params={"child_id": family.child_id}).json()
+        given = [
+            row for row in owed if row["activity"]["code"] == catalogue["a_repair"]
+        ]
+        assert given and given[0]["origin"] == "parent"
+
+    def test_applying_twice_skips_what_is_already_waiting(
+        self, family: Family, catalogue: dict[str, str]
+    ) -> None:
+        work_through(family, catalogue["a_source"], correct=False)
+        parent = family.as_parent()
+        parent.post(f"/api/v1/children/{family.child_id}/remediation")
+
+        again = parent.post(f"/api/v1/children/{family.child_id}/remediation").json()
+
+        assert again["assigned"] == []
+
+    def test_a_child_may_not_apply_anything(self, family: Family) -> None:
+        refused = family.as_child().post(
+            f"/api/v1/children/{family.child_id}/remediation"
+        )
+
+        assert refused.status_code == 403
+
+
+class TestTheAutomaticModeGivesOneRepairItself:
+    def test_finishing_an_attempt_gives_the_repair(
+        self, family: Family, catalogue: dict[str, str]
+    ) -> None:
+        family.as_parent().put(
+            f"/api/v1/children/{family.child_id}/remediation-mode",
+            json={"mode": "automatic"},
+        )
+
+        work_through(family, catalogue["a_source"], correct=False)
+
+        owed = (
+            family.as_parent()
+            .get(ASSIGNMENTS_URL, params={"child_id": family.child_id})
+            .json()
+        )
+        assert catalogue["a_repair"] in [row["activity"]["code"] for row in owed]
+
+    def test_what_the_platform_gives_says_it_was_the_platform(
+        self, family: Family, catalogue: dict[str, str]
+    ) -> None:
+        """A parent must be able to tell her decisions from ours."""
+        family.as_parent().put(
+            f"/api/v1/children/{family.child_id}/remediation-mode",
+            json={"mode": "automatic"},
+        )
+        work_through(family, catalogue["a_source"], correct=False)
+
+        owed = (
+            family.as_parent()
+            .get(ASSIGNMENTS_URL, params={"child_id": family.child_id})
+            .json()
+        )
+        given = [
+            row for row in owed if row["activity"]["code"] == catalogue["a_repair"]
+        ]
+        assert given and given[0]["origin"] == "system"
+
+    def test_the_default_mode_gives_nothing(
+        self, family: Family, catalogue: dict[str, str]
+    ) -> None:
+        work_through(family, catalogue["a_source"], correct=False)
+
+        owed = (
+            family.as_parent()
+            .get(ASSIGNMENTS_URL, params={"child_id": family.child_id})
+            .json()
+        )
+        assert catalogue["a_repair"] not in [row["activity"]["code"] for row in owed]
+
+    def test_it_gives_the_prerequisite_and_not_what_depends_on_it(
+        self, family: Family, catalogue: dict[str, str]
+    ) -> None:
+        """The automatic path works on what blocks, exactly as the manual one does."""
+        work_through(family, catalogue["b_source"], correct=False)
+        family.as_parent().put(
+            f"/api/v1/children/{family.child_id}/remediation-mode",
+            json={"mode": "automatic"},
+        )
+
+        work_through(family, catalogue["a_source"], correct=False)
+
+        owed = (
+            family.as_parent()
+            .get(ASSIGNMENTS_URL, params={"child_id": family.child_id})
+            .json()
+        )
+        codes = [row["activity"]["code"] for row in owed]
+        assert catalogue["a_repair"] in codes
+        assert catalogue["b_repair"] not in codes
+
+    def test_it_gives_one_activity_and_not_a_pile(
+        self, family: Family, catalogue: dict[str, str]
+    ) -> None:
+        """A helping hand, not a punishment."""
+        work_through(family, catalogue["c_source"], correct=False)
+        family.as_parent().put(
+            f"/api/v1/children/{family.child_id}/remediation-mode",
+            json={"mode": "automatic"},
+        )
+
+        work_through(family, catalogue["a_source"], correct=False)
+
+        owed = (
+            family.as_parent()
+            .get(ASSIGNMENTS_URL, params={"child_id": family.child_id})
+            .json()
+        )
+        system_given = [row for row in owed if row["origin"] == "system"]
+        assert len(system_given) == 1
+
+
 class TestTheHealthScoreIsShownWithItsTerms:
     def test_nothing_observed_yields_no_score_at_all(self, family: Family) -> None:
         body = family.as_parent().get(family.diagnostic_url).json()
@@ -490,9 +737,24 @@ class TestTheHealthScoreIsShownWithItsTerms:
         health = family.as_parent().get(family.diagnostic_url).json()["health"]
 
         assert health["observed"] == 2
+        assert health["attempts"] == 2
         assert health["mastered"] == 1 and health["not_mastered"] == 1
         assert health["score"] == 50
         assert health["rule_code"] == "health-weighted-outcomes"
+
+    def test_a_competency_worked_more_weighs_more(
+        self, family: Family, catalogue: dict[str, str]
+    ) -> None:
+        """One attempt mastered, two attempts failed: the failures weigh double."""
+        work_through(family, catalogue["a_source"], correct=True)
+        work_through(family, catalogue["b_source"], correct=False)
+        work_through(family, catalogue["b_repair"], correct=False)
+
+        health = family.as_parent().get(family.diagnostic_url).json()["health"]
+
+        # A weighs 1 attempt at 1,0 ; B weighs 2 attempts at 0,0.
+        assert health["observed"] == 2 and health["attempts"] == 3
+        assert health["score"] == 33
 
     def test_it_compares_this_child_to_nobody(
         self, family: Family, catalogue: dict[str, str]
@@ -546,7 +808,7 @@ class TestTheRulesArePublished:
         published = family.as_parent().get(RULES_URL)
 
         assert published.status_code == 200
-        assert len(published.json()) == 5
+        assert len(published.json()) == 6
 
     def test_a_child_may_read_them_too(self, family: Family) -> None:
         """Published behind a door only one side opens would publish to nobody."""
