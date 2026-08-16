@@ -89,10 +89,16 @@ vaut `false`. Une réponse courte ne doit pas se lire comme « aucune difficult�
 ## Le score de santé académique
 
 `health-weighted-outcomes` : moyenne pondérée des compétences **observées**, une
-acquise comptant 1, une en cours 0,5, une non acquise 0, rendue sur 100.
+acquise comptant 1, une en cours 0,5, une non acquise 0, **chacune pesant son
+nombre de tentatives terminées**, rendue sur 100.
 
-- **Explicable** : chaque terme voyage à côté du score, et n'importe qui peut
-  refaire l'arithmétique.
+Une compétence reprise dix fois pèse dix fois une compétence vue une seule. Le
+coût est écrit plutôt que caché : ce qui a été le plus refait porte le plus de
+poids, et ce n'est pas toujours ce qui compte le plus.
+
+- **Explicable** : chaque terme voyage à côté du score, y compris le total des
+  tentatives — une moyenne pondérée dont le dénominateur est caché ne peut pas
+  être vérifiée par qui on la montre.
 - **Non comparatif** : calculé sur ce que cette enfant a travaillé, et sur rien
   d'autre. Ni sur le programme, ce qui se lirait « quel retard », ni contre
   d'autres enfants, ce que la plateforme ne calcule jamais.
@@ -116,8 +122,19 @@ besoin de quelque chose à faire, pas d'un catalogue ; et en proposer trois
 laisserait croire que la plateforme sait laquelle est la meilleure, ce qui est
 faux.
 
-Ordre : **les causes racines d'abord**. Si une lacune peut se trouver sous une
-autre, commencer par celle du dessous est tout l'intérêt d'avoir cherché.
+**Une compétence dont le prérequis est en lacune n'est pas proposée du tout.**
+`defer-behind-prerequisite`. Demander d'assurer les opérations quand le vrai
+problème est le comptage, ou de conjuguer quand les groupes de verbes ne sont pas
+reconnus, c'est faire travailler l'enfant sur ce qui bute plutôt que sur ce qui
+bloque, et cela ne règle ni l'un ni l'autre.
+
+La lacune dépendante **reste affichée**, avec `blocked_by` et la phrase qui dit
+sur quoi elle attend. Reporter ce qu'on fait travailler n'est pas cacher ce qu'on
+a trouvé, et un parent qui voit une difficulté sans remédiation à côté doit
+savoir que le silence est délibéré.
+
+Les chaînes se règlent d'elles-mêmes : dans A ⟵ B ⟵ C toutes en lacune, seule A
+est travaillée.
 
 Choix de l'activité :
 
@@ -138,9 +155,11 @@ valide jamais seule une compétence.**
 
 | Route | Qui | Ce qu'elle rend |
 |---|---|---|
-| `GET /api/v1/children/{child_id}/diagnostic` | Parent | Lacunes, regroupements, hypothèses, score, recommandations |
+| `GET /api/v1/children/{child_id}/diagnostic` | Parent | Lacunes, regroupements, hypothèses, score, recommandations, mode |
+| `PUT /api/v1/children/{child_id}/remediation-mode` | Parent | Règle jusqu'où la plateforme peut agir |
+| `POST /api/v1/children/{child_id}/remediation` | Parent | Donne les activités proposées |
 | `GET /api/v1/me/next-steps` | Élève | Trois activités courtes, et rien d'autre |
-| `GET /api/v1/diagnostic/rules` | Toute session | Les cinq règles, condition et raison |
+| `GET /api/v1/diagnostic/rules` | Toute session | Les six règles, condition et raison |
 
 Le même moteur produit les deux, et la différence est **ce qui traverse**. Une
 enfant voit une activité et sa durée. Elle ne voit ni le score, ni les lacunes,
@@ -156,12 +175,58 @@ Les règles sont lisibles par toute session authentifiée, comme celles de
 l'étape 10 : les publier derrière une porte qu'un seul côté ouvre reviendrait à
 ne les publier à personne.
 
+## Jusqu'où la plateforme peut agir, et qui le décide
+
+`auth_children.remediation_mode` vaut `proposed` ou `automatic`. Ni « le système
+n'assigne jamais » ni « le système assigne toujours » : **le parent choisit**, et
+le défaut est le mode prudent, donc un parent qui n'ouvre jamais le réglage n'est
+jamais agi pour.
+
+Le réglage est porté par **l'enfant et non par le parent** : la confiance qu'on
+accorde à une automatisation dépend de la situation d'un enfant, et une famille
+avec une enfant de six ans et une de onze répond plausiblement différemment pour
+chacune.
+
+### Deux chemins
+
+**Sur la parole du parent**, dans les deux modes :
+`POST /api/v1/children/{id}/remediation` donne les activités proposées. Être
+d'accord avec elles ne doit pas obliger à les ressaisir dans le formulaire
+d'affectation. Ce qui est déjà en attente, ou ce qui passerait le plafond
+d'activités en cours, est **écarté et nommé** plutôt que forcé.
+
+**En mode `automatic`**, une activité est donnée à la clôture d'une tentative,
+parce que c'est le moment où la lecture change et où une difficulté peut
+apparaître. **Une seule, jamais une liste** : remettre cinq réparations parce que
+cinq compétences ont glissé transformerait un coup de main en punition. Et c'est
+celle que rien n'attend — une cause racine s'il y en a une —, donc le chemin
+automatique travaille sur ce qui bloque exactement comme le manuel.
+
+Le déclenchement se fait depuis la **route** de clôture d'une tentative, jamais
+depuis le service : un service qui affecterait du travail comme effet de bord
+d'un « j'ai fini » ferait deux choses à la fois, et une seule serait dans son nom.
+Pour la même raison, **aucune lecture n'affecte quoi que ce soit** : un `GET` ne
+crée rien, et c'est toute la raison d'être de la route d'application.
+
+### Qui a décidé reste lisible
+
+`assignments.origin` vaut `parent` ou `system`, posé par le serveur. Un parent
+qui laisse la plateforme agir doit rester capable de distinguer ce qu'elle a
+choisi de ce qui a été fait en son nom : sans cette colonne, les deux seraient
+indiscernables le lendemain. C'est aussi la trace sur laquelle s'appuiera
+l'avertissement du parent, dont la **remise** appartient aux notifications de
+l'étape 14.
+
+Le plafond d'activités en cours et l'interdiction du doublon s'appliquent aux
+deux chemins sans exception : ces règles protègent l'enfant de la plateforme
+exactement comme elles la protègent d'un geste malheureux d'un parent.
+
 ## Ce que l'étape 12 ne fait pas
 
 - **Aucun diagnostic médical, psychologique ou comportemental.** Ce qui est
   nommé est une compétence lue à partir de réponses, rien d'autre.
-- **Aucune assignation automatique.** Une recommandation est une proposition ; la
-  donner reste un geste du parent, par la route d'affectation de l'étape 09.
+- **Aucune notification.** Le mode automatique laisse une trace lisible, mais
+  rien ne va encore chercher le parent : c'est l'étape 14.
 - **Aucun classement, aucune cohorte, aucun percentile.** Le score ne compare à
   personne, et il n'existe aucune route qui compare deux enfants.
 - **Aucune IA générative de diagnostic**, hors périmètre du projet par décision.

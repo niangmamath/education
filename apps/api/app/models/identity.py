@@ -33,6 +33,14 @@ CHILD_STATUSES: Final = (
     CHILD_STATUS_DISABLED,
 )
 
+# How far the parent lets the platform go when a difficulty is found. Neither
+# "the system never assigns" nor "the system always assigns": the parent sets it,
+# and the cautious value is the default, so a parent who never opens the setting
+# is never acted for.
+REMEDIATION_MODE_PROPOSED: Final = "proposed"
+REMEDIATION_MODE_AUTOMATIC: Final = "automatic"
+REMEDIATION_MODES: Final = (REMEDIATION_MODE_PROPOSED, REMEDIATION_MODE_AUTOMATIC)
+
 
 class Parent(Base):
     """Adult account that owns and manages child profiles."""
@@ -89,6 +97,10 @@ class Child(Base):
             "status IN ('pending', 'active', 'disabled')",
             name="ck_auth_children_status",
         ),
+        CheckConstraint(
+            "remediation_mode IN ('proposed', 'automatic')",
+            name="ck_auth_children_remediation_mode",
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -108,6 +120,17 @@ class Child(Base):
         nullable=False,
         default=CHILD_STATUS_ACTIVE,
         server_default=CHILD_STATUS_ACTIVE,
+    )
+    # How much the parent lets the platform act for this child. Held on the
+    # child rather than on the parent because trust in automation is about one
+    # child's situation: a family with a six-year-old and an eleven-year-old
+    # plausibly answers differently for each. `proposed` is the default, so a
+    # parent who never opens the setting is never acted for.
+    remediation_mode: Mapped[str] = mapped_column(
+        String(16),
+        nullable=False,
+        default=REMEDIATION_MODE_PROPOSED,
+        server_default=REMEDIATION_MODE_PROPOSED,
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()

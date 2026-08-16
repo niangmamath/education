@@ -33,7 +33,14 @@ from app.api.deps import CurrentChild, CurrentParent, CurrentSession, DbSession
 from app.core.exceptions import NotFoundException
 from app.diagnostic import rules, service
 from app.models.identity import CHILD_STATUS_ACTIVE, Child
-from app.schemas.diagnostic import ChildDiagnostic, DiagnosticRulePublic, NextSteps
+from app.schemas.diagnostic import (
+    AppliedRemediation,
+    ChildDiagnostic,
+    DiagnosticRulePublic,
+    NextSteps,
+    RemediationModePublic,
+    RemediationModeRequest,
+)
 
 router = APIRouter()
 
@@ -60,6 +67,53 @@ async def read_child_diagnostic(
     if owned is None:
         raise NotFoundException(message=CHILD_NOT_FOUND_MESSAGE)
     return await service.child_diagnostic(db, child_id)
+
+
+@router.put(
+    "/children/{child_id}/remediation-mode", response_model=RemediationModePublic
+)
+async def set_remediation_mode(
+    child_id: uuid.UUID,
+    payload: RemediationModeRequest,
+    parent: CurrentParent,
+    db: DbSession,
+) -> Any:
+    """Set how far the platform may act for this child.
+
+    `proposed` is the default and the cautious answer: the platform proposes and
+    waits. `automatic` says the parent trusts it to give the first repair
+    herself. Neither is imposed — that the choice exists at all is the decision,
+    and it is the parent's alone to make.
+    """
+    child = await service.set_remediation_mode(db, parent, child_id, payload.mode)
+    await db.commit()
+    return RemediationModePublic(child_id=child.id, mode=child.remediation_mode)
+
+
+@router.post("/children/{child_id}/remediation", response_model=AppliedRemediation)
+async def apply_remediation(
+    child_id: uuid.UUID, parent: CurrentParent, db: DbSession
+) -> Any:
+    """Give the activities the platform proposes for this child.
+
+    The parent's act, in either mode: agreeing with the proposals should not mean
+    retyping them into the assignment form. Proposals the child already has, or
+    that would pass the ceiling of open assignments, are skipped and named rather
+    than forced — those rules protect her from the platform exactly as they
+    protect her from a slip of a parent's hand.
+    """
+    owned = await db.scalar(
+        select(Child).where(
+            Child.id == child_id,
+            Child.parent_id == parent.id,
+            Child.status == CHILD_STATUS_ACTIVE,
+        )
+    )
+    if owned is None:
+        raise NotFoundException(message=CHILD_NOT_FOUND_MESSAGE)
+    applied = await service.apply_recommendations(db, parent, child_id)
+    await db.commit()
+    return applied
 
 
 @router.get("/me/next-steps", response_model=NextSteps)

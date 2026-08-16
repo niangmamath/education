@@ -30,11 +30,15 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.assignments import service as assignments_service
+from app.core.exceptions import ConflictException, NotFoundException
 from app.diagnostic import remediation, rules
-from app.models.attempt import (
-    OUTCOME_MASTERED,
-    OUTCOME_NOT_MASTERED,
-    OUTCOME_PARTIAL,
+from app.models.assignment import ASSIGNMENT_ORIGIN_PARENT, ASSIGNMENT_ORIGIN_SYSTEM
+from app.models.identity import (
+    REMEDIATION_MODE_AUTOMATIC,
+    REMEDIATION_MODE_PROPOSED,
+    Child,
+    Parent,
 )
 from app.models.referential import (
     VERSION_STATUS_PUBLISHED,
@@ -45,15 +49,19 @@ from app.models.referential import (
 )
 from app.progress import service as progress_service
 from app.schemas.diagnostic import (
+    AppliedRemediation,
     ChildDiagnostic,
     GeneralGap,
     Health,
     LocalizedGap,
     NextStep,
     NextSteps,
+    Recommendation,
     RootCauseHypothesis,
 )
 from app.schemas.progress import CompetencyProgress
+
+CHILD_NOT_FOUND_MESSAGE = "Ce profil enfant n’existe pas"
 
 # How many things a child is shown at once. Enough to have a choice, few enough
 # that the list is not a backlog: a screen of repairs reads as a punishment.
@@ -95,16 +103,19 @@ async def child_diagnostic(db: AsyncSession, child_id: uuid.UUID) -> ChildDiagno
 
     general = _general_gaps(gaps)
     root_causes = _root_causes([row.competency_code for row in gaps], tree)
+    _defer_behind_prerequisites(gaps, root_causes)
 
+    child = await db.get(Child, child_id)
     return ChildDiagnostic(
         child_id=child_id,
+        remediation_mode=(
+            child.remediation_mode if child is not None else REMEDIATION_MODE_PROPOSED
+        ),
         health=_health(progress.competencies),
         localized_gaps=gaps,
         general_gaps=general,
         root_causes=root_causes,
-        recommendations=await remediation.quick_repairs(
-            db, child_id, _targets(gaps, root_causes)
-        ),
+        recommendations=await remediation.quick_repairs(db, child_id, _targets(gaps)),
         tree_available=tree.available,
         computed_at=datetime.now(timezone.utc),
     )
@@ -136,28 +147,178 @@ async def child_next_steps(db: AsyncSession, child_id: uuid.UUID) -> NextSteps:
     )
 
 
-def _targets(
+async def apply_recommendations(
+    db: AsyncSession, parent: Parent, child_id: uuid.UUID, limit: int | None = None
+) -> AppliedRemediation:
+    """Give the activities the platform proposes, on the parent's word.
+
+    This is the "make it easier" half of the setting: a parent who agrees with
+    the proposals should not have to retype them into the assignment form. It is
+    still her act — she called this route — and it works in either mode.
+
+    Refusals are collected rather than raised. A proposal already waiting for the
+    child, or one over the ceiling of open assignments, is skipped and named; the
+    others still go through. Failing the whole call because one of five was
+    already given would be worse than useless.
+    """
+    diagnostic = await child_diagnostic(db, child_id)
+    proposals = (
+        diagnostic.recommendations[:limit] if limit else diagnostic.recommendations
+    )
+
+    assigned, skipped = await _give(db, parent, child_id, proposals)
+    return AppliedRemediation(
+        assigned=assigned, skipped=skipped, reason=_applied_reason(assigned, skipped)
+    )
+
+
+async def assign_automatically(db: AsyncSession, child_id: uuid.UUID) -> list[str]:
+    """Give the first proposal, when the parent has said the platform may.
+
+    Called after an attempt is completed, because that is the moment the reading
+    changes and a new difficulty can appear. Nothing happens in `proposed` mode,
+    which is the default.
+
+    **One activity, never a list.** The one proposed first is the one nothing is
+    waiting on — a root cause when there is one — so the automatic path works on
+    what blocks rather than on what buts, exactly as the manual one does. Handing
+    a child five repairs because five competencies slipped would turn a helping
+    hand into a punishment.
+    """
+    child = await db.get(Child, child_id)
+    if child is None or child.remediation_mode != REMEDIATION_MODE_AUTOMATIC:
+        return []
+
+    parent = await db.get(Parent, child.parent_id)
+    if parent is None or not parent.is_active:
+        return []
+
+    diagnostic = await child_diagnostic(db, child_id)
+    assigned, _ = await _give(
+        db, parent, child_id, diagnostic.recommendations[:1], ASSIGNMENT_ORIGIN_SYSTEM
+    )
+    return assigned
+
+
+async def _give(
+    db: AsyncSession,
+    parent: Parent,
+    child_id: uuid.UUID,
+    proposals: Sequence[Recommendation],
+    origin: str = ASSIGNMENT_ORIGIN_PARENT,
+) -> tuple[list[str], list[str]]:
+    """Turn proposals into assignments, skipping the ones already refused."""
+    assigned: list[str] = []
+    skipped: list[str] = []
+    for proposal in proposals:
+        try:
+            await assignments_service.assign_activity(
+                db,
+                parent,
+                child_id,
+                proposal.activity_code,
+                note=_note(proposal, origin),
+                origin=origin,
+            )
+        except ConflictException:
+            # Already waiting for her, or the ceiling of open assignments is
+            # reached. Both are the platform being told no by rules that exist to
+            # protect the child, and both are reported rather than forced.
+            skipped.append(proposal.activity_code)
+            continue
+        assigned.append(proposal.activity_code)
+    return assigned, skipped
+
+
+def _note(proposal: Recommendation, origin: str) -> str:
+    """What the child is told about an activity she did not ask for.
+
+    A note in a child's own space should say something to her, not report a
+    diagnosis: it names the work, never the difficulty behind it, for the same
+    reason `child_next_steps` shows no gap.
+    """
+    if origin == ASSIGNMENT_ORIGIN_SYSTEM:
+        return f"Un petit exercice de {proposal.duration_minutes} minutes pour s’entraîner."
+    return f"À faire quand tu veux, {proposal.duration_minutes} minutes."
+
+
+def _applied_reason(assigned: list[str], skipped: list[str]) -> str:
+    if not assigned and not skipped:
+        return "Aucune remédiation à proposer pour l’instant."
+    given = "activité donnée" if len(assigned) == 1 else "activités données"
+    if not skipped:
+        return f"{len(assigned)} {given}."
+    return (
+        f"{len(assigned)} {given}, {len(skipped)} écartée"
+        f"{'s' if len(skipped) > 1 else ''} : déjà en attente, ou plafond "
+        "d’activités en cours atteint."
+    )
+
+
+async def set_remediation_mode(
+    db: AsyncSession, parent: Parent, child_id: uuid.UUID, mode: str
+) -> Child:
+    """Record how far this parent lets the platform act for this child."""
+    child = await db.scalar(
+        select(Child).where(Child.id == child_id, Child.parent_id == parent.id)
+    )
+    if child is None:
+        raise NotFoundException(message=CHILD_NOT_FOUND_MESSAGE)
+    child.remediation_mode = mode
+    await db.flush()
+    return child
+
+
+def _defer_behind_prerequisites(
     gaps: list[LocalizedGap], root_causes: list[RootCauseHypothesis]
-) -> list[str]:
+) -> None:
+    """Mark every gap that is waiting on a prerequisite gap of its own.
+
+    This is the point of having a competency tree at all. Asking a child to
+    secure her operations when the real trouble is counting, or to conjugate when
+    she cannot yet tell the verb groups apart, makes her work on what buts rather
+    than on what blocks — and settles neither. So while a prerequisite is itself
+    a gap, the competency that depends on it is **not proposed at all**, not
+    merely proposed second.
+
+    The gap stays listed, with `blocked_by` and a sentence saying what it waits
+    on. A parent who sees a difficulty with no repair beside it must be told the
+    silence is deliberate.
+
+    Chains fall out of this on their own: with A required by B required by C, all
+    three in gap, B is deferred behind A and C behind B, so only A is worked on.
+    """
+    blocking = {
+        dependent: cause.competency_code
+        for cause in root_causes
+        for dependent in cause.explains_codes
+    }
+    for row in gaps:
+        prerequisite = blocking.get(row.competency_code)
+        if prerequisite is None:
+            continue
+        row.blocked_by = prerequisite
+        row.deferral = rules.explain_deferral(row.competency_code, prerequisite)
+
+
+def _targets(gaps: list[LocalizedGap]) -> list[str]:
     """Which competencies to propose work on, and in which order.
 
-    Root-cause candidates first: if one gap may sit underneath another, starting
-    with the one underneath is the whole point of having looked. The rest follow
-    in the order they were read, which is the competency code order.
+    Only the gaps nothing is waiting on. A deferred gap contributes nothing here
+    — that is what deferring it means — and the order is the order they were read
+    in, which is competency code order.
     """
-    first = [row.competency_code for row in root_causes]
-    return first + [
-        row.competency_code for row in gaps if row.competency_code not in first
-    ]
+    return [row.competency_code for row in gaps if row.blocked_by is None]
 
 
 def _health(competencies: Sequence[CompetencyProgress]) -> Health | None:
-    """The score, from the same readings the gaps were proposed from."""
-    outcomes = [row.latest_outcome for row in competencies]
+    """The score, from the same readings the gaps were proposed from.
+
+    Each competency is passed with the number of completed attempts it was read
+    from, because that is what weights it.
+    """
     reading = rules.health(
-        mastered=sum(1 for row in outcomes if row == OUTCOME_MASTERED),
-        partial=sum(1 for row in outcomes if row == OUTCOME_PARTIAL),
-        not_mastered=sum(1 for row in outcomes if row == OUTCOME_NOT_MASTERED),
+        [(row.latest_outcome, row.attempts_counted) for row in competencies]
     )
     if reading is None:
         return None
@@ -165,6 +326,7 @@ def _health(competencies: Sequence[CompetencyProgress]) -> Health | None:
         score=reading.score,
         rule_code=reading.rule_code,
         observed=reading.observed,
+        attempts=reading.attempts,
         mastered=reading.mastered,
         partial=reading.partial,
         not_mastered=reading.not_mastered,

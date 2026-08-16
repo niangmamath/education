@@ -1,7 +1,7 @@
 # ADR-015, Diagnostic explicable, hypothèses non stockées, et ce que chaque côté voit
 
 - Statut : Accepté
-- Date : 16 août 2026
+- Date : 16 août 2026, amendée le 16 août 2026 par le propriétaire
 
 ## Contexte
 
@@ -104,6 +104,87 @@ trois propriétés, et non par un compromis :
 **Rien d'observé ne rend aucun score**, et il n'y a délibérément pas de zéro pour
 cela : zéro dirait que le travail s'est mal passé, alors qu'il n'a pas eu lieu.
 
+### Une compétence dont le prérequis est en lacune n'est pas proposée du tout
+
+*Amendement du 16 août 2026.* La première version proposait la compétence
+dépendante **après** sa cause racine. Le propriétaire a corrigé : elle ne doit
+pas être proposée du tout tant que le prérequis est en lacune.
+
+> « L'idée est de ne pas lui demander d'assurer une compétence alors que le vrai
+> problème c'est une autre compétence prérequis : lui demander d'assurer des
+> opérations mathématiques alors que le vrai problème c'est le comptage, lui
+> demander de conjuguer alors qu'il peine à reconnaître les groupes de verbes ou
+> à discerner les temps qui existent. »
+
+`defer-behind-prerequisite` est donc une sixième règle publiée. La lacune
+dépendante **reste affichée** au parent, avec `blocked_by` et la phrase qui dit
+sur quoi elle attend : reporter ce qu'on fait travailler n'est pas cacher ce
+qu'on a trouvé, et un parent qui voit une difficulté sans remédiation à côté doit
+savoir que le silence est délibéré.
+
+Les chaînes se règlent d'elles-mêmes : dans A ⟵ B ⟵ C toutes en lacune, B attend
+A et C attend B, donc seule A est travaillée.
+
+### Le score est pondéré par le nombre de tentatives
+
+*Amendement du 16 août 2026.* La première version faisait peser toutes les
+compétences observées pareil, et l'agent avait signalé la limite sans la lever.
+Le propriétaire a tranché : **pondérer par le nombre de tentatives terminées**.
+
+Une compétence reprise dix fois pèse dix fois une compétence vue une seule.
+Le coût est écrit plutôt que caché : ce qui a été le plus refait porte désormais
+le plus de poids, et ce n'est pas toujours ce qui compte le plus. Le total des
+tentatives voyage avec le score, parce qu'une moyenne pondérée dont le
+dénominateur est caché ne peut pas être vérifiée par qui on la montre.
+
+### L'automatisation est un réglage du parent
+
+*Amendement du 16 août 2026.* La première version excluait toute assignation
+automatique, au motif qu'automatiser déciderait à la place d'un adulte. Le
+propriétaire a infirmé cette décision :
+
+> « Le système doit pouvoir faciliter la tâche au parent. Après avoir fait un
+> diagnostic, il doit pouvoir lui proposer puis aviser le parent, mais tout ça
+> doit être réglable par le parent : il peut décider de faire entièrement
+> confiance et d'approuver que le système assigne directement. »
+
+Donc ni « le système n'assigne jamais » ni « le système assigne toujours ».
+
+`auth_children.remediation_mode` vaut `proposed` ou `automatic`. Il est porté par
+**l'enfant et non par le parent** : la confiance qu'on accorde à une
+automatisation dépend de la situation d'un enfant, et une famille avec une
+enfant de six ans et une de onze répond plausiblement différemment pour chacune.
+`proposed` est le défaut, donc un parent qui n'ouvre jamais le réglage n'est
+jamais agi pour.
+
+Deux chemins en découlent :
+
+- `POST /api/v1/children/{id}/remediation` donne les propositions **sur la parole
+  du parent**, dans les deux modes. C'est la moitié « faciliter la tâche » : être
+  d'accord avec les propositions ne doit pas obliger à les ressaisir dans le
+  formulaire d'affectation.
+- En mode `automatic`, **une** activité est donnée à la clôture d'une tentative,
+  parce que c'est le moment où la lecture change. Une seule, jamais une liste :
+  remettre cinq réparations parce que cinq compétences ont glissé transformerait
+  un coup de main en punition. Et c'est celle que rien n'attend — une cause
+  racine s'il y en a une —, donc le chemin automatique travaille sur ce qui
+  bloque exactement comme le manuel.
+
+L'assignation automatique se déclenche depuis la **route** de clôture d'une
+tentative et non depuis le service des tentatives : un service qui affecterait du
+travail comme effet de bord d'un « j'ai fini » ferait deux choses à la fois, et
+une seule serait dans son nom.
+
+`assignments.origin` vaut `parent` ou `system`. Un parent qui laisse la
+plateforme agir doit rester capable de distinguer ce qu'elle a choisi de ce qui a
+été fait en son nom — sans cette colonne, les deux seraient indiscernables le
+lendemain. C'est aussi la trace sur laquelle s'appuiera le « puis aviser le
+parent » demandé, dont la **remise** appartient aux notifications de l'étape 14.
+
+Le plafond d'activités en cours et l'interdiction du doublon s'appliquent aux
+deux chemins sans exception : ces règles protègent l'enfant de la plateforme
+exactement comme elles la protègent d'un geste malheureux d'un parent.
+
 ### Une Quick Repair dure de 3 à 7 minutes, et mène à une preuve
 
 Une activité publiée travaillant la compétence, dans cette bande de durée. Hors
@@ -140,9 +221,10 @@ n'est pas pour elle.
 - Le MVP tient enfin sa boucle : lacune détectée, Quick Repair recommandé,
   contenu joué, résultat capturé, lacune et score recalculés. Il manque
   l'affichage, qui est l'étape 13.
-- **Aucune assignation automatique.** Une recommandation est une proposition ;
-  la donner reste un geste du parent, par la route d'affectation de l'étape 09.
-  Automatiser cela déciderait à la place d'un adulte, ce que le produit refuse.
+- L'assignation automatique existe et **est un réglage**, dont le défaut reste la
+  proposition. Chaque fois qu'une fonctionnalité future pourrait agir à la place
+  du parent, la bonne conception est un réglage confié au parent avec un défaut
+  prudent, et non un refus d'automatiser au nom du principe.
 - Le calcul à la lecture coûte quelques requêtes par appel, sur des volumes
   d'une famille. Si les tableaux de bord de l'étape 13 demandent un cache, ce
   sera une décision de cache prise au grand jour, comme déjà écrit dans ADR-014.
