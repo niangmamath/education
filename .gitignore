@@ -158,6 +158,10 @@ eggs/
 .eggs/
 lib/
 lib64/
+# `lib/` above targets Python build output, but it is unanchored and therefore
+# swallowed `apps/web/lib/`, which is source. The web app's own source is
+# re-included by name; the Python rule keeps its reach everywhere else.
+!apps/web/lib/
 parts/
 sdist/
 var/
