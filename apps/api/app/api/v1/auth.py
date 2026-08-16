@@ -16,7 +16,14 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.cookies import clear_session_cookie, set_session_cookie
-from app.api.deps import CurrentParent, DbSession, RedisClient, SessionToken
+from app.api.deps import (
+    INVALID_SESSION_MESSAGE,
+    CurrentParent,
+    CurrentSession,
+    DbSession,
+    RedisClient,
+    SessionToken,
+)
 from app.core.config import settings
 from app.core.exceptions import AuthenticationException, ConflictException
 from app.core.security import (
@@ -26,9 +33,20 @@ from app.core.security import (
     spend_dummy_verification,
     verify_password,
 )
-from app.core.sessions import PARENT_USER_TYPE, create_session, delete_session
-from app.models import Parent
-from app.schemas.auth import ParentLoginRequest, ParentPublic, ParentRegisterRequest
+from app.core.sessions import (
+    CHILD_USER_TYPE,
+    PARENT_USER_TYPE,
+    create_session,
+    delete_session,
+)
+from app.models import Child, Parent
+from app.models.identity import CHILD_STATUS_ACTIVE
+from app.schemas.auth import (
+    ParentLoginRequest,
+    ParentPublic,
+    ParentRegisterRequest,
+    SessionPublic,
+)
 
 router = APIRouter()
 
@@ -178,3 +196,31 @@ async def logout(
 async def read_current_parent(parent: CurrentParent) -> Parent:
     """Return the parent behind the current session."""
     return parent
+
+
+@router.get("/session", response_model=SessionPublic)
+async def read_current_session(session: CurrentSession, db: DbSession) -> SessionPublic:
+    """Say which space the caller is in, and under what name.
+
+    Open to either role, because the question is the same for both and a client
+    has to answer it before it can ask anything else. It says nothing a session
+    does not already establish: the holder of the cookie learns who they are.
+
+    An account deactivated or removed since the cookie was minted is treated as
+    an invalid session rather than as a name that no longer resolves — the same
+    rule the two `me` routes follow.
+    """
+    if session.user_type == PARENT_USER_TYPE:
+        parent = await db.get(Parent, session.user_id)
+        if parent is None or not parent.is_active:
+            raise AuthenticationException(message=INVALID_SESSION_MESSAGE)
+        return SessionPublic(
+            user_type=PARENT_USER_TYPE, id=parent.id, display_name=parent.display_name
+        )
+
+    child = await db.get(Child, session.user_id)
+    if child is None or child.status != CHILD_STATUS_ACTIVE:
+        raise AuthenticationException(message=INVALID_SESSION_MESSAGE)
+    return SessionPublic(
+        user_type=CHILD_USER_TYPE, id=child.id, display_name=child.display_name
+    )

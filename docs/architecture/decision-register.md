@@ -18,7 +18,7 @@ Ce document est le **registre central** de toutes les Architecture Decision Reco
 
 ## Structure des dossiers
 
-Les seize ADR existent toutes en fichier ; ce registre les résume et ne les
+Les dix-sept ADR existent toutes en fichier ; ce registre les résume et ne les
 remplace pas.
 
 ```
@@ -39,7 +39,8 @@ docs/
 │   ├── ADR-012-h5p-standalone-pilote.md       # Type H5P unique, accepté sous conditions
 │   ├── ADR-013-catalogue-lie-par-code.md      # Catalogue lié par code métier
 │   ├── ADR-014-ingestion-xapi.md              # Ingestion xAPI, acteur pseudonyme, prééminence
-│   └── ADR-015-diagnostic-explicable.md       # Diagnostic explicable et non stocké
+│   ├── ADR-015-diagnostic-explicable.md       # Diagnostic explicable et non stocké
+│   └── ADR-016-web-parle-a-l-api-par-le-serveur.md  # Le web appelle l’API par son serveur
 └── architecture/
     └── decision-register.md                   # Ce fichier
 ```
@@ -332,17 +333,34 @@ docs/
 
 ---
 
+### ADR-016 : Le web parle à l'API par son serveur
+
+| Champ | Valeur |
+|-------|--------|
+| **Titre** | Le web parle à l'API par son serveur, jamais par le navigateur |
+| **Statut** | ✅ **Accepted** |
+| **Date** | 16 août 2026 |
+| **Auteur** | Équipe StudentConnect |
+| **Décision** | Le navigateur ne connaît que l'origine du web ; les composants serveur portent le cookie de session jusqu'à l'API |
+| **Fichier** | [docs/adr/ADR-016-web-parle-a-l-api-par-le-serveur.md](../adr/ADR-016-web-parle-a-l-api-par-le-serveur.md) |
+| **Dépendances** | ADR-002, ADR-005, ADR-012 |
+| **Impact** | Frontend, Sécurité |
+
+**Résumé** : Un appel direct depuis le navigateur exigerait un cookie tiers, la forme que les navigateurs suppriment, et exposerait la session à tout ce que la page charge. Les mutations passent par des actions serveur nommées une par une plutôt que par un proxy générique. La seule route d'API du web relaie les événements xAPI du runtime, avec un contrôle d'origine du `postMessage` comme mesure de sécurité de la boucle.
+
+---
+
 ## Statistiques
 
 | Statut | Count |
 |--------|-------|
-| ✅ Accepted | 15 |
+| ✅ Accepted | 16 |
 | ⚠️ Proposed | 1 |
 | ⏳ À créer | 0 |
 | ❌ Deprecated | 0 |
 | ⛔ Rejected | 0 |
 | 🔄 Superseeded | 0 |
-| **Total** | **16** |
+| **Total** | **17** |
 
 Une seule ADR reste ouverte, ADR-000 sur la licence du projet. ADR-012 est
 acceptée **sous conditions**, comptée ici parmi les acceptées. Ses huit conditions
@@ -356,7 +374,7 @@ aucune n'est plus entièrement à faire.
 
 1. **Vérifier** qu'aucune décision existante ne couvre déjà le sujet
 2. **Discuter** avec l'équipe avant de rédiger
-3. **Suivre la forme des ADR existantes** : statut, date, décision, conséquences. Aucun template séparé n'est maintenu, les seize fichiers en tiennent lieu
+3. **Suivre la forme des ADR existantes** : statut, date, décision, conséquences. Aucun template séparé n'est maintenu, les dix-sept fichiers en tiennent lieu
 4. **Numérotation** : Utiliser le prochain numéro disponible
 5. **Statut initial** : `Proposed`
 6. **Créer un PR** avec le nouvel ADR

@@ -1,27 +1,73 @@
-import { BookOpen } from 'lucide-react';
-import { PrototypeNotice } from '../../../components/ui/prototype-notice';
+import { api } from '../../../lib/api';
+import { requireParent } from '../../../lib/session';
+import { InterfaceState } from '../../../components/ui/interface-state';
+import type { ParentAssignment } from '../../../lib/types';
 
-export const metadata = { title: 'Activités Parent' };
+export const metadata = { title: 'Activités' };
 
-export default function ParentActivitiesPage() {
+const LABELS: Record<ParentAssignment['status'], { label: string; className: string }> = {
+  assigned: { label: 'Donnée', className: 'text-bg-primary' },
+  in_progress: { label: 'En cours', className: 'text-bg-info' },
+  completed: { label: 'Terminée', className: 'text-bg-success' },
+  cancelled: { label: 'Annulée', className: 'text-bg-secondary' },
+};
+
+/**
+ * Everything given to the family, newest first.
+ *
+ * Cancelled assignments are kept in the list rather than hidden: calling an
+ * activity off is a decision somebody made, and a history that quietly loses it
+ * would answer "was this ever given?" wrongly.
+ */
+export default async function ParentActivitiesPage() {
+  await requireParent();
+  const assignments = await api<ParentAssignment[]>('/assignments');
+
+  if (!assignments.ok) {
+    return (
+      <InterfaceState
+        kind="unavailable"
+        title="Les activités n’ont pas pu être chargées"
+        description={assignments.message}
+      />
+    );
+  }
+
   return (
     <>
-      <PrototypeNotice />
       <header className="mb-4">
-        <p className="text-uppercase text-primary fw-semibold small mb-1">Espace Parent</p>
-        <h1 className="h2 mb-2">Activités</h1>
-        <p className="text-secondary mb-0">Consulter les activités recommandées et récentes.</p>
+        <h1 className="h2 mb-1">Activités</h1>
+        <p className="text-secondary mb-0">
+          Ce que vous avez donné, et où cela en est.
+        </p>
       </header>
 
-      <section className="card border-0 shadow-sm">
-        <div className="card-body p-4 p-lg-5 text-center">
-          <span className="sc-feature-icon mb-3" aria-hidden="true"><BookOpen size={24} /></span>
-          <h2 className="h5">Aucune activité disponible</h2>
-          <p className="text-secondary mb-0">
-            Les recommandations seront affichées après l’implémentation du moteur métier. Aucune activité n’est réellement assignée.
-          </p>
-        </div>
-      </section>
+      {assignments.data.length === 0 ? (
+        <InterfaceState
+          kind="empty"
+          title="Aucune activité donnée"
+          description="Les activités proposées apparaissent sur la page de chaque enfant, avec la raison qui les a fait proposer."
+        />
+      ) : (
+        <ul className="list-group">
+          {assignments.data.map((assignment) => (
+            <li className="list-group-item py-3" key={assignment.id}>
+              <div className="d-flex flex-wrap align-items-center gap-2 mb-1">
+                <span className={`badge rounded-pill ${LABELS[assignment.status].className}`}>
+                  {LABELS[assignment.status].label}
+                </span>
+                <span className="fw-semibold">{assignment.activity.title}</span>
+                <span className="text-secondary small">
+                  — {assignment.child_pseudonym}, {assignment.activity.duration_minutes} minutes
+                </span>
+              </div>
+              {assignment.note ? (
+                <p className="text-secondary small mb-0">{assignment.note}</p>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      )}
     </>
   );
 }

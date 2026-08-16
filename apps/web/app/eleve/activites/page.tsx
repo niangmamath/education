@@ -1,27 +1,95 @@
-import { BookOpen } from 'lucide-react';
-import { PrototypeNotice } from '../../../components/ui/prototype-notice';
+import Link from 'next/link';
+import { Clock3 } from 'lucide-react';
+import { api } from '../../../lib/api';
+import { requireChild } from '../../../lib/session';
+import { InterfaceState } from '../../../components/ui/interface-state';
+import { StartActivityButton } from '../../../components/eleve/start-activity-button';
+import type { ChildAssignment } from '../../../lib/types';
 
-export const metadata = { title: 'Activités Élève' };
+export const metadata = { title: 'Mes activités' };
 
-export default function EleveActivitiesPage() {
+const LABELS: Record<string, string> = {
+  assigned: 'À commencer',
+  in_progress: 'En cours',
+  completed: 'Terminée',
+  cancelled: 'Annulée',
+};
+
+/**
+ * Everything she has been given, what is owed first.
+ *
+ * Cancelled assignments are not shown. An activity called off is not something
+ * she failed to do, and listing it beside what is owed would read as a reproach.
+ */
+export default async function MesActivitesPage() {
+  await requireChild();
+  const assignments = await api<ChildAssignment[]>('/me/activities');
+
+  if (!assignments.ok) {
+    return (
+      <InterfaceState
+        kind="unavailable"
+        title="Tes activités n’ont pas pu être chargées"
+        description={assignments.message}
+      />
+    );
+  }
+
+  const shown = assignments.data.filter((row) => row.status !== 'cancelled');
+  const owed = shown.filter((row) => row.status !== 'completed');
+  const done = shown.filter((row) => row.status === 'completed');
+
   return (
     <>
-      <PrototypeNotice />
       <header className="mb-4">
-        <p className="text-uppercase text-primary fw-semibold small mb-1">Espace Élève</p>
-        <h1 className="h2 mb-2">Mes activités</h1>
-        <p className="text-secondary mb-0">Choisir ou reprendre une activité courte.</p>
+        <h1 className="h2 mb-1">Mes activités</h1>
+        <p className="text-secondary mb-0">
+          {owed.length > 0
+            ? `${owed.length} activité${owed.length > 1 ? 's' : ''} à faire.`
+            : 'Tu as tout terminé.'}
+        </p>
       </header>
 
-      <section className="card border-0 shadow-sm">
-        <div className="card-body p-4 p-lg-5 text-center">
-          <span className="sc-student-icon mb-3" aria-hidden="true"><BookOpen size={28} /></span>
-          <h2 className="h5">Aucune activité disponible</h2>
-          <p className="text-secondary mb-0">
-            Les activités seront proposées après l’implémentation du catalogue et des recommandations. Rien n’est assigné dans ce prototype.
-          </p>
+      {shown.length === 0 ? (
+        <InterfaceState
+          kind="empty"
+          title="Aucune activité pour l’instant"
+          description="Quand un adulte t’en donnera une, elle apparaîtra ici."
+        />
+      ) : (
+        <div className="row g-3">
+          {[...owed, ...done].map((row) => (
+            <div className="col-12 col-lg-6" key={row.id}>
+              <article className="card h-100 border-0 shadow-sm">
+                <div className="card-body p-4">
+                  <span
+                    className={`badge rounded-pill mb-2 ${
+                      row.status === 'completed' ? 'text-bg-success' : 'text-bg-primary'
+                    }`}
+                  >
+                    {LABELS[row.status] ?? row.status}
+                  </span>
+                  <h2 className="h5">{row.activity.title}</h2>
+                  {row.note ? <p className="text-secondary small">{row.note}</p> : null}
+                  <p className="d-flex align-items-center gap-2 small text-secondary">
+                    <Clock3 size={16} aria-hidden="true" />
+                    Environ {row.activity.duration_minutes} minutes
+                  </p>
+
+                  {row.status === 'assigned' ? (
+                    <StartActivityButton assignmentId={row.id} label="Commencer" />
+                  ) : null}
+                  {row.status === 'in_progress' ? (
+                    <Link href={`/eleve/activites/${row.id}`} className="btn btn-primary">
+                      Reprendre
+                    </Link>
+                  ) : null}
+                </div>
+              </article>
+            </div>
+          ))}
         </div>
-      </section>
+      )}
     </>
   );
 }

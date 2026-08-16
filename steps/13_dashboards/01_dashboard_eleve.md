@@ -37,4 +37,4 @@ Alimenter le dashboard Élève avec données API réelles : activité à reprend
 
 ## Statut
 
-À faire.
+Terminée. Preuve : rapport `rapport_2026-08-16_2200_dashboards.md`.

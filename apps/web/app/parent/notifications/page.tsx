@@ -1,27 +1,70 @@
-import { Bell } from 'lucide-react';
-import { PrototypeNotice } from '../../../components/ui/prototype-notice';
+import { api } from '../../../lib/api';
+import { requireParent } from '../../../lib/session';
+import { InterfaceState } from '../../../components/ui/interface-state';
+import { NotificationList } from '../../../components/parent/notification-list';
+import { notificationsFor } from '../../../lib/notifications';
+import type { ChildProfile, Diagnostic, ParentAssignment } from '../../../lib/types';
 
-export const metadata = { title: 'Notifications Parent' };
+export const metadata = { title: 'Ce qui a changé' };
 
-export default function ParentNotificationsPage() {
+/**
+ * Everything that changed, and an honest account of what this page is not.
+ *
+ * Nothing is sent anywhere. No email leaves, no push is delivered, nothing is
+ * stored and no read state is kept — so there is no unread count, because a
+ * badge would claim a state nobody keeps. What is here is a reading of facts the
+ * parent could have found by opening three other pages.
+ *
+ * Saying so on the page itself is the point of the step's "without misleading
+ * automation": a list that looked like an inbox would promise a delivery that
+ * does not exist, and a parent would stop checking.
+ */
+export default async function NotificationsPage() {
+  await requireParent();
+
+  const children = await api<ChildProfile[]>('/auth/children');
+  if (!children.ok) {
+    return (
+      <InterfaceState
+        kind="unavailable"
+        title="Vos profils enfants n’ont pas pu être chargés"
+        description={children.message}
+      />
+    );
+  }
+
+  const active = children.data.filter((child) => child.status === 'active');
+  const [assignments, ...diagnostics] = await Promise.all([
+    api<ParentAssignment[]>('/assignments'),
+    ...active.map((child) => api<Diagnostic>(`/children/${child.id}/diagnostic`)),
+  ]);
+
+  const notifications = notificationsFor(
+    active,
+    assignments.ok ? assignments.data : [],
+    diagnostics.map((result, index) => ({
+      child: active[index],
+      diagnostic: result.ok ? result.data : null,
+    })),
+  );
+
   return (
     <>
-      <PrototypeNotice />
       <header className="mb-4">
-        <p className="text-uppercase text-primary fw-semibold small mb-1">Espace Parent</p>
-        <h1 className="h2 mb-2">Notifications</h1>
-        <p className="text-secondary mb-0">Informations qui nécessiteront une attention.</p>
+        <h1 className="h2 mb-1">Ce qui a changé</h1>
+        <p className="text-secondary mb-0">
+          Activités terminées, points d’attention et activités qui attendent.
+        </p>
       </header>
 
-      <section className="card border-0 shadow-sm">
-        <div className="card-body p-4 p-lg-5 text-center">
-          <span className="sc-feature-icon mb-3" aria-hidden="true"><Bell size={24} /></span>
-          <h2 className="h5">Aucune notification</h2>
-          <p className="text-secondary mb-0">
-            Cette page présente uniquement l’état vide. Aucune notification réelle n’est envoyée ou enregistrée.
-          </p>
-        </div>
-      </section>
+      <div className="alert alert-secondary" role="note">
+        <strong>Rien ne vous est envoyé.</strong> Cette page relit ce que la
+        plateforme sait déjà ; aucun e-mail ni aucune alerte ne part, et rien
+        n’est marqué comme lu. L’envoi viendra avec les notifications de
+        l’étape 14.
+      </div>
+
+      <NotificationList notifications={notifications} />
     </>
   );
 }
