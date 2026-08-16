@@ -37,4 +37,4 @@ Recommander une activité adaptée à partir des compétences et contenus dispon
 
 ## Statut
 
-À faire.
+Terminée. Preuve : rapport `rapport_2026-08-16_1030_diagnostic_remediation.md`.

@@ -37,4 +37,4 @@ Exposer uniquement les diagnostics autorisés au Parent et les prochaines action
 
 ## Statut
 
-À faire.
+Terminée. Preuve : rapport `rapport_2026-08-16_1030_diagnostic_remediation.md`.

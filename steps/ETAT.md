@@ -3,7 +3,7 @@
 ## Référence
 
 - Projet : StudentConnect
-- Date : 15 août 2026
+- Date : 16 août 2026
 - Dépôt : `Tidianesarrndiaye/StudentConnect`
 - Branche : `main`
 - Version cible : `V0.1`
@@ -429,7 +429,7 @@ Tests      : trois pages de deux rendent cinq compétences distinctes
 
 ## Dernier rapport appliqué
 
-`steps/11_evenements_xapi_progres/rapport_2026-08-15_2030_evenements_xapi_progres.md`.
+`steps/12_diagnostic_remediation/rapport_2026-08-16_1030_diagnostic_remediation.md`.
 
 ## Historique de clôture de l’étape 06
 
@@ -1028,6 +1028,114 @@ Tests      : aucun ratio ni score dans la charge utile des progrès
 Tests      : deux lectures des progrès rendent exactement la même chose
 ```
 
+## Étape 12, diagnostic et remédiation, clôturée
+
+Travaux menés sur la branche `feat/etape-12-diagnostic`. Sous-étapes enchaînées
+sans arrêt ; les décisions prises par l'agent sont consignées dans ADR-015.
+
+### Ce que l'étape ajoute, et ce qu'elle refuse d'ajouter
+
+La plateforme savait dire ce qu'un enfant avait fait et ce que chaque tentative
+avait conclu. Elle ne disait nulle part qu'il y avait une difficulté. L'étape 12
+le dit — et le dit de telle façon qu'aucune conclusion n'échappe à son
+explication. **Aucune migration** : le diagnostic se calcule à chaque lecture.
+
+### 12.1, règles de diagnostic, terminée
+
+- [x] Cinq règles nommées, publiées par `GET /api/v1/diagnostic/rules`, toutes de
+      l'arithmétique sur des comptes. Aucun modèle, opaque ou non.
+- [x] **Une seule lecture intermédiaire n'est pas une difficulté** : c'est ce à
+      quoi ressemble un apprentissage en chemin. Elle le devient si elle survit à
+      une deuxième tentative terminée.
+- [x] **Une compétence jamais travaillée n'est pas une lacune.** La ranger sous
+      « difficulté » ferait d'une absence une accusation — la même règle qu'à
+      l'étape 10, où l'absence de preuve n'écrit aucun résultat.
+- [x] Le regroupement par domaine **ne supprime pas ce qu'il regroupe** : les
+      compétences d'une lacune générale restent listées une par une, les deux
+      listes côte à côte.
+- [x] Une cause racine est une arête entre **deux** lacunes. Un prérequis acquis
+      est une preuve contre l'hypothèse ; un prérequis jamais travaillé n'est
+      aucune preuve. `confirmed` est un champ toujours faux, pas un sous-entendu.
+
+### 12.2, moteur de remédiation, terminée
+
+- [x] Une Quick Repair dure **de 3 à 7 minutes**. Hors bande, elle n'est pas
+      proposée, si bien assortie soit-elle : proposer vingt minutes comme
+      réparation rapide rendrait la promesse fausse.
+- [x] Une seule activité par compétence, **causes racines d'abord**. Commencer
+      par ce qui est dessous est tout l'intérêt d'avoir cherché.
+- [x] Jamais proposée d'abord ; sinon déjà terminée, reproposée et **signalée**,
+      parce que la refaire est une seconde passe ; jamais celle qui l'attend déjà.
+- [x] Chaque recommandation **nomme sa preuve finale**, la lecture de la
+      tentative. Rien n'y est marqué comme réparé.
+
+### 12.3, API du diagnostic, terminée
+
+- [x] Le diagnostic au Parent, les prochaines actions à l'Élève, par **deux
+      routes distinctes** — une route unique à identifiant facultatif serait à un
+      contrôle oublié près de montrer à une enfant ce qui n'est pas pour elle.
+- [x] Une enfant voit une activité et sa durée ; ni le score, ni les lacunes, ni
+      la règle qui a nommé une difficulté. Ce n'est pas du secret sur son propre
+      travail : ses tentatives, ses résultats et ses progrès restent à sa
+      disposition. C'est qu'une liste de réparations remise à une enfant *comme un
+      diagnostic* est un jugement auquel elle n'a aucun moyen de répondre.
+
+### Le score de santé, et la règle qu'il devait ne pas casser
+
+- [x] Le produit demande un score ; une règle non négociable dit qu'une note ne
+      remplace jamais une compétence. Les deux tiennent par trois propriétés et
+      non par un compromis : le score apparaît **une fois pour un enfant**, à côté
+      de la lecture par compétence qu'il résume et jamais à la place de l'une
+      d'elles ; il est calculé sur ce que cette enfant a travaillé et **sur rien
+      d'autre**, ni le programme ni d'autres enfants ; chacun de ses termes voyage
+      avec lui, donc il se démonte.
+- [x] **Rien d'observé ne rend aucun score.** Pas de zéro pour cela : zéro dirait
+      que le travail s'est mal passé, alors qu'il n'a pas eu lieu.
+
+### 12.4, clôture, terminée
+
+- [x] Séquence complète de l'API CI rejouée, depuis la machine et dans le
+      conteneur, tout vert, 544 tests dont 45 pour cette étape.
+- [x] Rapport `rapport_2026-08-16_1030_diagnostic_remediation.md` produit.
+- [x] ADR-015 écrite, registre des décisions mis à jour.
+- [x] Une seule Pull Request pour toute l'étape.
+
+### Points ouverts de l'étape 12
+
+- **Aucune assignation automatique.** Une recommandation reste une proposition,
+  et la donner reste un geste du parent. C'est délibéré — automatiser déciderait
+  à la place d'un adulte — mais la boucle du MVP demande donc encore une action
+  humaine entre la recommandation et l'activité.
+- **Le score suppose que les compétences observées se valent.** Une compétence
+  travaillée une fois pèse autant qu'une travaillée dix fois. Pondérer par le
+  nombre de tentatives donnerait plus de poids à ce qui a été le plus refait, ce
+  qui n'est pas la même chose que ce qui compte le plus. Laissé simple et écrit
+  plutôt qu'arbitré en silence.
+- Sans édition du référentiel en vigueur, les lacunes sont rendues mais ni
+  regroupées ni expliquées par un prérequis ; `tree_available` le dit, pour
+  qu'une réponse courte ne se lise pas « aucune difficulté ».
+
+## Résultats techniques de l'étape 12
+
+```text
+Ruff       : vert, format inclus
+Mypy       : vert sur 72 fichiers
+Alembic    : 0010_xapi_statements (head), aucune migration ajoutée par l'étape
+Pytest     : 544 tests réussis, dont 45 dédiés au diagnostic
+Tests      : une compétence jamais travaillée n'est jamais une lacune
+Tests      : une lecture intermédiaire seule n'est pas une lacune, deux le sont
+Tests      : les lacunes regroupées restent listées une par une
+Tests      : un prérequis acquis n'explique rien
+Tests      : une cause racine n'est jamais marquée comme établie
+Tests      : une activité de vingt minutes n'est jamais une Quick Repair
+Tests      : la cause racine est recommandée avant ce qu'elle explique
+Tests      : une activité déjà en attente n'est pas reproposée
+Tests      : rien d'observé ne rend aucun score
+Tests      : le score porte chacun de ses termes et ne compare à personne
+Tests      : l'Élève ne reçoit ni score, ni lacune, ni code de règle
+Tests      : réparer le prérequis fait disparaître l'hypothèse, sans rafraîchir
+```
+
 ## Prochaine action
 
-Ouvrir l'étape 12, diagnostic et remédiation.
+Ouvrir l'étape 13, tableaux de bord.
