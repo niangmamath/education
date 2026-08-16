@@ -1,41 +1,45 @@
 import Link from 'next/link';
-import { ArrowLeft, LockKeyhole } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
+import { LoginForms } from '../../components/auth/login-forms';
 
 export const metadata = {
   title: 'Connexion',
-  description: 'Prototype du futur accès à StudentConnect',
+  description: 'Accès aux espaces Parent et Élève de StudentConnect',
 };
 
-export default function ConnexionPage() {
+/**
+ * Two ways in, side by side, because they are not the same act.
+ *
+ * A parent signs in with an email and a password. A child signs in with the
+ * family code, her pseudonym and a PIN — no email and no telephone, which a
+ * project rule requires and which is also why the two forms cannot be merged
+ * into one with a hidden switch.
+ *
+ * `suite` says which space the visitor was trying to reach, so the right form is
+ * open when they arrive; it changes nothing about what either accepts.
+ */
+export default async function ConnexionPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ suite?: string }>;
+}) {
+  const { suite } = await searchParams;
+
   return (
     <main className="container py-5">
-      <div className="mx-auto" style={{ maxWidth: '42rem' }}>
+      <div className="mx-auto" style={{ maxWidth: '52rem' }}>
         <Link href="/" className="d-inline-flex align-items-center gap-2 mb-4">
           <ArrowLeft size={18} aria-hidden="true" />
           Retour à l’accueil
         </Link>
 
-        <section className="card border-0 shadow-sm">
-          <div className="card-body p-4 p-lg-5">
-            <span className="sc-feature-icon mb-3" aria-hidden="true">
-              <LockKeyhole size={24} />
-            </span>
-            <p className="badge rounded-pill text-bg-primary mb-3">Prototype UX</p>
-            <h1 className="display-6 fw-bold">Connexion à StudentConnect</h1>
-            <p className="lead text-secondary">
-              L’authentification n’est pas encore implémentée. Aucun identifiant ne doit être saisi sur cette page prototype.
-            </p>
+        <h1 className="h2 mb-1">Se connecter</h1>
+        <p className="text-secondary mb-4">
+          Choisissez l’espace qui vous concerne. Un enfant n’a besoin ni d’adresse
+          e-mail ni de téléphone.
+        </p>
 
-            <div className="alert alert-warning" role="status">
-              <strong>Données fictives.</strong> Ce formulaire visuel sera ajouté après la conception et la validation de la sécurité des sessions.
-            </div>
-
-            <div className="d-flex flex-wrap gap-3 mt-4">
-              <Link href="/" className="btn btn-primary">Revenir à l’accueil</Link>
-              <Link href="/aide" className="btn btn-outline-primary">Consulter l’aide</Link>
-            </div>
-          </div>
-        </section>
+        <LoginForms defaultTab={suite === 'eleve' ? 'eleve' : 'parent'} />
       </div>
     </main>
   );

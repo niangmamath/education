@@ -290,3 +290,49 @@ class TestLogout:
 
     def test_logout_refuses_a_caller_without_a_cookie(self, client: TestClient) -> None:
         assert client.delete(LOGOUT_URL).status_code == 401
+
+
+class TestWhichSpaceTheCallerIsIn:
+    """`GET /auth/session` answers, in one call, a question every client asks first.
+
+    Without it a client would try the Parent route, read a `403`, and try the
+    Élève one — two round trips and a refusal in the logs to answer a question
+    neither endpoint was asked.
+    """
+
+    def test_a_parent_session_says_parent(self, client: TestClient, email: str) -> None:
+        client.post(
+            REGISTER_URL,
+            json={
+                "email": email,
+                "password": VALID_PASSWORD,
+                "display_name": "Alex Martin",
+            },
+        )
+        client.post(LOGIN_URL, json={"email": email, "password": VALID_PASSWORD})
+
+        body = client.get("/api/v1/auth/session")
+
+        assert body.status_code == 200
+        assert body.json()["user_type"] == "parent"
+        assert body.json()["display_name"] == "Alex Martin"
+
+    def test_no_session_is_refused(self, client: TestClient) -> None:
+        assert client.get("/api/v1/auth/session").status_code == 401
+
+    def test_it_carries_no_secret(self, client: TestClient, email: str) -> None:
+        """It names the caller; what an account holds is served elsewhere."""
+        client.post(
+            REGISTER_URL,
+            json={
+                "email": email,
+                "password": VALID_PASSWORD,
+                "display_name": "Alex Martin",
+            },
+        )
+        client.post(LOGIN_URL, json={"email": email, "password": VALID_PASSWORD})
+
+        body = client.get("/api/v1/auth/session").json()
+
+        assert set(body) == {"user_type", "id", "display_name"}
+        assert email not in str(body)

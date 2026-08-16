@@ -157,7 +157,21 @@ nombre de tentatives, et une route évite au parent de ressaisir les proposition
 Un mode automatique a été construit puis **retiré à sa demande** ; la plateforme
 n’assigne rien d’elle-même. ADR-015 amendée en conséquence.
 
+### Phase 9, tableaux de bord
+
+| ID | Travail | Dépendances | Statut | Preuve |
+|---|---|---|---|---|
+| DASH-01 | Alimenter l’espace Élève | DIA-05 | Terminé | Cinq pages sur données réelles, activité en cours d’abord, aucun diagnostic |
+| DASH-02 | Alimenter l’espace Parent | DASH-01 | Terminé | Six pages, chaque conclusion avec sa phrase, lacunes reportées montrées à part |
+| DASH-03 | Présenter les notifications | DASH-02 | Terminé | Relecture des faits, aucune remise, aucun état de lecture, dit en toutes lettres |
+| DASH-04 | Clôturer l’étape 13 | DASH-03 | Terminé | 562 tests, web vert, boucle du MVP jouée sur la pile vivante, ADR-016 |
+
+`DASH-01` referme le point ouvert de l’étape 11 : l’endpoint xAPI a enfin un
+appelant. La boucle complète du MVP — activité donnée, contenu joué, événement
+capturé, lacune et score recalculés, tableau de bord mis à jour — a été jouée de
+bout en bout sur la pile vivante.
+
 ### Prochaine tâche
 
-Ouvrir l’étape 13, tableaux de bord. C’est là que le web appelle l’API pour la
-première fois et que la boucle du MVP devient visible de bout en bout.
+Ouvrir l’étape 14, notifications. La page « Ce qui a changé » livrée par
+`DASH-03` en est la présentation provisoire et devra s’y raccorder.

@@ -1,57 +1,84 @@
 import Link from 'next/link';
-import { UserRound } from 'lucide-react';
-import { PrototypeNotice } from '../../../components/ui/prototype-notice';
+import { api } from '../../../lib/api';
+import { requireParent } from '../../../lib/session';
+import { InterfaceState } from '../../../components/ui/interface-state';
+import type { ChildProfile, ParentProfile } from '../../../lib/types';
 
-export const metadata = { title: 'Enfants' };
+export const metadata = { title: 'Mes enfants' };
 
-const students = [
-  {
-    id: 'eleve-exemple-01',
-    displayName: 'Élève exemple',
-    level: 'Niveau fictif',
-  },
-];
+const STATUS: Record<ChildProfile['status'], { label: string; className: string }> = {
+  active: { label: 'Actif', className: 'text-bg-success' },
+  pending: { label: 'En attente d’activation', className: 'text-bg-warning' },
+  disabled: { label: 'Désactivé', className: 'text-bg-secondary' },
+};
 
-export default function ParentChildrenPage() {
+/**
+ * The family's profiles, and the code that lets a child join it.
+ *
+ * A pending profile is one a child opened with the family code and that nobody
+ * has activated yet. It is shown as waiting rather than as a problem: it is the
+ * ordinary way in, and it grants nothing until an adult says so.
+ */
+export default async function EnfantsPage() {
+  await requireParent();
+  const [children, parent] = await Promise.all([
+    api<ChildProfile[]>('/auth/children'),
+    api<ParentProfile>('/auth/me'),
+  ]);
+
+  if (!children.ok) {
+    return (
+      <InterfaceState
+        kind="unavailable"
+        title="Vos profils enfants n’ont pas pu être chargés"
+        description={children.message}
+      />
+    );
+  }
+
   return (
     <>
-      <PrototypeNotice />
       <header className="mb-4">
-        <p className="text-uppercase text-primary fw-semibold small mb-1">Espace Parent</p>
-        <h1 className="h2 mb-2">Enfants suivis</h1>
-        <p className="text-secondary mb-0">
-          Cette liste illustre le futur affichage des profils autorisés.
-        </p>
+        <h1 className="h2 mb-1">Mes enfants</h1>
+        {parent.ok ? (
+          <p className="text-secondary mb-0">
+            Code de la famille : <code className="fs-6">{parent.data.family_code}</code>. Un
+            enfant en a besoin pour se connecter.
+          </p>
+        ) : null}
       </header>
 
-      {students.length === 0 ? (
-        <section className="card border-0 shadow-sm">
-          <div className="card-body p-4">
-            <h2 className="h5">Aucun enfant associé</h2>
-            <p className="text-secondary mb-0">
-              L’association d’un dossier sera disponible après l’implémentation du parcours sécurisé.
-            </p>
-          </div>
-        </section>
+      {children.data.length === 0 ? (
+        <InterfaceState
+          kind="empty"
+          title="Aucun profil pour l’instant"
+          description="Un enfant peut ouvrir son profil avec le code de la famille ; il restera en attente jusqu’à ce que vous l’activiez."
+        />
       ) : (
-        <div className="row g-4">
-          {students.map((student) => (
-            <div className="col-12 col-md-6 col-xl-4" key={student.id}>
-              <article className="card h-100 border-0 shadow-sm">
-                <div className="card-body p-4">
-                  <span className="sc-feature-icon mb-3" aria-hidden="true">
-                    <UserRound size={24} />
-                  </span>
-                  <h2 className="h5">{student.displayName}</h2>
-                  <p className="text-secondary">{student.level}</p>
-                  <Link href={`/parent/enfants/${student.id}`} className="btn btn-primary">
-                    Consulter le détail fictif
-                  </Link>
-                </div>
-              </article>
-            </div>
+        <ul className="list-group">
+          {children.data.map((child) => (
+            <li
+              className="list-group-item d-flex flex-wrap align-items-center justify-content-between gap-3 py-3"
+              key={child.id}
+            >
+              <div>
+                <span className="fw-semibold">{child.display_name}</span>
+                <span className="text-secondary small"> — {child.pseudonym}</span>
+                <span className={`badge rounded-pill ms-2 ${STATUS[child.status].className}`}>
+                  {STATUS[child.status].label}
+                </span>
+              </div>
+              {child.status === 'active' ? (
+                <Link
+                  href={`/parent/enfants/${child.id}`}
+                  className="btn btn-outline-primary btn-sm"
+                >
+                  Voir sa progression
+                </Link>
+              ) : null}
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </>
   );

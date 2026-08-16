@@ -429,7 +429,7 @@ Tests      : trois pages de deux rendent cinq compétences distinctes
 
 ## Dernier rapport appliqué
 
-`steps/12_diagnostic_remediation/rapport_2026-08-16_1900_retrait_mode_automatique.md`.
+`steps/13_dashboards/rapport_2026-08-16_2200_dashboards.md`.
 
 ## Historique de clôture de l’étape 06
 
@@ -992,10 +992,9 @@ manquait pour l'étape 10.
 
 ### Points ouverts de l'étape 11
 
-- **Aucun client n'appelle encore la route.** Elle est éprouvée par ses tests,
-  pas par un navigateur réel. C'est le miroir exact du constat de `PRE-01` — un
-  producteur sans destinataire — et il se referme à l'étape 13, quand le web
-  parlera à l'API pour la première fois.
+- [x] **Refermé le 16 août 2026 par l'étape 13.** La route a désormais un
+      appelant : le lecteur de contenu du web écoute le `postMessage` de
+      `play.html` et relaie par `POST /api/xapi`. Éprouvé sur la pile vivante.
 - **Ce n'est pas un LRS** : ni `GET` par requête xAPI, ni `voided`, ni version de
   spec négociée. C'est écrit dans la documentation pour ne pas laisser croire à
   une conformité que rien ne teste.
@@ -1184,6 +1183,121 @@ Tests      : le parent donne les propositions en un appel
 Tests      : appliquer deux fois n'ajoute rien et le dit
 ```
 
+## Étape 13, tableaux de bord, clôturée
+
+Travaux menés sur la branche `feat/etape-13-dashboards`. Sous-étapes enchaînées
+sans arrêt ; les décisions sont consignées dans ADR-016.
+
+### La première fois que le web appelle l'API
+
+Le web était le prototype de l'étape 05 : des pages statiques, un bandeau
+« données fictives » sur chacune, pas une requête. Côté API, tout existait depuis
+six étapes et rien ne l'appelait. L'étape 13 les réunit — et c'est la première
+fois qu'il faut dire **comment**.
+
+### La décision qui gouverne l'étape, ADR-016
+
+- [x] **Le navigateur ne connaît que l'origine du web.** Les composants serveur
+      lisent le cookie de session et appellent l'API eux-mêmes. Un appel direct
+      exigerait un cookie tiers `SameSite=None` — la forme que les navigateurs
+      suppriment — et exposerait la session à tout ce que la page charge.
+      Que `localhost:3000` et `localhost:8000` soient « même site » rend le
+      problème invisible en développement et bien réel en production : une
+      architecture qui ne marche qu'en local échoue au moment où c'est cher.
+- [x] **Des actions serveur nommées une par une**, pas de proxy générique : un
+      proxy ferait du web une seconde porte d'entrée de l'API, chaque route
+      devenant joignable par un chemin que personne n'a écrit.
+- [x] **Le garde d'accès est dans le layout, pas dans un middleware** : un
+      middleware déciderait de la seule présence du cookie, et un cookie dont
+      Redis ne détient plus la session ressemble exactement à un cookie valide.
+      C'est l'API qui décide, toujours.
+- [x] `GET /api/v1/auth/session` ajouté : sans lui un client devrait provoquer un
+      `403` pour savoir qui il sert.
+
+### 13.1, espace Élève, terminée
+
+- [x] Cinq pages sur données réelles. **L'activité en cours passe avant tout** :
+      c'est le seul élément réellement urgent, et l'enterrer sous la liste de ce
+      qui reste serait le plus sûr moyen qu'elle ne soit jamais finie.
+- [x] **Aucun diagnostic nulle part** : ni score, ni lacune, ni nom de règle. Ses
+      résultats et sa progression restent à sa disposition et s'expliquent.
+- [x] Rien n'est classé par gravité : une page qui s'ouvrirait sur les échecs
+      serait une page sur l'échec.
+
+### Le point ouvert de l'étape 11, refermé
+
+- [x] `POST /api/xapi` est la **seule** route d'API du web, et elle relaie sans
+      rien décider. `play.html` remontait ses événements depuis `PRE-01` sans
+      destinataire ; il en a un.
+- [x] **Le contrôle d'origine du `postMessage` est la mesure de sécurité de cette
+      boucle.** `postMessage` livre à une fenêtre et non à un destinataire :
+      sans vérifier `event.origin`, n'importe quelle frame ou extension pourrait
+      déposer des réponses au nom d'un enfant. L'origine attendue vient de l'URL
+      rendue par l'API, donc rien dans une requête ne la déplace.
+
+### 13.2, espace Parent, terminée
+
+- [x] Six pages. **Chaque conclusion porte la phrase qui l'a produite** : un
+      parent qui ne peut pas discuter une conclusion se fait dire quoi penser.
+- [x] Les **lacunes reportées sont montrées à part**, avec ce qu'elles attendent,
+      et ne sont comptées ni dans les points d'attention ni dans les
+      notifications : les signaler pousserait vers la compétence que la
+      plateforme a décidé de ne pas travailler encore.
+- [x] `/parent/parametres` publie les règles de lecture et de diagnostic — la
+      page pour laquelle elles avaient été publiées — et dit pourquoi il n'y a
+      rien à régler.
+
+### 13.3, notifications, terminée
+
+- [x] **Rien n'est envoyé nulle part.** Aucun e-mail, aucune alerte, rien de
+      stocké, aucun état « lu » — donc **pas de pastille de non-lus**, parce
+      qu'une pastille revendiquerait un état que personne ne tient. La page le
+      dit en toutes lettres : c'est la lecture stricte du « sans automatisme
+      trompeur » de la fiche.
+- [x] Le calcul est côté web et non dans l'API : un modèle de notification avec
+      sa remise et son état de lecture est le sujet de l'étape 14, et en inventer
+      la moitié maintenant laisserait cette étape discuter avec une
+      demi-implémentation.
+
+### 13.4, clôture, terminée
+
+- [x] **La boucle du MVP jouée de bout en bout sur la pile vivante** : activité
+      donnée, commencée, contenu joué sur son origine isolée, événement xAPI
+      relayé et dédupliqué, tentative lue, santé académique affichée au parent.
+      Les preuves sont dans le rapport ; les données ont été supprimées ensuite.
+- [x] Rapport `rapport_2026-08-16_2200_dashboards.md` produit.
+- [x] Une seule Pull Request pour toute l'étape.
+
+### Points ouverts de l'étape 13
+
+- **Aucun test automatisé du web.** La CI tient TypeScript, ESLint et le build ;
+  les parcours ont été éprouvés à la main. C'est la dette principale de l'étape :
+  un rendu qui régresse ne sera vu par personne. `vitest` est déclaré dans
+  `package.json` sans être installé ni lancé, ce qui est le point de départ
+  naturel pour la résorber.
+- **Un appel d'API par enfant** sur le tableau de bord Parent. À la taille d'une
+  famille cela ne se mesure pas ; à celle d'une classe, il faudra une lecture
+  groupée.
+- **Aucun écran d'administration des profils** : créer, activer et désactiver un
+  enfant restent des appels d'API. C'est l'étape 15.
+
+## Résultats techniques de l'étape 13
+
+```text
+Ruff        : vert, format inclus
+Mypy        : vert sur 72 fichiers
+Pytest      : 562 tests réussis, dont 3 pour GET /auth/session
+TypeScript  : vert
+ESLint      : vert
+Build Next  : vert, 19 routes
+Pile vivante : /eleve sans session redirige, avec session affiche l'activité
+Pile vivante : la page de lecture rend l'iframe vers l'origine de contenu
+Pile vivante : POST /api/xapi rend 202, le rejeu ne stocke rien de plus
+Pile vivante : l'acteur revendiqué n'est pas conservé, un pseudonyme l'est
+Pile vivante : la tentative terminée rend « 1 réponse évaluée, dont 1 juste »
+Pile vivante : le parent voit la santé académique et sa phrase
+```
+
 ## Prochaine action
 
-Ouvrir l'étape 13, tableaux de bord.
+Ouvrir l'étape 14, notifications.

@@ -103,6 +103,23 @@ def validate_new_pin(value: SecretStr) -> SecretStr:
     return value
 
 
+class SessionPublic(BaseModel):
+    """Who is signed in, in the one shape both roles share.
+
+    A client rendering a page needs to know which space it is in before it can
+    ask for anything else. Without this route it would have to try the Parent
+    endpoint, read a `403`, and try the Élève one — two round trips and a refusal
+    in the logs to answer a question neither of them was asked.
+
+    It carries the display name and nothing more of the account: what each space
+    may see about itself is already served by `/auth/me` and `/auth/child/me`.
+    """
+
+    user_type: str
+    id: uuid.UUID
+    display_name: str
+
+
 class ParentPublic(BaseModel):
     """Parent fields the API is allowed to return.
 

@@ -37,4 +37,4 @@ Valider données, autorisations, responsive, accessibilité, tests et CI.
 
 ## Statut
 
-À faire.
+Terminée. Preuve : rapport `rapport_2026-08-16_2200_dashboards.md`.

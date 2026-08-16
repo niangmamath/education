@@ -37,4 +37,4 @@ Intégrer les notifications utiles dans les dashboards sans automatisme trompeur
 
 ## Statut
 
-À faire.
+Terminée. Preuve : rapport `rapport_2026-08-16_2200_dashboards.md`.

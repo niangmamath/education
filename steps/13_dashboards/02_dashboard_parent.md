@@ -37,4 +37,4 @@ Alimenter le dashboard Parent avec enfants autorisés, activités, progrès et p
 
 ## Statut
 
-À faire.
+Terminée. Preuve : rapport `rapport_2026-08-16_2200_dashboards.md`.
