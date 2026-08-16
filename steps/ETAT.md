@@ -1099,6 +1099,9 @@ explication. **Aucune migration** : le diagnostic se calcule à chaque lecture.
 - [x] Rapport `rapport_2026-08-16_1030_diagnostic_remediation.md` produit.
 - [x] ADR-015 écrite, registre des décisions mis à jour.
 - [x] Une seule Pull Request pour toute l'étape.
+- [x] Clôture distante : Pull Request #26 fusionnée le 16 août 2026, commit de
+      fusion `01a259a`, API CI et Secret Scan verts sur la Pull Request puis sur
+      `main`.
 
 ### Points ouverts de l'étape 12
 
