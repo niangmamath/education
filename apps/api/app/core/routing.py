@@ -12,6 +12,7 @@ from app.api.v1 import (
     auth,
     catalog,
     children,
+    diagnostic,
     internal,
     progress,
     referential,
@@ -31,6 +32,7 @@ api_router.include_router(assignments.router, tags=["assignments"])
 api_router.include_router(attempts.router, tags=["attempts"])
 api_router.include_router(xapi.router, tags=["xapi"])
 api_router.include_router(progress.router, tags=["progress"])
+api_router.include_router(diagnostic.router, tags=["diagnostic"])
 api_router.include_router(internal.router, tags=["internal"])
 
 

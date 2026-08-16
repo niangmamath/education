@@ -138,9 +138,21 @@ L’étape 11 **dépend de l’étape 10** : `XAP-03` produit des agrégats « �
 des événements et résultats », et ces résultats sont ceux de `TEN-03`. Un
 décalage inverse avait été inscrit par erreur le 15 août 2026 ; il est corrigé.
 
+### Phase 8, diagnostic et remédiation
+
+| ID | Travail | Dépendances | Statut | Preuve |
+|---|---|---|---|---|
+| DIA-01 | Définir les règles de diagnostic | XAP-04 | Terminé | Cinq règles nommées et publiées, `GET /api/v1/diagnostic/rules` |
+| DIA-02 | Recommander une remédiation | DIA-01, CAT-03 | Terminé | Quick Repairs de 3 à 7 minutes, causes racines d’abord, preuve finale nommée |
+| DIA-03 | Exposer le diagnostic et les prochaines actions | DIA-02 | Terminé | Diagnostic au Parent, actions à l’Élève, deux routes distinctes |
+| DIA-04 | Clôturer l’étape 12 | DIA-03 | Terminé | 544 tests, rapport du 16 août 2026, ADR-015 |
+
+L’étape 12 n’ajoute **aucune migration** : le diagnostic se calcule à chaque
+lecture, ce qui rend vraie par construction la règle « une cause racine reste une
+hypothèse jusqu’à la réévaluation ». C’est une décision consignée dans ADR-015,
+pas un oubli.
+
 ### Prochaine tâche
 
-Ouvrir l’étape 12, diagnostic et remédiation. Les progrès livrés par XAP-03 sont
-descriptifs : nommer une difficulté et proposer une suite en est délibérément
-absent, parce que c’est le sujet de l’étape 12 et qu’en poser une première
-version ailleurs ferait décider à deux endroits ce qu’est une difficulté.
+Ouvrir l’étape 13, tableaux de bord. C’est là que le web appelle l’API pour la
+première fois et que la boucle du MVP devient visible de bout en bout.

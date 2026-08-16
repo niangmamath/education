@@ -1,6 +1,6 @@
 # Registre des Décisions d'Architecture (ADR Register)
 
-> **Dernière mise à jour : 15 août 2026**
+> **Dernière mise à jour : 16 août 2026**
 > **Statut : à jour, reconstruit depuis les fichiers d'ADR**
 
 Ce document est le **registre central** de toutes les Architecture Decision Records (ADR) du projet StudentConnect. Chaque ADR documente une décision architecturale structurante prise par l'équipe.
@@ -18,7 +18,7 @@ Ce document est le **registre central** de toutes les Architecture Decision Reco
 
 ## Structure des dossiers
 
-Les quinze ADR existent toutes en fichier ; ce registre les résume et ne les
+Les seize ADR existent toutes en fichier ; ce registre les résume et ne les
 remplace pas.
 
 ```
@@ -38,7 +38,8 @@ docs/
 │   ├── ADR-011-sqlalchemy-async.md            # SQLAlchemy async et asyncpg
 │   ├── ADR-012-h5p-standalone-pilote.md       # Type H5P unique, accepté sous conditions
 │   ├── ADR-013-catalogue-lie-par-code.md      # Catalogue lié par code métier
-│   └── ADR-014-ingestion-xapi.md              # Ingestion xAPI, acteur pseudonyme, prééminence
+│   ├── ADR-014-ingestion-xapi.md              # Ingestion xAPI, acteur pseudonyme, prééminence
+│   └── ADR-015-diagnostic-explicable.md       # Diagnostic explicable et non stocké
 └── architecture/
     └── decision-register.md                   # Ce fichier
 ```
@@ -314,17 +315,34 @@ docs/
 
 ---
 
+### ADR-015 : Diagnostic explicable et non stocké
+
+| Champ | Valeur |
+|-------|--------|
+| **Titre** | Diagnostic explicable, hypothèses non stockées, et ce que chaque côté voit |
+| **Statut** | ✅ **Accepted** |
+| **Date** | 16 août 2026 |
+| **Auteur** | Équipe StudentConnect |
+| **Décision** | Les seuils du diagnostic sont publiés, rien n'est stocké, le score résume sans remplacer, et l'Élève voit des actions quand le Parent voit le diagnostic |
+| **Fichier** | [docs/adr/ADR-015-diagnostic-explicable.md](../adr/ADR-015-diagnostic-explicable.md) |
+| **Dépendances** | ADR-013, ADR-014 |
+| **Impact** | Produit, Données |
+
+**Résumé** : Une lacune est une candidate qui porte sa règle et ses comptes ; une compétence jamais travaillée n'en est pas une. Le regroupement ajoute une lecture sans en retirer aucune. Rien n'est stocké, ce qui rend vraie par construction la règle « une cause racine reste une hypothèse jusqu'à la réévaluation ». Le score de santé résume les lectures par compétence sans en remplacer une, et ne compare à personne.
+
+---
+
 ## Statistiques
 
 | Statut | Count |
 |--------|-------|
-| ✅ Accepted | 14 |
+| ✅ Accepted | 15 |
 | ⚠️ Proposed | 1 |
 | ⏳ À créer | 0 |
 | ❌ Deprecated | 0 |
 | ⛔ Rejected | 0 |
 | 🔄 Superseeded | 0 |
-| **Total** | **15** |
+| **Total** | **16** |
 
 Une seule ADR reste ouverte, ADR-000 sur la licence du projet. ADR-012 est
 acceptée **sous conditions**, comptée ici parmi les acceptées. Ses huit conditions
@@ -338,7 +356,7 @@ aucune n'est plus entièrement à faire.
 
 1. **Vérifier** qu'aucune décision existante ne couvre déjà le sujet
 2. **Discuter** avec l'équipe avant de rédiger
-3. **Suivre la forme des ADR existantes** : statut, date, décision, conséquences. Aucun template séparé n'est maintenu, les quinze fichiers en tiennent lieu
+3. **Suivre la forme des ADR existantes** : statut, date, décision, conséquences. Aucun template séparé n'est maintenu, les seize fichiers en tiennent lieu
 4. **Numérotation** : Utiliser le prochain numéro disponible
 5. **Statut initial** : `Proposed`
 6. **Créer un PR** avec le nouvel ADR

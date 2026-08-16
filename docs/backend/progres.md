@@ -82,9 +82,11 @@ faite pour être montrée à la personne dont elle parle.
 
 ## Ce que les progrès ne font pas
 
-- **Aucun diagnostic, aucune recommandation, aucune tendance nommée.** C'est
-  l'étape 12, et en poser une première version ici ferait décider à deux endroits
-  ce qu'est une difficulté. Ce qui est rendu est descriptif.
+- **Aucun diagnostic, aucune recommandation, aucune tendance nommée.** En poser
+  une première version ici ferait décider à deux endroits ce qu'est une
+  difficulté. Ce qui est rendu est descriptif ; nommer une lacune et proposer une
+  suite est l'étape 12, `diagnostic-remediation.md`, qui lit ce fichier sans
+  jamais le recalculer.
 - **Aucune vue famille**, aucune comparaison entre enfants, aucun classement.
 - **Aucun libellé de compétence** : le lien avec le référentiel se fait par
   code, ADR-013, et résoudre les libellés appartient à qui affiche.
