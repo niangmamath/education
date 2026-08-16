@@ -1267,6 +1267,16 @@ fois qu'il faut dire **comment**.
       Les preuves sont dans le rapport ; les données ont été supprimées ensuite.
 - [x] Rapport `rapport_2026-08-16_2200_dashboards.md` produit.
 - [x] Une seule Pull Request pour toute l'étape.
+- [x] Clôture distante : Pull Request #30 fusionnée le 16 août 2026, commit de
+      fusion `646b172`, API CI, Web CI et Secret Scan verts sur la Pull Request
+      puis sur `main`. **Web CI passe pour la première fois sur du code qui
+      appelle l'API.**
+- [x] Un défaut trouvé par la CI et corrigé dans la même Pull Request : `lib/`,
+      hérité de la section Python du `.gitignore`, avalait `apps/web/lib/`.
+      Cinq fichiers de source n'étaient jamais arrivés dans le dépôt — le
+      typage passait en local et ne pouvait pas passer en CI. C'est la
+      cinquième fois sur ce projet qu'un contrôle dit une chose ici et une
+      autre là ; celle-ci vient d'un motif d'exclusion non ancré.
 
 ### Points ouverts de l'étape 13
 
