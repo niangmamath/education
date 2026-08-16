@@ -31,15 +31,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.assignments import service as assignments_service
-from app.core.exceptions import ConflictException, NotFoundException
+from app.core.exceptions import ConflictException
 from app.diagnostic import remediation, rules
-from app.models.assignment import ASSIGNMENT_ORIGIN_PARENT, ASSIGNMENT_ORIGIN_SYSTEM
-from app.models.identity import (
-    REMEDIATION_MODE_AUTOMATIC,
-    REMEDIATION_MODE_PROPOSED,
-    Child,
-    Parent,
-)
+from app.models.identity import Parent
 from app.models.referential import (
     VERSION_STATUS_PUBLISHED,
     Competency,
@@ -105,12 +99,8 @@ async def child_diagnostic(db: AsyncSession, child_id: uuid.UUID) -> ChildDiagno
     root_causes = _root_causes([row.competency_code for row in gaps], tree)
     _defer_behind_prerequisites(gaps, root_causes)
 
-    child = await db.get(Child, child_id)
     return ChildDiagnostic(
         child_id=child_id,
-        remediation_mode=(
-            child.remediation_mode if child is not None else REMEDIATION_MODE_PROPOSED
-        ),
         health=_health(progress.competencies),
         localized_gaps=gaps,
         general_gaps=general,
@@ -172,40 +162,11 @@ async def apply_recommendations(
     )
 
 
-async def assign_automatically(db: AsyncSession, child_id: uuid.UUID) -> list[str]:
-    """Give the first proposal, when the parent has said the platform may.
-
-    Called after an attempt is completed, because that is the moment the reading
-    changes and a new difficulty can appear. Nothing happens in `proposed` mode,
-    which is the default.
-
-    **One activity, never a list.** The one proposed first is the one nothing is
-    waiting on — a root cause when there is one — so the automatic path works on
-    what blocks rather than on what buts, exactly as the manual one does. Handing
-    a child five repairs because five competencies slipped would turn a helping
-    hand into a punishment.
-    """
-    child = await db.get(Child, child_id)
-    if child is None or child.remediation_mode != REMEDIATION_MODE_AUTOMATIC:
-        return []
-
-    parent = await db.get(Parent, child.parent_id)
-    if parent is None or not parent.is_active:
-        return []
-
-    diagnostic = await child_diagnostic(db, child_id)
-    assigned, _ = await _give(
-        db, parent, child_id, diagnostic.recommendations[:1], ASSIGNMENT_ORIGIN_SYSTEM
-    )
-    return assigned
-
-
 async def _give(
     db: AsyncSession,
     parent: Parent,
     child_id: uuid.UUID,
     proposals: Sequence[Recommendation],
-    origin: str = ASSIGNMENT_ORIGIN_PARENT,
 ) -> tuple[list[str], list[str]]:
     """Turn proposals into assignments, skipping the ones already refused."""
     assigned: list[str] = []
@@ -217,8 +178,7 @@ async def _give(
                 parent,
                 child_id,
                 proposal.activity_code,
-                note=_note(proposal, origin),
-                origin=origin,
+                note=_note(proposal),
             )
         except ConflictException:
             # Already waiting for her, or the ceiling of open assignments is
@@ -230,15 +190,13 @@ async def _give(
     return assigned, skipped
 
 
-def _note(proposal: Recommendation, origin: str) -> str:
-    """What the child is told about an activity she did not ask for.
+def _note(proposal: Recommendation) -> str:
+    """What the child is told about an activity her parent has just given her.
 
     A note in a child's own space should say something to her, not report a
     diagnosis: it names the work, never the difficulty behind it, for the same
     reason `child_next_steps` shows no gap.
     """
-    if origin == ASSIGNMENT_ORIGIN_SYSTEM:
-        return f"Un petit exercice de {proposal.duration_minutes} minutes pour s’entraîner."
     return f"À faire quand tu veux, {proposal.duration_minutes} minutes."
 
 
@@ -253,20 +211,6 @@ def _applied_reason(assigned: list[str], skipped: list[str]) -> str:
         f"{'s' if len(skipped) > 1 else ''} : déjà en attente, ou plafond "
         "d’activités en cours atteint."
     )
-
-
-async def set_remediation_mode(
-    db: AsyncSession, parent: Parent, child_id: uuid.UUID, mode: str
-) -> Child:
-    """Record how far this parent lets the platform act for this child."""
-    child = await db.scalar(
-        select(Child).where(Child.id == child_id, Child.parent_id == parent.id)
-    )
-    if child is None:
-        raise NotFoundException(message=CHILD_NOT_FOUND_MESSAGE)
-    child.remediation_mode = mode
-    await db.flush()
-    return child
 
 
 def _defer_behind_prerequisites(

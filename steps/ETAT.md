@@ -429,7 +429,7 @@ Tests      : trois pages de deux rendent cinq compétences distinctes
 
 ## Dernier rapport appliqué
 
-`steps/12_diagnostic_remediation/rapport_2026-08-16_1600_remediation_reglable.md`.
+`steps/12_diagnostic_remediation/rapport_2026-08-16_1900_retrait_mode_automatique.md`.
 
 ## Historique de clôture de l’étape 06
 
@@ -1103,45 +1103,55 @@ explication. **Aucune migration** : le diagnostic se calcule à chaque lecture.
       fusion `01a259a`, API CI et Secret Scan verts sur la Pull Request puis sur
       `main`.
 
-### Deux décisions infirmées par le propriétaire, corrigées le 16 août 2026
+### Corrections du propriétaire, 16 août 2026
 
-Travaux menés après la clôture, sur la branche `feat/remediation-reglable`,
-migration `0011_remediation_settings` réversible. ADR-015 amendée.
+Travaux menés après la clôture, en deux temps, sur les branches
+`feat/remediation-reglable` puis `chore/retirer-mode-automatique`. Migrations
+`0011` et `0012` réversibles. ADR-015 amendée.
 
-- [x] **L'automatisation est un réglage du parent**, ni imposée ni absente.
-      L'agent avait tranché qu'il n'y aurait aucune assignation automatique ; le
-      propriétaire a infirmé : « le système doit pouvoir faciliter la tâche au
-      parent […] mais tout ça doit être réglable par le parent ».
-      `auth_children.remediation_mode` vaut `proposed`, le défaut prudent, ou
-      `automatic`. Porté par l'**enfant** et non par le parent : la confiance
-      accordée à une automatisation dépend de la situation d'un enfant.
-- [x] `POST /children/{id}/remediation` donne les propositions sur la parole du
-      parent, dans les deux modes. En mode `automatic`, **une seule** activité est
-      donnée à la clôture d'une tentative — remettre cinq réparations parce que
-      cinq compétences ont glissé transformerait un coup de main en punition.
-- [x] `assignments.origin` distingue `parent` de `system`. Sans elle, un parent
-      ne pourrait plus dire le lendemain ce qu'il a choisi de ce qui a été fait en
-      son nom. C'est la trace sur laquelle s'appuiera l'avertissement du parent,
-      dont la remise appartient à l'étape 14.
 - [x] **Une compétence dont le prérequis est en lacune n'est plus proposée du
       tout**, au lieu d'être proposée en second. Le propriétaire a rappelé
       l'intention : « ne pas lui demander d'assurer des opérations mathématiques
       alors que le vrai problème c'est le comptage, lui demander de conjuguer
       alors qu'il peine à reconnaître les groupes de verbes ». Sixième règle
-      publiée, `defer-behind-prerequisite`. La lacune reportée **reste affichée**,
-      avec ce qu'elle attend : reporter ce qu'on fait travailler n'est pas cacher
-      ce qu'on a trouvé.
+      publiée, `defer-behind-prerequisite`. La lacune reportée **reste
+      affichée**, avec ce qu'elle attend : reporter ce qu'on fait travailler
+      n'est pas cacher ce qu'on a trouvé. Les chaînes se règlent seules.
 - [x] **Le score est pondéré par le nombre de tentatives terminées.** Une
       compétence reprise dix fois pèse dix fois une compétence vue une seule. Le
-      coût est écrit : ce qui a été le plus refait porte le plus de poids, et ce
-      n'est pas toujours ce qui compte le plus.
-- [x] 24 tests supplémentaires, 568 au total.
+      total des tentatives voyage avec le score : une moyenne pondérée dont le
+      dénominateur est caché n'est pas vérifiable.
+- [x] `POST /children/{id}/remediation` **donne les propositions sur la parole du
+      parent**. Ce que la route retire est la ressaisie, pas la décision.
+
+### Un aller-retour sur l'automatisation, et ce qu'il laisse
+
+L'agent avait d'abord refusé toute assignation automatique. Le propriétaire a
+infirmé — « le système doit pouvoir faciliter la tâche au parent […] mais tout ça
+doit être réglable par le parent » — et un mode `automatic` par enfant a été
+construit. Il a ensuite tranché : « on abandonne le mode automatique pour le
+moment, on reste comme avant ».
+
+- [x] Mode automatique retiré, migration `0012` : `auth_children.remediation_mode`
+      et `assignments.origin` supprimées. Une colonne à valeur unique se lit comme
+      une distinction que le code ferait ; la garder « pour plus tard » coûterait
+      un malentendu à chaque rencontre.
+- [x] **La plateforme n'assigne rien d'elle-même.** Ni à la lecture d'un
+      diagnostic, ni à la clôture d'une tentative.
+- [x] Arbitrage à retenir si l'automatisation revient : le réglage appartient au
+      **parent**, avec une valeur par enfant — et non au profil de l'enfant, ce
+      que l'agent avait choisi.
+- [x] La leçon de conception : retirer une ressaisie est de l'ergonomie, choisir
+      ce qu'un enfant fera est une décision. La plateforme fait la première et
+      laisse la seconde.
+- [x] 559 tests au total : neuf tests disparaissent avec la fonctionnalité qu’ils
+      éprouvaient.
 
 ### Points ouverts de l'étape 12
 
-- **Aucune notification.** Le mode automatique laisse une trace lisible, mais
-  rien ne va encore chercher le parent : le « puis aviser le parent » demandé
-  attend les notifications de l'étape 14.
+- **Aucune notification**, et plus rien à notifier automatiquement : le « puis
+  aviser le parent » demandé le 16 août attend l'étape 14, et n'a de sens que si
+  une automatisation revient.
 - Sans édition du référentiel en vigueur, les lacunes sont rendues mais ni
   regroupées ni expliquées par un prérequis ; `tree_available` le dit, pour
   qu'une réponse courte ne se lise pas « aucune difficulté ».
@@ -1151,8 +1161,8 @@ migration `0011_remediation_settings` réversible. ADR-015 amendée.
 ```text
 Ruff       : vert, format inclus
 Mypy       : vert sur 72 fichiers
-Alembic    : 0011_remediation_settings (head), check vert, downgrade base et retour au head
-Pytest     : 568 tests réussis, dont 69 dédiés au diagnostic
+Alembic    : 0012_drop_automatic_remediation (head), check vert, downgrade base et retour au head
+Pytest     : 559 tests réussis, dont 60 dédiés au diagnostic
 Tests      : une compétence jamais travaillée n'est jamais une lacune
 Tests      : une lecture intermédiaire seule n'est pas une lacune, deux le sont
 Tests      : les lacunes regroupées restent listées une par une
@@ -1169,9 +1179,9 @@ Tests      : une compétence dont le prérequis est en lacune n'est pas proposé
 Tests      : la lacune reportée reste affichée, avec ce qu'elle attend
 Tests      : une compétence reprise dix fois pèse dix fois celle vue une seule
 Tests      : lire le diagnostic n'affecte rien
-Tests      : le mode par défaut ne donne rien de lui-même
-Tests      : le mode automatique donne une activité, et une seule
-Tests      : ce que la plateforme donne se distingue de ce que le parent donne
+Tests      : terminer une tentative n'affecte rien
+Tests      : le parent donne les propositions en un appel
+Tests      : appliquer deux fois n'ajoute rien et le dit
 ```
 
 ## Prochaine action

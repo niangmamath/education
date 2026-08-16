@@ -155,8 +155,7 @@ valide jamais seule une compétence.**
 
 | Route | Qui | Ce qu'elle rend |
 |---|---|---|
-| `GET /api/v1/children/{child_id}/diagnostic` | Parent | Lacunes, regroupements, hypothèses, score, recommandations, mode |
-| `PUT /api/v1/children/{child_id}/remediation-mode` | Parent | Règle jusqu'où la plateforme peut agir |
+| `GET /api/v1/children/{child_id}/diagnostic` | Parent | Lacunes, regroupements, hypothèses, score, recommandations |
 | `POST /api/v1/children/{child_id}/remediation` | Parent | Donne les activités proposées |
 | `GET /api/v1/me/next-steps` | Élève | Trois activités courtes, et rien d'autre |
 | `GET /api/v1/diagnostic/rules` | Toute session | Les six règles, condition et raison |
@@ -175,58 +174,35 @@ Les règles sont lisibles par toute session authentifiée, comme celles de
 l'étape 10 : les publier derrière une porte qu'un seul côté ouvre reviendrait à
 ne les publier à personne.
 
-## Jusqu'où la plateforme peut agir, et qui le décide
+## La plateforme propose, le parent donne
 
-`auth_children.remediation_mode` vaut `proposed` ou `automatic`. Ni « le système
-n'assigne jamais » ni « le système assigne toujours » : **le parent choisit**, et
-le défaut est le mode prudent, donc un parent qui n'ouvre jamais le réglage n'est
-jamais agi pour.
+**Rien n'est jamais affecté par la plateforme elle-même.** Ni à la lecture d'un
+diagnostic — un `GET` ne crée rien —, ni à la clôture d'une tentative, qui serait
+pourtant le moment naturel puisque c'est là que la lecture change.
 
-Le réglage est porté par **l'enfant et non par le parent** : la confiance qu'on
-accorde à une automatisation dépend de la situation d'un enfant, et une famille
-avec une enfant de six ans et une de onze répond plausiblement différemment pour
-chacune.
+Ce qui existe est une route qui **retire la ressaisie, pas la décision** :
 
-### Deux chemins
+`POST /api/v1/children/{id}/remediation` donne les activités proposées, sur la
+parole du parent. Être d'accord avec les propositions ne doit pas obliger à les
+recopier une à une dans le formulaire d'affectation. Ce qui est déjà en attente,
+ou ce qui passerait le plafond d'activités en cours, est **écarté et nommé**
+plutôt que forcé.
 
-**Sur la parole du parent**, dans les deux modes :
-`POST /api/v1/children/{id}/remediation` donne les activités proposées. Être
-d'accord avec elles ne doit pas obliger à les ressaisir dans le formulaire
-d'affectation. Ce qui est déjà en attente, ou ce qui passerait le plafond
-d'activités en cours, est **écarté et nommé** plutôt que forcé.
+La distinction vaut d'être gardée : retirer une ressaisie est de l'ergonomie,
+choisir ce qu'un enfant fera est une décision. La plateforme fait la première et
+laisse la seconde.
 
-**En mode `automatic`**, une activité est donnée à la clôture d'une tentative,
-parce que c'est le moment où la lecture change et où une difficulté peut
-apparaître. **Une seule, jamais une liste** : remettre cinq réparations parce que
-cinq compétences ont glissé transformerait un coup de main en punition. Et c'est
-celle que rien n'attend — une cause racine s'il y en a une —, donc le chemin
-automatique travaille sur ce qui bloque exactement comme le manuel.
-
-Le déclenchement se fait depuis la **route** de clôture d'une tentative, jamais
-depuis le service : un service qui affecterait du travail comme effet de bord
-d'un « j'ai fini » ferait deux choses à la fois, et une seule serait dans son nom.
-Pour la même raison, **aucune lecture n'affecte quoi que ce soit** : un `GET` ne
-crée rien, et c'est toute la raison d'être de la route d'application.
-
-### Qui a décidé reste lisible
-
-`assignments.origin` vaut `parent` ou `system`, posé par le serveur. Un parent
-qui laisse la plateforme agir doit rester capable de distinguer ce qu'elle a
-choisi de ce qui a été fait en son nom : sans cette colonne, les deux seraient
-indiscernables le lendemain. C'est aussi la trace sur laquelle s'appuiera
-l'avertissement du parent, dont la **remise** appartient aux notifications de
-l'étape 14.
-
-Le plafond d'activités en cours et l'interdiction du doublon s'appliquent aux
-deux chemins sans exception : ces règles protègent l'enfant de la plateforme
-exactement comme elles la protègent d'un geste malheureux d'un parent.
+Un mode automatique a existé brièvement, réglable par enfant ; il a été retiré à
+la demande du propriétaire, colonnes comprises, par la migration `0012`. S'il
+revient, son réglage appartiendra au **parent**, avec une valeur par enfant.
+Voir ADR-015.
 
 ## Ce que l'étape 12 ne fait pas
 
 - **Aucun diagnostic médical, psychologique ou comportemental.** Ce qui est
   nommé est une compétence lue à partir de réponses, rien d'autre.
-- **Aucune notification.** Le mode automatique laisse une trace lisible, mais
-  rien ne va encore chercher le parent : c'est l'étape 14.
+- **Aucune assignation par la plateforme.** Elle propose, le parent donne.
+- **Aucune notification** : c'est l'étape 14.
 - **Aucun classement, aucune cohorte, aucun percentile.** Le score ne compare à
   personne, et il n'existe aucune route qui compare deux enfants.
 - **Aucune IA générative de diagnostic**, hors périmètre du projet par décision.

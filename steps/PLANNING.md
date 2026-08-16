@@ -147,14 +147,15 @@ décalage inverse avait été inscrit par erreur le 15 août 2026 ; il est corri
 | DIA-03 | Exposer le diagnostic et les prochaines actions | DIA-02 | Terminé | Diagnostic au Parent, actions à l’Élève, deux routes distinctes |
 | DIA-04 | Clôturer l’étape 12 | DIA-03 | Terminé | 544 tests, rapport du 16 août 2026, ADR-015 |
 
-| DIA-05 | Rendre l’automatisation réglable et reporter derrière le prérequis | DIA-04 | Terminé | Migration `0011`, mode par enfant, `origin` sur l’affectation, 568 tests |
+| DIA-05 | Reporter derrière le prérequis, pondérer le score, éviter la ressaisie | DIA-04 | Terminé | Migrations `0011` et `0012`, sixième règle publiée, 559 tests |
 
 Le diagnostic lui-même se calcule à chaque lecture et ne se stocke pas, ce qui
 rend vraie par construction la règle « une cause racine reste une hypothèse
-jusqu’à la réévaluation ». `DIA-05` corrige deux décisions infirmées par le
-propriétaire : l’automatisation devient un **réglage du parent** avec un défaut
-prudent, et une compétence dont le prérequis est en lacune n’est plus proposée du
-tout. ADR-015 amendée en conséquence.
+jusqu’à la réévaluation ». `DIA-05` applique les corrections du propriétaire : une compétence dont le
+prérequis est en lacune n’est plus proposée du tout, le score est pondéré par le
+nombre de tentatives, et une route évite au parent de ressaisir les propositions.
+Un mode automatique a été construit puis **retiré à sa demande** ; la plateforme
+n’assigne rien d’elle-même. ADR-015 amendée en conséquence.
 
 ### Prochaine tâche
 

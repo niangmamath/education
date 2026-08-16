@@ -156,7 +156,6 @@ def _parent_view(assignment: Any) -> AssignmentPublic:
         child_id=assignment.child_id,
         child_pseudonym=assignment.child.pseudonym,
         status=assignment.status,
-        origin=assignment.origin,
         note=assignment.note,
         due_on=assignment.due_on,
         activity=assignment.activity,

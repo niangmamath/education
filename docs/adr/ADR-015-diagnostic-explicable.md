@@ -137,53 +137,51 @@ le plus de poids, et ce n'est pas toujours ce qui compte le plus. Le total des
 tentatives voyage avec le score, parce qu'une moyenne pondérée dont le
 dénominateur est caché ne peut pas être vérifiée par qui on la montre.
 
-### L'automatisation est un réglage du parent
+### La plateforme n'assigne rien d'elle-même, et une route évite la ressaisie
 
-*Amendement du 16 août 2026.* La première version excluait toute assignation
-automatique, au motif qu'automatiser déciderait à la place d'un adulte. Le
-propriétaire a infirmé cette décision :
+*Amendement du 16 août 2026, en deux temps, et il vaut la peine de garder les
+deux.*
+
+La première version excluait toute assignation automatique, au motif
+qu'automatiser déciderait à la place d'un adulte. Le propriétaire a **infirmé** :
 
 > « Le système doit pouvoir faciliter la tâche au parent. Après avoir fait un
 > diagnostic, il doit pouvoir lui proposer puis aviser le parent, mais tout ça
 > doit être réglable par le parent : il peut décider de faire entièrement
 > confiance et d'approuver que le système assigne directement. »
 
-Donc ni « le système n'assigne jamais » ni « le système assigne toujours ».
+Un mode `automatic`, réglable par enfant, a donc été construit. Le propriétaire a
+ensuite tranché : **« on abandonne le mode automatique pour le moment, on reste
+comme avant »**. Il a été retiré, colonnes comprises, par la migration `0012`.
 
-`auth_children.remediation_mode` vaut `proposed` ou `automatic`. Il est porté par
-**l'enfant et non par le parent** : la confiance qu'on accorde à une
-automatisation dépend de la situation d'un enfant, et une famille avec une
-enfant de six ans et une de onze répond plausiblement différemment pour chacune.
-`proposed` est le défaut, donc un parent qui n'ouvre jamais le réglage n'est
-jamais agi pour.
-
-Deux chemins en découlent :
+Ce qui subsiste de l'aller-retour, et qui répond au « faciliter la tâche » sans
+rien décider à la place de personne :
 
 - `POST /api/v1/children/{id}/remediation` donne les propositions **sur la parole
-  du parent**, dans les deux modes. C'est la moitié « faciliter la tâche » : être
-  d'accord avec les propositions ne doit pas obliger à les ressaisir dans le
-  formulaire d'affectation.
-- En mode `automatic`, **une** activité est donnée à la clôture d'une tentative,
-  parce que c'est le moment où la lecture change. Une seule, jamais une liste :
-  remettre cinq réparations parce que cinq compétences ont glissé transformerait
-  un coup de main en punition. Et c'est celle que rien n'attend — une cause
-  racine s'il y en a une —, donc le chemin automatique travaille sur ce qui
-  bloque exactement comme le manuel.
+  du parent**. Ce que la route retire est la ressaisie, pas la décision : être
+  d'accord avec les propositions ne doit pas obliger à les recopier une à une
+  dans le formulaire d'affectation.
+- Ce qui est déjà en attente, ou ce qui passerait le plafond d'activités en
+  cours, est **écarté et nommé** plutôt que forcé.
+- Aucune lecture n'affecte quoi que ce soit : un `GET` ne crée rien, et la
+  clôture d'une tentative ne donne rien non plus.
 
-L'assignation automatique se déclenche depuis la **route** de clôture d'une
-tentative et non depuis le service des tentatives : un service qui affecterait du
-travail comme effet de bord d'un « j'ai fini » ferait deux choses à la fois, et
-une seule serait dans son nom.
+**La leçon de conception retenue** : quand une fonctionnalité pourrait agir à la
+place du parent, la question n'est pas « automatiser ou refuser » mais « qu'est-ce
+qui est de l'ergonomie et qu'est-ce qui est de la décision ». Retirer une
+ressaisie est de l'ergonomie ; choisir ce qu'un enfant fera est une décision.
 
-`assignments.origin` vaut `parent` ou `system`. Un parent qui laisse la
-plateforme agir doit rester capable de distinguer ce qu'elle a choisi de ce qui a
-été fait en son nom — sans cette colonne, les deux seraient indiscernables le
-lendemain. C'est aussi la trace sur laquelle s'appuiera le « puis aviser le
-parent » demandé, dont la **remise** appartient aux notifications de l'étape 14.
+**Où vivra le réglage s'il revient.** Le propriétaire a corrigé l'agent sur ce
+point avant d'abandonner la fonctionnalité, et l'arbitrage reste valable : « le
+réglage doit être porté par le parent pour cette version, mais si le ou les
+parents ont plusieurs enfants ils peuvent faire différents réglages selon
+l'enfant ». Donc un réglage **appartenant au parent**, avec une valeur par
+enfant — et non une colonne du profil de l'enfant, ce que l'agent avait choisi.
 
-Le plafond d'activités en cours et l'interdiction du doublon s'appliquent aux
-deux chemins sans exception : ces règles protègent l'enfant de la plateforme
-exactement comme elles la protègent d'un geste malheureux d'un parent.
+Les colonnes de `0011` ont été supprimées plutôt que laissées en place « pour
+plus tard ». Une colonne à valeur unique se lit comme une distinction que le code
+ferait, et il ne la fait pas ; la garder coûterait un malentendu à chaque
+rencontre, et la ramener coûte une migration.
 
 ### Une Quick Repair dure de 3 à 7 minutes, et mène à une preuve
 
@@ -221,10 +219,10 @@ n'est pas pour elle.
 - Le MVP tient enfin sa boucle : lacune détectée, Quick Repair recommandé,
   contenu joué, résultat capturé, lacune et score recalculés. Il manque
   l'affichage, qui est l'étape 13.
-- L'assignation automatique existe et **est un réglage**, dont le défaut reste la
-  proposition. Chaque fois qu'une fonctionnalité future pourrait agir à la place
-  du parent, la bonne conception est un réglage confié au parent avec un défaut
-  prudent, et non un refus d'automatiser au nom du principe.
+- **La plateforme n'assigne rien d'elle-même dans cette version.** Elle propose,
+  et le parent donne — en un appel plutôt qu'en ressaisissant. Un mode
+  automatique ne sera pas reconstruit sans une demande nouvelle et explicite ; s'il
+  revient, son réglage appartiendra au parent, avec une valeur par enfant.
 - Le calcul à la lecture coûte quelques requêtes par appel, sur des volumes
   d'une famille. Si les tableaux de bord de l'étape 13 demandent un cache, ce
   sera une décision de cache prise au grand jour, comme déjà écrit dans ADR-014.

@@ -33,7 +33,6 @@ from app.attempts.service import abandon_running_attempt
 from app.core.exceptions import ConflictException, NotFoundException
 from app.models.assignment import (
     ASSIGNMENT_OPEN_STATUSES,
-    ASSIGNMENT_ORIGIN_PARENT,
     MAX_OPEN_ASSIGNMENTS,
     ASSIGNMENT_STATUS_ASSIGNED,
     ASSIGNMENT_STATUS_CANCELLED,
@@ -98,16 +97,8 @@ async def assign_activity(
     activity_code: str,
     note: str | None = None,
     due_on: date | None = None,
-    origin: str = ASSIGNMENT_ORIGIN_PARENT,
 ) -> Assignment:
-    """Give one published activity to one of this parent's children.
-
-    `origin` is the caller's, never the client's: it says whether the parent
-    asked for this or the platform did on her behalf, and a payload that named it
-    would let a browser claim either. Every refusal below applies to both — the
-    ceiling and the no-duplicate rule protect a child from the platform exactly
-    as they protect her from a slip of a parent's hand.
-    """
+    """Give one published activity to one of this parent's children."""
     if due_on is not None and due_on < date.today():
         # Refused rather than accepted and shown as already late: nobody means
         # to give a child something that was due yesterday.
@@ -154,7 +145,6 @@ async def assign_activity(
         child_id=child.id,
         assigned_by_parent_id=parent.id,
         activity_id=activity.id,
-        origin=origin,
         note=note,
         due_on=due_on,
     )

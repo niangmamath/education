@@ -47,10 +47,6 @@ class AssignmentPublic(BaseModel):
     child_id: uuid.UUID
     child_pseudonym: str
     status: str
-    # `parent` or `system`. A parent who lets the platform assign a remediation
-    # for her must be able to tell what she chose from what was done in her name;
-    # it travels on the parent's view only, since it says nothing a child needs.
-    origin: str
     note: str | None
     due_on: date | None
     activity: AssignedActivity
