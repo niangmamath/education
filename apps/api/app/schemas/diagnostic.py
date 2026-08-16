@@ -13,9 +13,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Literal
-
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Field
 
 
 class LocalizedGap(BaseModel):
@@ -108,10 +106,6 @@ class ChildDiagnostic(BaseModel):
     """What the platform proposes about one child, for her parent."""
 
     child_id: uuid.UUID
-    # How far this parent lets the platform act for this child. Returned with the
-    # diagnostic so that a client showing recommendations can say whether they
-    # will be acted on, without a second call.
-    remediation_mode: str
     # Absent when nothing has been observed. There is no zero for it: zero would
     # say the work went badly, and nothing went at all.
     health: Health | None = None
@@ -145,21 +139,6 @@ class NextSteps(BaseModel):
 
     steps: list[NextStep] = Field(default_factory=list)
     computed_at: datetime
-
-
-class RemediationModeRequest(BaseModel):
-    """How far the parent lets the platform act for one child."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    mode: Literal["proposed", "automatic"]
-
-
-class RemediationModePublic(BaseModel):
-    """The setting as it now stands."""
-
-    child_id: uuid.UUID
-    mode: str
 
 
 class AppliedRemediation(BaseModel):

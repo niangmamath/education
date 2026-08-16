@@ -59,13 +59,6 @@ ASSIGNMENT_OPEN_STATUSES: Final = (
     ASSIGNMENT_STATUS_IN_PROGRESS,
 )
 
-# Who decided. A parent may let the platform assign a remediation for her, and
-# when she does she must still be able to tell what she chose from what was done
-# in her name. Set by the server; a payload that mentions it is refused.
-ASSIGNMENT_ORIGIN_PARENT: Final = "parent"
-ASSIGNMENT_ORIGIN_SYSTEM: Final = "system"
-ASSIGNMENT_ORIGINS: Final = (ASSIGNMENT_ORIGIN_PARENT, ASSIGNMENT_ORIGIN_SYSTEM)
-
 MAX_NOTE_LENGTH: Final = 500
 
 # A child cannot be given an unbounded pile of work. The ceiling counts only what
@@ -97,7 +90,6 @@ class Assignment(Base):
             "status <> 'cancelled' OR cancelled_at IS NOT NULL",
             name="ck_assignments_cancelled_at",
         ),
-        CheckConstraint("origin IN ('parent', 'system')", name="ck_assignments_origin"),
         # The same activity may not be owed twice at once — that would be a
         # slip of the hand, not an intention. It may be given again once the
         # first one is finished or called off, and that is a second row.
@@ -140,15 +132,6 @@ class Assignment(Base):
         nullable=False,
         default=ASSIGNMENT_STATUS_ASSIGNED,
         server_default=ASSIGNMENT_STATUS_ASSIGNED,
-    )
-    # Whether the parent asked for this, or the platform did on her behalf. The
-    # owning parent stays on `assigned_by_parent_id` either way — the assignment
-    # belongs to that account — and this says who made the call.
-    origin: Mapped[str] = mapped_column(
-        String(16),
-        nullable=False,
-        default=ASSIGNMENT_ORIGIN_PARENT,
-        server_default=ASSIGNMENT_ORIGIN_PARENT,
     )
     # A word from the parent to the child, shown with the activity.
     note: Mapped[str | None] = mapped_column(Text, nullable=True)

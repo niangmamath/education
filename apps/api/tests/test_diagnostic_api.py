@@ -531,49 +531,20 @@ class TestADependentGapIsDeferredBehindItsPrerequisite:
         assert gap is not None and gap["blocked_by"] is None
 
 
-class TestTheParentSetsHowFarThePlatformMayGo:
-    def test_the_cautious_mode_is_the_default(self, family: Family) -> None:
-        """A parent who never opens the setting is never acted for."""
-        body = family.as_parent().get(family.diagnostic_url).json()
-
-        assert body["remediation_mode"] == "proposed"
-
-    def test_a_parent_may_switch_to_automatic_and_back(self, family: Family) -> None:
-        parent = family.as_parent()
-        url = f"/api/v1/children/{family.child_id}/remediation-mode"
-
-        assert parent.put(url, json={"mode": "automatic"}).json()["mode"] == "automatic"
-        assert parent.put(url, json={"mode": "proposed"}).json()["mode"] == "proposed"
-
-    def test_an_unknown_mode_is_refused(self, family: Family) -> None:
-        refused = family.as_parent().put(
-            f"/api/v1/children/{family.child_id}/remediation-mode",
-            json={"mode": "whatever"},
-        )
-
-        assert refused.status_code == 422
-
-    def test_a_child_may_not_set_it(self, family: Family) -> None:
-        refused = family.as_child().put(
-            f"/api/v1/children/{family.child_id}/remediation-mode",
-            json={"mode": "automatic"},
-        )
-
-        assert refused.status_code == 403
-
-    def test_another_familys_child_does_not_exist(self, client: TestClient) -> None:
-        first = Family(client)
-        second = Family(client)
-
-        refused = second.as_parent().put(
-            f"/api/v1/children/{first.child_id}/remediation-mode",
-            json={"mode": "automatic"},
-        )
-
-        assert refused.status_code == 404
-
-
 class TestNothingIsGivenUntilSomebodySaysSo:
+    def test_finishing_an_attempt_assigns_nothing(
+        self, family: Family, catalogue: dict[str, str]
+    ) -> None:
+        """The platform never gives work by itself: it proposes, a parent gives."""
+        work_through(family, catalogue["a_source"], correct=False)
+
+        owed = (
+            family.as_parent()
+            .get(ASSIGNMENTS_URL, params={"child_id": family.child_id})
+            .json()
+        )
+        assert catalogue["a_repair"] not in [row["activity"]["code"] for row in owed]
+
     def test_reading_the_diagnostic_assigns_nothing(
         self, family: Family, catalogue: dict[str, str]
     ) -> None:
@@ -597,19 +568,15 @@ class TestNothingIsGivenUntilSomebodySaysSo:
         assert applied.status_code == 200
         assert applied.json()["assigned"] == [catalogue["a_repair"]]
 
-    def test_what_is_given_that_way_is_marked_as_the_parents(
+    def test_what_is_given_that_way_really_reaches_the_child(
         self, family: Family, catalogue: dict[str, str]
     ) -> None:
-        """She called the route, so it is her decision and it says so."""
         work_through(family, catalogue["a_source"], correct=False)
         parent = family.as_parent()
         parent.post(f"/api/v1/children/{family.child_id}/remediation")
 
         owed = parent.get(ASSIGNMENTS_URL, params={"child_id": family.child_id}).json()
-        given = [
-            row for row in owed if row["activity"]["code"] == catalogue["a_repair"]
-        ]
-        assert given and given[0]["origin"] == "parent"
+        assert catalogue["a_repair"] in [row["activity"]["code"] for row in owed]
 
     def test_applying_twice_skips_what_is_already_waiting(
         self, family: Family, catalogue: dict[str, str]
@@ -628,98 +595,6 @@ class TestNothingIsGivenUntilSomebodySaysSo:
         )
 
         assert refused.status_code == 403
-
-
-class TestTheAutomaticModeGivesOneRepairItself:
-    def test_finishing_an_attempt_gives_the_repair(
-        self, family: Family, catalogue: dict[str, str]
-    ) -> None:
-        family.as_parent().put(
-            f"/api/v1/children/{family.child_id}/remediation-mode",
-            json={"mode": "automatic"},
-        )
-
-        work_through(family, catalogue["a_source"], correct=False)
-
-        owed = (
-            family.as_parent()
-            .get(ASSIGNMENTS_URL, params={"child_id": family.child_id})
-            .json()
-        )
-        assert catalogue["a_repair"] in [row["activity"]["code"] for row in owed]
-
-    def test_what_the_platform_gives_says_it_was_the_platform(
-        self, family: Family, catalogue: dict[str, str]
-    ) -> None:
-        """A parent must be able to tell her decisions from ours."""
-        family.as_parent().put(
-            f"/api/v1/children/{family.child_id}/remediation-mode",
-            json={"mode": "automatic"},
-        )
-        work_through(family, catalogue["a_source"], correct=False)
-
-        owed = (
-            family.as_parent()
-            .get(ASSIGNMENTS_URL, params={"child_id": family.child_id})
-            .json()
-        )
-        given = [
-            row for row in owed if row["activity"]["code"] == catalogue["a_repair"]
-        ]
-        assert given and given[0]["origin"] == "system"
-
-    def test_the_default_mode_gives_nothing(
-        self, family: Family, catalogue: dict[str, str]
-    ) -> None:
-        work_through(family, catalogue["a_source"], correct=False)
-
-        owed = (
-            family.as_parent()
-            .get(ASSIGNMENTS_URL, params={"child_id": family.child_id})
-            .json()
-        )
-        assert catalogue["a_repair"] not in [row["activity"]["code"] for row in owed]
-
-    def test_it_gives_the_prerequisite_and_not_what_depends_on_it(
-        self, family: Family, catalogue: dict[str, str]
-    ) -> None:
-        """The automatic path works on what blocks, exactly as the manual one does."""
-        work_through(family, catalogue["b_source"], correct=False)
-        family.as_parent().put(
-            f"/api/v1/children/{family.child_id}/remediation-mode",
-            json={"mode": "automatic"},
-        )
-
-        work_through(family, catalogue["a_source"], correct=False)
-
-        owed = (
-            family.as_parent()
-            .get(ASSIGNMENTS_URL, params={"child_id": family.child_id})
-            .json()
-        )
-        codes = [row["activity"]["code"] for row in owed]
-        assert catalogue["a_repair"] in codes
-        assert catalogue["b_repair"] not in codes
-
-    def test_it_gives_one_activity_and_not_a_pile(
-        self, family: Family, catalogue: dict[str, str]
-    ) -> None:
-        """A helping hand, not a punishment."""
-        work_through(family, catalogue["c_source"], correct=False)
-        family.as_parent().put(
-            f"/api/v1/children/{family.child_id}/remediation-mode",
-            json={"mode": "automatic"},
-        )
-
-        work_through(family, catalogue["a_source"], correct=False)
-
-        owed = (
-            family.as_parent()
-            .get(ASSIGNMENTS_URL, params={"child_id": family.child_id})
-            .json()
-        )
-        system_given = [row for row in owed if row["origin"] == "system"]
-        assert len(system_given) == 1
 
 
 class TestTheHealthScoreIsShownWithItsTerms:
