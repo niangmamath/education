@@ -999,9 +999,15 @@ manquait pour l'étape 10.
 - **Ce n'est pas un LRS** : ni `GET` par requête xAPI, ni `voided`, ni version de
   spec négociée. C'est écrit dans la documentation pour ne pas laisser croire à
   une conformité que rien ne teste.
-- Le cache local de Ruff appartient à `root` dans l'arborescence du dépôt, et le
-  `.venv` local n'a pas `argon2-cffi`. Les contrôles se rejouent donc dans le
-  conteneur `api`, ce que fait aussi la CI. Sans effet sur la CI distante.
+- **`SECRET_KEY` vide n'empêche pas le démarrage**, alors qu'elle dérive
+  désormais le pseudonyme d'acteur xAPI. Le propriétaire a arbitré le 15 août
+  2026 que ce durcissement appartient à l'étape 15 ; il est inscrit dans sa
+  fiche 15.2 plutôt que traité par anticipation.
+- Résorbé le 15 août 2026, Pull Request #24 : les contrôles ne se jouaient que
+  dans le conteneur. `db.py` lisait `DATABASE_URL` dans `os.environ` quand tout
+  le reste passe par les settings, PostgreSQL n'était publié nulle part, et les
+  deux fichiers d'exemple décrivaient un état révolu. 499 tests verts des deux
+  côtés.
 
 ## Résultats techniques de l'étape 11
 
