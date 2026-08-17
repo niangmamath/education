@@ -13,6 +13,7 @@ from __future__ import annotations
 import uuid
 from collections.abc import Iterator
 from datetime import date, timedelta
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
