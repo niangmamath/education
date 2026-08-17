@@ -110,6 +110,33 @@ aucun identifiant qui le lui permettrait : elle remonte les événements xAPI au
 parent par `postMessage`, le seul canal que deux origines ont le droit de
 partager.
 
+## Le ticket est un segment de chemin, et c'est une correction
+
+`/t/<ticket>/content/<empreinte>/…` et `/t/<ticket>/libraries/…`.
+
+La première version mettait le ticket dans la **requête** et comptait sur le
+lecteur H5P pour le reporter sur chaque asset. Un lecteur compose une URL
+d'asset en **assemblant des segments de chemin** ; une chaîne de requête n'en est
+pas un, et elle disparaissait dès que le lecteur demandait quoi que ce soit de
+lui-même. Chaque asset arrivait donc sans ticket, et l'origine refusait, et
+elle avait raison.
+
+Personne ne l'avait vu parce qu'aucun contenu n'avait jamais été joué de bout en
+bout : les tests écrivaient l'URI à la main, et une main écrit l'URI que la
+conception attend, pas celle que le lecteur produit. La première lecture réelle,
+le 17 août, l'a révélé en une seconde.
+
+Un préfixe de chemin survit à l'assemblage **par construction**. C'est tout
+l'intérêt du changement : la plateforme n'a plus à contrôler chaque URL que le
+lecteur invente.
+
+Un cookie sur l'origine de contenu était l'autre candidat, et il est pire ici :
+le runtime est embarqué en iframe cross-site, donc son cookie serait un cookie
+tiers — exactement ce que les navigateurs suppriment.
+
+Les mêmes arbres sans segment de ticket rendent `404`. Ce n'est pas une autre
+porte : ce n'est pas une porte.
+
 Depuis l'étape 11, `play.html` **pose un identifiant sur chaque événement** qui
 n'en porte pas. C'est ce que le serveur lit pour reconnaître une
 retransmission ; le frapper côté serveur ferait de chaque réessai une seconde
@@ -117,8 +144,7 @@ réponse. Voir `evenements-xapi.md`.
 
 ## Ce que ce prérequis ne fait pas
 
-- **Aucune intégration web** : le web n'appelle pas encore l'API, et le faire
-  suppose de régler la session entre deux origines. Cela vient avec l'étape 13,
-  où les dashboards sont alimentés en données réelles pour la première fois.
+- [x] L'intégration web est venue avec l'étape 13, et c'est elle qui a permis de
+      jouer un contenu pour de vrai — donc de trouver le défaut du ticket.
 - Aucun antivirus, toujours, condition 2 d'ADR-012 pour la production.
 - Aucune purge des contenus déployés qui ne servent plus.

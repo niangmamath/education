@@ -205,7 +205,15 @@ class TestTickets:
 
 
 class TestWhatTheOriginAsks:
-    """The endpoint nginx calls before serving a byte."""
+    """The endpoint nginx calls before serving a byte.
+
+    The ticket is a **path segment**. It used to be a query parameter, and that
+    was wrong for a reason worth keeping: the H5P player builds asset URLs by
+    joining path segments, so a query string was dropped the moment it fetched
+    anything of its own, and every asset reached the origin unticketed. No test
+    caught it because these tests wrote the URI by hand, and a hand writes the
+    URI the design expects rather than the one the player produces.
+    """
 
     async def test_a_valid_ticket_for_that_content_is_allowed(
         self, client: TestClient, client_redis: Any
@@ -214,8 +222,36 @@ class TestWhatTheOriginAsks:
 
         response = client.get(
             ACCESS_URL,
+            headers={"X-Original-URI": f"/t/{token}/content/{DIGEST}/h5p.json"},
+        )
+
+        assert response.status_code == 204
+        await revoke_ticket(client_redis, token)
+
+    async def test_a_library_needs_only_a_valid_ticket(
+        self, client: TestClient, client_redis: Any
+    ) -> None:
+        """Libraries are shared by every content, so no digest is checked."""
+        token = await mint_ticket(client_redis, uuid.uuid4(), DIGEST)
+
+        response = client.get(
+            ACCESS_URL,
+            headers={"X-Original-URI": f"/t/{token}/libraries/H5P.TrueFalse-1.8/x.js"},
+        )
+
+        assert response.status_code == 204
+        await revoke_ticket(client_redis, token)
+
+    async def test_a_deep_asset_path_is_allowed(
+        self, client: TestClient, client_redis: Any
+    ) -> None:
+        """What the player actually asks for, not what a hand would write."""
+        token = await mint_ticket(client_redis, uuid.uuid4(), DIGEST)
+
+        response = client.get(
+            ACCESS_URL,
             headers={
-                "X-Original-URI": f"/content/{DIGEST}/h5p.json?c={DIGEST}&t={token}"
+                "X-Original-URI": f"/t/{token}/content/{DIGEST}/content/images/a.png"
             },
         )
 
@@ -230,16 +266,16 @@ class TestWhatTheOriginAsks:
 
         response = client.get(
             ACCESS_URL,
-            headers={
-                "X-Original-URI": f"/content/{OTHER_DIGEST}/h5p.json"
-                f"?c={OTHER_DIGEST}&t={token}"
-            },
+            headers={"X-Original-URI": f"/t/{token}/content/{OTHER_DIGEST}/h5p.json"},
         )
 
         assert response.status_code == 403
         await revoke_ticket(client_redis, token)
 
-    def test_a_request_with_no_ticket_is_refused(self, client: TestClient) -> None:
+    def test_a_path_without_a_ticket_segment_is_refused(
+        self, client: TestClient
+    ) -> None:
+        """The old shape, and any other: not a different way in, no way in."""
         response = client.get(
             ACCESS_URL, headers={"X-Original-URI": f"/content/{DIGEST}/h5p.json"}
         )
@@ -252,7 +288,7 @@ class TestWhatTheOriginAsks:
     def test_an_invented_ticket_is_refused(self, client: TestClient) -> None:
         response = client.get(
             ACCESS_URL,
-            headers={"X-Original-URI": f"/content/{DIGEST}/x?c={DIGEST}&t=invente"},
+            headers={"X-Original-URI": f"/t/invente/content/{DIGEST}/x"},
         )
 
         assert response.status_code == 403
@@ -266,11 +302,11 @@ class TestWhatTheOriginAsks:
 
         allowed = client.get(
             ACCESS_URL,
-            headers={"X-Original-URI": f"/content/{DIGEST}/x?c={DIGEST}&t={token}"},
+            headers={"X-Original-URI": f"/t/{token}/content/{DIGEST}/x"},
         )
         refused = client.get(
             ACCESS_URL,
-            headers={"X-Original-URI": f"/content/{DIGEST}/x?c={DIGEST}&t=x"},
+            headers={"X-Original-URI": f"/t/x/content/{DIGEST}/x"},
         )
 
         assert allowed.content == b""

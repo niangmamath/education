@@ -45,15 +45,19 @@
     return;
   }
 
-  var query = '?c=' + encodeURIComponent(digest) + '&t=' + encodeURIComponent(ticket);
+  // The ticket is a path segment, not a query parameter. The player builds its
+  // own asset URLs by joining paths — a query string is not a path segment and
+  // was dropped the moment it asked for anything of its own, so every asset
+  // arrived at the origin without a ticket and was refused. A prefix survives
+  // the joining by construction, which is why the ticket lives here now.
+  var prefix = '/t/' + encodeURIComponent(ticket);
   var options = {
-    h5pJsonPath: '/content/' + digest,
-    librariesPath: '/libraries',
-    frameJs: '/player/frame.bundle.js' + query,
-    frameCss: '/player/styles/h5p.css' + query,
-    // Every asset request carries the ticket, because the origin checks each one.
-    customJs: [],
-    urlPrefix: query
+    h5pJsonPath: prefix + '/content/' + encodeURIComponent(digest),
+    librariesPath: prefix + '/libraries',
+    // The player itself carries no content, so it is served without a ticket.
+    frameJs: '/player/frame.bundle.js',
+    frameCss: '/player/styles/h5p.css',
+    customJs: []
   };
 
   new H5PStandalone.H5P(document.getElementById('h5p'), options)
