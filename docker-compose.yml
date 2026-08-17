@@ -88,6 +88,11 @@ services:
     volumes:
       - ./apps/api:/app
       - content_runtime:/srv/content
+      # Read-only, and only in this development compose: the vetted H5P package
+      # and the offline-prepared libraries are project artefacts the API lays
+      # out, never rebuilds. ADR-012 condition 3 asks that they be frozen, and
+      # mounting them read-only is what that means at runtime.
+      - ./experiments/h5p-spike:/opt/h5p-spike:ro
     depends_on:
       postgres:
         condition: service_healthy

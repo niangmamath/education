@@ -90,13 +90,18 @@ async def child_diagnostic(db: AsyncSession, child_id: uuid.UUID) -> ChildDiagno
                 answered=reading.answered,
                 correct=reading.correct,
                 rule_code=reading.rule_code,
-                explanation=rules.explain_gap(reading, row.competency_code),
+                # Named as a parent knows it when the edition in force can say
+                # so. A sentence that reads "demo-num-compter" is addressed to
+                # whoever wrote the catalogue, not to the person being shown it.
+                explanation=rules.explain_gap(
+                    reading, placed.label if placed else row.competency_code
+                ),
                 last_seen_at=row.latest_at,
             )
         )
 
     general = _general_gaps(gaps)
-    root_causes = _root_causes([row.competency_code for row in gaps], tree)
+    root_causes = _root_causes(gaps, tree)
     _defer_behind_prerequisites(gaps, root_causes)
 
     return ChildDiagnostic(
@@ -237,12 +242,20 @@ def _defer_behind_prerequisites(
         for cause in root_causes
         for dependent in cause.explains_codes
     }
+    # Labels where the edition in force knows them, codes otherwise. `blocked_by`
+    # keeps the code either way: it is an identifier a client joins on, and the
+    # sentence beside it is what a person reads.
+    named = {
+        row.competency_code: row.competency_label or row.competency_code for row in gaps
+    }
     for row in gaps:
         prerequisite = blocking.get(row.competency_code)
         if prerequisite is None:
             continue
         row.blocked_by = prerequisite
-        row.deferral = rules.explain_deferral(row.competency_code, prerequisite)
+        row.deferral = rules.explain_deferral(
+            named[row.competency_code], named.get(prerequisite, prerequisite)
+        )
 
 
 def _targets(gaps: list[LocalizedGap]) -> list[str]:
@@ -309,14 +322,17 @@ def _general_gaps(gaps: list[LocalizedGap]) -> list[GeneralGap]:
     return grouped
 
 
-def _root_causes(gap_codes: list[str], tree: _Tree) -> list[RootCauseHypothesis]:
+def _root_causes(gaps: list[LocalizedGap], tree: _Tree) -> list[RootCauseHypothesis]:
     """Which gaps are prerequisites of which other gaps.
 
     Only edges between two gaps count. A prerequisite that is mastered, or that
     nobody has worked on, explains nothing: the first is evidence against the
     hypothesis, and the second is no evidence at all.
     """
-    in_gap = set(gap_codes)
+    named = {
+        row.competency_code: row.competency_label or row.competency_code for row in gaps
+    }
+    in_gap = set(named)
     explains: dict[str, list[str]] = {}
     for code in sorted(in_gap):
         for prerequisite in tree.prerequisites.get(code, ()):
@@ -328,7 +344,10 @@ def _root_causes(gap_codes: list[str], tree: _Tree) -> list[RootCauseHypothesis]
             competency_code=cause,
             explains_codes=sorted(dependents),
             rule_code=rules.RULE_ROOT_CAUSE_PREREQUISITE,
-            explanation=rules.explain_root_cause(cause, sorted(dependents)),
+            explanation=rules.explain_root_cause(
+                named.get(cause, cause),
+                [named.get(code, code) for code in sorted(dependents)],
+            ),
         )
         for cause, dependents in sorted(explains.items())
     ]
