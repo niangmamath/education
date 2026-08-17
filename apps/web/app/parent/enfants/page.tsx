@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { api } from '../../../lib/api';
 import { requireParent } from '../../../lib/session';
 import { InterfaceState } from '../../../components/ui/interface-state';
+import { AddChildForm } from '../../../components/parent/add-child-form';
+import { ChildAccessButton } from '../../../components/parent/child-access-button';
 import type { ChildProfile, ParentProfile } from '../../../lib/types';
 
 export const metadata = { title: 'Mes enfants' };
@@ -48,6 +50,10 @@ export default async function EnfantsPage() {
         ) : null}
       </header>
 
+      <div className="mb-4">
+        <AddChildForm />
+      </div>
+
       {children.data.length === 0 ? (
         <InterfaceState
           kind="empty"
@@ -68,14 +74,20 @@ export default async function EnfantsPage() {
                   {STATUS[child.status].label}
                 </span>
               </div>
-              {child.status === 'active' ? (
-                <Link
-                  href={`/parent/enfants/${child.id}`}
-                  className="btn btn-outline-primary btn-sm"
-                >
-                  Voir sa progression
-                </Link>
-              ) : null}
+              <div className="d-flex flex-wrap gap-2">
+                {child.status === 'active' ? (
+                  <Link
+                    href={`/parent/enfants/${child.id}`}
+                    className="btn btn-outline-primary btn-sm"
+                  >
+                    Voir sa progression
+                  </Link>
+                ) : null}
+                <ChildAccessButton
+                  childId={child.id}
+                  open={child.status !== 'active'}
+                />
+              </div>
             </li>
           ))}
         </ul>

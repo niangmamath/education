@@ -266,7 +266,11 @@ class TestGivingAnActivity:
         second = assign(family, activities["un"])
 
         assert second["id"] != first["id"]
-        assert len(family.as_parent().get(ASSIGNMENTS_URL).json()) == 2
+        # Two rows for the same activity: that is the claim. What else the child
+        # holds is not part of it.
+        assert set(
+            only_ours(family.as_parent().get(ASSIGNMENTS_URL).json(), first, second)
+        ) == {first["id"], second["id"]}
 
 
 class TestFamilyIsolation:
@@ -287,13 +291,16 @@ class TestFamilyIsolation:
         self, client: TestClient, activities: dict[str, str]
     ) -> None:
         theirs = Family(client)
-        assign(theirs, activities["un"])
+        hers = assign(theirs, activities["un"])
         ours = Family(client)
         mine = assign(ours, activities["deux"])
 
-        listed = ours.as_parent().get(ASSIGNMENTS_URL).json()
+        listed = [row["id"] for row in ours.as_parent().get(ASSIGNMENTS_URL).json()]
 
-        assert [row["id"] for row in listed] == [mine["id"]]
+        # What isolation claims is that the other family is absent, not that the
+        # list holds one row: her own child may also have what the platform gave.
+        assert hers["id"] not in listed
+        assert mine["id"] in listed
 
     def test_a_parent_cannot_cancel_another_family_s_assignment(
         self, client: TestClient, activities: dict[str, str]
@@ -312,13 +319,14 @@ class TestFamilyIsolation:
         self, client: TestClient, activities: dict[str, str]
     ) -> None:
         theirs = Family(client)
-        assign(theirs, activities["un"])
+        hers = assign(theirs, activities["un"])
         ours = Family(client)
         mine = assign(ours, activities["deux"])
 
-        listed = ours.as_child().get(MY_ACTIVITIES_URL).json()
+        listed = [row["id"] for row in ours.as_child().get(MY_ACTIVITIES_URL).json()]
 
-        assert [row["id"] for row in listed] == [mine["id"]]
+        assert hers["id"] not in listed
+        assert mine["id"] in listed
 
     def test_a_child_cannot_start_another_child_s_activity(
         self, client: TestClient, activities: dict[str, str]
@@ -447,7 +455,11 @@ class TestCancelling:
 
         assert cancelled["status"] == "cancelled"
         assert cancelled["cancelled_at"] is not None
-        assert len(family.as_parent().get(ASSIGNMENTS_URL).json()) == 1
+        # The row stays, cancelled: that is the whole claim. Counting the list
+        # would count whatever else the child holds as well.
+        assert only_ours(family.as_parent().get(ASSIGNMENTS_URL).json(), given) == [
+            given["id"]
+        ]
 
     def test_an_activity_under_way_may_still_be_called_off(
         self, family: Family, activities: dict[str, str]
@@ -466,7 +478,7 @@ class TestListings:
         self, family: Family, activities: dict[str, str]
     ) -> None:
         first = assign(family, activities["un"])
-        assign(family, activities["deux"])
+        second = assign(family, activities["deux"])
         family.as_child().post(f"{MY_ACTIVITIES_URL}/{first['id']}/start")
 
         parent = family.as_parent()
@@ -477,28 +489,29 @@ class TestListings:
             ASSIGNMENTS_URL, params={"assignment_status": "in_progress"}
         ).json()
 
-        assert len(by_child) == 2
-        assert [row["id"] for row in under_way] == [first["id"]]
+        assert set(only_ours(by_child, first, second)) == {first["id"], second["id"]}
+        assert only_ours(under_way, first, second) == [first["id"]]
 
     def test_a_child_may_narrow_by_status(
         self, family: Family, activities: dict[str, str]
     ) -> None:
         first = assign(family, activities["un"])
-        assign(family, activities["deux"])
+        second = assign(family, activities["deux"])
         child = family.as_child()
         child.post(f"{MY_ACTIVITIES_URL}/{first['id']}/start")
 
         to_do = child.get(MY_ACTIVITIES_URL, params={"assignment_status": "assigned"})
 
-        assert [row["activity"]["code"] for row in to_do.json()] == [activities["deux"]]
+        assert only_ours(to_do.json(), first, second) == [second["id"]]
 
     def test_a_child_is_not_told_which_child_she_is(
         self, family: Family, activities: dict[str, str]
     ) -> None:
         """Every row she sees is hers; saying so on each one would be noise."""
-        assign(family, activities["un"])
+        given = assign(family, activities["un"])
 
-        row = family.as_child().get(MY_ACTIVITIES_URL).json()[0]
+        rows = family.as_child().get(MY_ACTIVITIES_URL).json()
+        row = next(item for item in rows if item["id"] == given["id"])
 
         assert "child_id" not in row
         assert "child_pseudonym" not in row
@@ -557,7 +570,7 @@ class TestDueDateAndCourseOrder:
     ) -> None:
         """The whole of the course order: a consequence of the dates, not a list
         to be dragged around."""
-        assign(
+        later = assign(
             family,
             activities["un"],
             due_on=(date.today() + timedelta(days=9)).isoformat(),
@@ -568,9 +581,15 @@ class TestDueDateAndCourseOrder:
             due_on=(date.today() + timedelta(days=1)).isoformat(),
         )
 
-        listed = family.as_child().get(MY_ACTIVITIES_URL).json()
+        # Among the rows this test created: a child's list also holds whatever
+        # the platform has given her, and the order promised is between these two.
+        listed = [
+            row["id"]
+            for row in family.as_child().get(MY_ACTIVITIES_URL).json()
+            if row["id"] in {soon["id"], later["id"]}
+        ]
 
-        assert listed[0]["id"] == soon["id"]
+        assert listed == [soon["id"], later["id"]]
 
     def test_what_is_expected_on_no_day_comes_after_what_is(
         self, family: Family, activities: dict[str, str]
@@ -588,14 +607,22 @@ class TestDueDateAndCourseOrder:
 
 
 class TestCeilingOnOpenWork:
-    """The other debt: nothing stopped a child being buried in work."""
+    """The other debt: nothing stopped a child being buried in work.
+
+    These count from what the child already owes rather than from zero. A
+    profile may arrive with something the platform gave it — the initiation
+    assessment, when one is published — and a test that assumes an empty slate
+    passes or fails depending on which database it meets. That has happened
+    often enough on this project to be worth spelling out.
+    """
 
     def test_a_child_cannot_be_given_more_than_the_ceiling(
         self, family: Family, engine: Engine, activities: dict[str, str]
     ) -> None:
-        codes = _many_activities(engine, MAX_OPEN_ASSIGNMENTS + 1)
+        free = MAX_OPEN_ASSIGNMENTS - _owed(family)
+        codes = _many_activities(engine, free + 1)
 
-        for code in codes[:MAX_OPEN_ASSIGNMENTS]:
+        for code in codes[:free]:
             assign(family, code)
         refused = family.as_parent().post(
             ASSIGNMENTS_URL,
@@ -609,8 +636,9 @@ class TestCeilingOnOpenWork:
         self, family: Family, engine: Engine, activities: dict[str, str]
     ) -> None:
         """The ceiling counts what is owed, not what has ever been given."""
-        codes = _many_activities(engine, MAX_OPEN_ASSIGNMENTS + 1)
-        given = [assign(family, code) for code in codes[:MAX_OPEN_ASSIGNMENTS]]
+        free = MAX_OPEN_ASSIGNMENTS - _owed(family)
+        codes = _many_activities(engine, free + 1)
+        given = [assign(family, code) for code in codes[:free]]
 
         child = family.as_child()
         child.post(f"{MY_ACTIVITIES_URL}/{given[0]['id']}/start")
@@ -626,8 +654,9 @@ class TestCeilingOnOpenWork:
     def test_cancelling_one_frees_a_slot_too(
         self, family: Family, engine: Engine, activities: dict[str, str]
     ) -> None:
-        codes = _many_activities(engine, MAX_OPEN_ASSIGNMENTS + 1)
-        given = [assign(family, code) for code in codes[:MAX_OPEN_ASSIGNMENTS]]
+        free = MAX_OPEN_ASSIGNMENTS - _owed(family)
+        codes = _many_activities(engine, free + 1)
+        given = [assign(family, code) for code in codes[:free]]
         family.as_parent().post(f"{ASSIGNMENTS_URL}/{given[0]['id']}/cancel")
 
         accepted = family.as_parent().post(
@@ -714,6 +743,29 @@ class TestOpeningTheContent:
 
         assert refused.status_code == 409
         assert "H5P" in refused.json()["error"]["message"]
+
+
+def only_ours(rows: list[dict[str, Any]], *given: dict[str, Any]) -> list[str]:
+    """The identifiers of the rows this test created, in the order served.
+
+    A child's list also holds what the platform gave her — the initiation
+    assessment, when one is published — and a test that counts the whole list is
+    measuring the database it happened to meet. Filtering to what the test
+    created is what makes the assertion mean the same thing everywhere.
+    """
+    wanted = {row["id"] for row in given}
+    return [row["id"] for row in rows if row["id"] in wanted]
+
+
+def _owed(family: Family) -> int:
+    """How many activities this child already has waiting.
+
+    The platform may have given her one of its own — the initiation assessment —
+    and the ceiling counts it like any other. Reading it rather than assuming
+    zero is what makes these tests true on an empty database and on a seeded one.
+    """
+    rows = family.as_child().get(MY_ACTIVITIES_URL).json()
+    return len([row for row in rows if row["status"] in ("assigned", "in_progress")])
 
 
 def _many_activities(engine: Engine, count: int) -> list[str]:

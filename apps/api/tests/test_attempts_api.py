@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import uuid
 from collections.abc import Iterator
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -166,6 +167,18 @@ def started_activity(family: Family, activity_code: str) -> str:
         == 200
     )
     return assignment_id
+
+
+def _find(rows: list[dict[str, Any]], assignment_id: str) -> dict[str, Any]:
+    """The row this test is about, found by its identifier.
+
+    Never by position. A child's list holds whatever the platform has given her,
+    the initiation assessment included, and a test that reads the first row is
+    testing the order of a list nobody promised.
+    """
+    match = [row for row in rows if row["id"] == assignment_id]
+    assert len(match) == 1, rows
+    return match[0]
 
 
 def answer(client: TestClient, attempt_id: str, ref: str, correct: bool | None) -> None:
@@ -398,9 +411,9 @@ class TestTheAssignmentFollows:
         attempt = child.post(f"{MY_ACTIVITIES_URL}/{assignment_id}/attempts").json()
         child.post(f"{MY_ATTEMPTS_URL}/{attempt['id']}/complete")
 
-        listed = child.get(MY_ACTIVITIES_URL).json()
+        mine = _find(child.get(MY_ACTIVITIES_URL).json(), assignment_id)
 
-        assert listed[0]["status"] == "completed"
+        assert mine["status"] == "completed"
 
     def test_cancelling_the_assignment_abandons_the_attempt_without_erasing_it(
         self, family: Family, activity: str
@@ -415,7 +428,11 @@ class TestTheAssignmentFollows:
 
         family.as_parent().post(f"{ASSIGNMENTS_URL}/{assignment_id}/cancel")
 
-        listed = family.as_child().get(MY_ATTEMPTS_URL).json()
+        listed = (
+            family.as_child()
+            .get(MY_ATTEMPTS_URL, params={"assignment_id": assignment_id})
+            .json()
+        )
         assert [row["id"] for row in listed] == [attempt["id"]]
         assert listed[0]["status"] == "abandoned"
 

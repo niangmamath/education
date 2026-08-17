@@ -2,13 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart3, BookOpen, House, Star } from 'lucide-react';
+import { BarChart3, BookOpen, House } from 'lucide-react';
 
 const items = [
   { href: '/eleve', label: 'Accueil', icon: House, exact: true },
   { href: '/eleve/activites', label: 'Activités', icon: BookOpen },
   { href: '/eleve/progression', label: 'Progression', icon: BarChart3 },
-  { href: '/eleve/recompenses', label: 'Récompenses', icon: Star },
 ];
 
 export function EleveNavigation() {
