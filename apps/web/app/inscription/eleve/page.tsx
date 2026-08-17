@@ -1,13 +1,13 @@
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import { ParentSignUpForm } from '../../components/auth/parent-sign-up-form';
+import { ChildSignUpForm } from '../../../components/auth/child-sign-up-form';
 
 export const metadata = {
-  title: 'Créer un compte Parent',
-  description: 'Ouvrir un compte Parent et recevoir son code de famille',
+  title: 'Rejoindre sa famille',
+  description: 'Créer un profil Élève avec le code de sa famille',
 };
 
-export default function InscriptionParentPage() {
+export default function InscriptionElevePage() {
   return (
     <main className="container py-5">
       <div className="mx-auto" style={{ maxWidth: '34rem' }}>
@@ -18,13 +18,13 @@ export default function InscriptionParentPage() {
 
         <div className="card border-0 shadow-sm">
           <div className="card-body p-4 p-lg-5">
-            <ParentSignUpForm />
+            <ChildSignUpForm />
           </div>
         </div>
 
         <div className="d-flex flex-column gap-2 mt-4">
-          <p className="mb-0">Tu es un élève ? <Link href="/inscription/eleve">Rejoindre ta famille</Link></p>
-          <p className="mb-0">Vous avez déjà un compte ? <Link href="/connexion">Se connecter</Link></p>
+          <p className="mb-0">Vous êtes un parent ? <Link href="/inscription">Ouvrir un compte</Link></p>
+          <p className="mb-0">Tu as déjà un profil ? <Link href="/connexion/eleve">Entrer</Link></p>
         </div>
       </div>
     </main>

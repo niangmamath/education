@@ -1,13 +1,13 @@
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import { ParentLoginForm } from '../../components/auth/parent-login-form';
+import { ChildLoginForm } from '../../../components/auth/child-login-form';
 
 export const metadata = {
-  title: 'Connexion Parent',
-  description: 'Se connecter à l’espace Parent de StudentConnect',
+  title: 'Connexion Élève',
+  description: 'Entrer dans l’espace Élève avec le code de sa famille',
 };
 
-export default async function ConnexionParentPage({
+export default async function ConnexionElevePage({
   searchParams,
 }: {
   searchParams: Promise<{ cree?: string; demande?: string }>;
@@ -38,13 +38,13 @@ export default async function ConnexionParentPage({
 
         <div className="card border-0 shadow-sm">
           <div className="card-body p-4 p-lg-5">
-            <ParentLoginForm />
+            <ChildLoginForm />
           </div>
         </div>
 
         <div className="d-flex flex-column gap-2 mt-4">
-          <p className="mb-0">Tu es un élève ? <Link href="/connexion/eleve">Entrer dans l’espace Élève</Link></p>
-          <p className="mb-0">Pas encore de compte ? <Link href="/inscription">En créer un</Link></p>
+          <p className="mb-0">Vous êtes un parent ? <Link href="/connexion">Espace Parent</Link></p>
+          <p className="mb-0">Tu n’as pas encore de profil ? <Link href="/inscription/eleve">En créer un</Link></p>
         </div>
       </div>
     </main>
