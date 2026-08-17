@@ -15,6 +15,11 @@ const EMPTY: FormState = { error: null };
  * Both forms say their rules **before** they are broken — twelve characters, six
  * digits — rather than after. A form that only objects on submission teaches
  * that you did something wrong; one that says what it wants does not.
+ *
+ * Every field also names what it holds, so a browser can offer to remember it
+ * and fill it next time: the family as an `organization`, the pseudonym as the
+ * `username`, the code secret as a new password. A form that has to switch
+ * autofill off is a form that failed to describe itself.
  */
 export function SignUpForms({ defaultTab }: { defaultTab: 'parent' | 'eleve' }) {
   const [tab, setTab] = useState<'parent' | 'eleve'>(defaultTab);
@@ -156,7 +161,13 @@ export function SignUpForms({ defaultTab }: { defaultTab: 'parent' | 'eleve' }) 
                 id="family_code-inscription"
                 name="family_code"
                 className="form-control text-uppercase"
-                autoComplete="off"
+                // The family is the organisation this child belongs to, and
+                // naming it as one is what stops the browser guessing. Left to
+                // guess, it read the lone text field above a password field as
+                // the username and filled it with the six-digit code secret.
+                autoComplete="organization"
+                autoCapitalize="characters"
+                spellCheck={false}
                 required
               />
             </div>
@@ -180,7 +191,7 @@ export function SignUpForms({ defaultTab }: { defaultTab: 'parent' | 'eleve' }) 
                 id="pseudonym-inscription"
                 name="pseudonym"
                 className="form-control"
-                autoComplete="off"
+                autoComplete="username"
                 minLength={3}
                 required
                 aria-describedby="aide-pseudo"
@@ -199,7 +210,7 @@ export function SignUpForms({ defaultTab }: { defaultTab: 'parent' | 'eleve' }) 
                 name="pin"
                 type="password"
                 inputMode="numeric"
-                pattern="[0-9]*"
+                pattern="[0-9]{6}"
                 className="form-control"
                 autoComplete="new-password"
                 required
