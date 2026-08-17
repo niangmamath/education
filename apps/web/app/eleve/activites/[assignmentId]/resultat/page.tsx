@@ -67,7 +67,7 @@ export default async function ResultatPage({
           {results.map((result) => (
             <li className="list-group-item" key={result.competency_code}>
               <div className="d-flex flex-wrap align-items-center gap-2 mb-1">
-                <span className={`badge rounded-pill ${OUTCOME_CLASSES[result.outcome]}`}>
+                <span className={`${OUTCOME_CLASSES[result.outcome]}`}>
                   {OUTCOME_LABELS[result.outcome]}
                 </span>
                 <span className="fw-semibold">{result.competency_code}</span>

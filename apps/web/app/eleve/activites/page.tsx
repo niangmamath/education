@@ -63,8 +63,8 @@ export default async function MesActivitesPage() {
               <article className="card h-100 border-0 shadow-sm">
                 <div className="card-body p-4">
                   <span
-                    className={`badge rounded-pill mb-2 ${
-                      row.status === 'completed' ? 'text-bg-success' : 'text-bg-primary'
+                    className={`mb-2 sc-etat ${
+                      row.status === 'completed' ? 'sc-etat-acquis' : 'sc-etat-travail'
                     }`}
                   >
                     {LABELS[row.status] ?? row.status}

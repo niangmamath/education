@@ -56,7 +56,7 @@ export default async function ProgressionPage() {
           {competencies.map((row) => (
             <li className="list-group-item py-3" key={row.competency_code}>
               <div className="d-flex flex-wrap align-items-center gap-2 mb-1">
-                <span className={`badge rounded-pill ${OUTCOME_CLASSES[row.latest_outcome]}`}>
+                <span className={`${OUTCOME_CLASSES[row.latest_outcome]}`}>
                   {OUTCOME_LABELS[row.latest_outcome]}
                 </span>
                 <span className="fw-semibold">{row.competency_code}</span>

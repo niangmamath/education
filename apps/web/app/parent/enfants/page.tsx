@@ -9,9 +9,9 @@ import type { ChildProfile, ParentProfile } from '../../../lib/types';
 export const metadata = { title: 'Mes enfants' };
 
 const STATUS: Record<ChildProfile['status'], { label: string; className: string }> = {
-  active: { label: 'Actif', className: 'text-bg-success' },
-  pending: { label: 'En attente d’activation', className: 'text-bg-warning' },
-  disabled: { label: 'Désactivé', className: 'text-bg-secondary' },
+  active: { label: 'Actif', className: 'sc-etat sc-etat-acquis' },
+  pending: { label: 'En attente d’activation', className: 'sc-etat sc-etat-travail' },
+  disabled: { label: 'Désactivé', className: 'sc-etat sc-etat-non-acquis' },
 };
 
 /**
@@ -70,7 +70,7 @@ export default async function EnfantsPage() {
               <div>
                 <span className="fw-semibold">{child.display_name}</span>
                 <span className="text-secondary small"> — {child.pseudonym}</span>
-                <span className={`badge rounded-pill ms-2 ${STATUS[child.status].className}`}>
+                <span className={`ms-2 ${STATUS[child.status].className}`}>
                   {STATUS[child.status].label}
                 </span>
               </div>

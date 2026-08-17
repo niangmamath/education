@@ -8,13 +8,13 @@ export function ParentHeader({ displayName }: { displayName: string }) {
         <Link href="/parent" className="d-inline-flex align-items-center gap-3 text-decoration-none">
           <span className="sc-brand-mark" aria-hidden="true">SC</span>
           <span>
-            <span className="d-block fw-bold text-dark">StudentConnect</span>
-            <span className="d-block small text-secondary">Espace Parent</span>
+            <span className="sc-marque-nom d-block">StudentConnect</span>
+            <span className="sc-marque-role d-block">Espace parent</span>
           </span>
         </Link>
         <div className="d-flex align-items-center gap-2">
           <span className="small text-secondary d-none d-sm-inline">{displayName}</span>
-          <Link href="/aide" className="btn btn-outline-primary btn-sm">Aide</Link>
+          <Link href="/aide" className="btn btn-outline-secondary btn-sm">Aide</Link>
           <SignOutButton label="Se déconnecter" />
         </div>
       </div>

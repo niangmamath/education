@@ -1,7 +1,6 @@
 'use client';
 
 import { useActionState } from 'react';
-import { UserPlus } from 'lucide-react';
 import { registerParent, type FormState } from '../../lib/actions';
 
 const EMPTY: FormState = { error: null };
@@ -22,14 +21,7 @@ export function ParentSignUpForm() {
 
   return (
     <form action={action} noValidate>
-      <span className="sc-feature-icon mb-3" aria-hidden="true">
-        <UserPlus size={24} />
-      </span>
-      <h2 className="h4">Ouvrir un compte Parent</h2>
-      <p className="text-secondary">
-        Vous recevrez un code de famille : c’est lui que vos enfants utiliseront
-        pour se connecter.
-      </p>
+      <h2 className="h5 mb-4">Vos informations</h2>
 
       {state.error ? (
         <div className="alert alert-danger" role="alert">
@@ -94,7 +86,7 @@ export function ParentSignUpForm() {
         />
       </div>
 
-      <button type="submit" className="btn btn-primary" disabled={pending}>
+      <button type="submit" className="btn btn-primary w-100" disabled={pending}>
         {pending ? 'Création…' : 'Créer le compte'}
       </button>
     </form>

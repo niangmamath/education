@@ -54,8 +54,8 @@ export default async function ParentHomePage() {
   return (
     <>
       <header className="mb-4">
-        <p className="text-uppercase text-primary fw-semibold small mb-1">Tableau de bord</p>
-        <h1 className="h2 mb-1">Bonjour {session.display_name}</h1>
+        <p className="sc-oeilleton sc-oeilleton-indigo">Tableau de bord</p>
+        <h1 className="mb-1">Bonjour {session.display_name}</h1>
         <p className="text-secondary mb-0">
           {active.length > 0
             ? `${active.length} profil${active.length > 1 ? 's' : ''} actif${active.length > 1 ? 's' : ''}.`
@@ -102,10 +102,10 @@ export default async function ParentHomePage() {
                     )}
 
                     {actionable.length > 0 ? (
-                      <p className="d-flex align-items-center gap-2 mb-3">
-                        <AlertTriangle size={18} aria-hidden="true" className="text-warning-emphasis" />
-                        <span>
-                          {actionable.length} point{actionable.length > 1 ? 's' : ''} d’attention
+                      <p className="mb-3">
+                        <span className="sc-etat sc-etat-travail">
+                          <AlertTriangle size={15} aria-hidden="true" />
+                          {actionable.length} point{actionable.length > 1 ? 's' : ''} à travailler
                         </span>
                       </p>
                     ) : null}
@@ -125,6 +125,7 @@ export default async function ParentHomePage() {
       )}
 
       <section>
+        <p className="sc-oeilleton">Depuis trente jours</p>
         <h2 className="h4 mb-3">Ce qui a changé</h2>
         <NotificationList notifications={notifications.slice(0, 5)} />
       </section>

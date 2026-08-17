@@ -21,8 +21,8 @@ export default function AccessibilityStatesPage() {
   return (
     <main className="container py-5" id="contenu-principal">
       <header className="mb-4">
-        <p className="text-uppercase text-primary fw-semibold small mb-1">Référence d’interface</p>
-        <h1 className="display-6 fw-bold">États d’interface et accessibilité</h1>
+        <p className="sc-oeilleton sc-oeilleton-indigo">Référence d’interface</p>
+        <h1>États d’interface et accessibilité</h1>
         <p className="lead text-secondary mb-0">
           Chaque état associe une icône, un titre et un message. La couleur n’est jamais le seul indicateur.
         </p>

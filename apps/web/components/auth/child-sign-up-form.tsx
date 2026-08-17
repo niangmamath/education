@@ -1,7 +1,6 @@
 'use client';
 
 import { useActionState } from 'react';
-import { KeyRound } from 'lucide-react';
 import { registerChild, type FormState } from '../../lib/actions';
 
 const EMPTY: FormState = { error: null };
@@ -18,14 +17,7 @@ export function ChildSignUpForm() {
 
   return (
     <form action={action} noValidate>
-      <span className="sc-feature-icon mb-3" aria-hidden="true">
-        <KeyRound size={24} />
-      </span>
-      <h2 className="h4">Rejoindre ta famille</h2>
-      <p className="text-secondary">
-        Demande le code de ta famille à un adulte. Ton profil l’attendra : il
-        pourra se connecter quand cet adulte l’aura accepté.
-      </p>
+      <h2 className="h5 mb-4">Ton profil</h2>
 
       {state.error ? (
         <div className="alert alert-danger" role="alert">
@@ -96,7 +88,7 @@ export function ChildSignUpForm() {
         </div>
       </div>
 
-      <button type="submit" className="btn btn-primary" disabled={pending}>
+      <button type="submit" className="btn btn-primary w-100" disabled={pending}>
         {pending ? 'Création…' : 'Créer mon profil'}
       </button>
     </form>

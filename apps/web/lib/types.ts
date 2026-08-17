@@ -204,11 +204,19 @@ export const OUTCOME_LABELS: Record<Outcome, string> = {
 };
 
 /**
- * How an outcome is coloured. Three bands and no gradient: a mark never replaces
- * a competency, and a continuous scale would read as one.
+ * How an outcome is marked. Three bands and no gradient: a mark never replaces a
+ * competency, and a continuous scale would read as one.
+ *
+ * None of the three is red, and that is the rule rather than a coincidence: red
+ * in this interface is reserved for technical failures. "Non acquise" is a
+ * neutral reading and not a mistake — it is where the work starts, not a
+ * sanction for it.
+ *
+ * The shape carries as much of the meaning as the colour: each state is a rule
+ * down its left edge, legible without telling the hues apart.
  */
 export const OUTCOME_CLASSES: Record<Outcome, string> = {
-  mastered: 'text-bg-success',
-  partial: 'text-bg-warning',
-  not_mastered: 'text-bg-secondary',
+  mastered: 'sc-etat sc-etat-acquis',
+  partial: 'sc-etat sc-etat-travail',
+  not_mastered: 'sc-etat sc-etat-non-acquis',
 };
