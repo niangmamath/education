@@ -285,6 +285,8 @@ class TestWhatIsServed:
     def test_the_kinds_are_served_so_a_client_need_not_hard_code_them(
         self, client: TestClient, parent: dict[str, str]
     ) -> None:
+        """The initiation assessment is a kind, and deliberately not offered here:
+        nobody browses for it and nobody gives it."""
         assert client.get(KINDS_URL).json() == ["h5p", "phet", "video"]
 
 

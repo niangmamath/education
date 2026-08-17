@@ -24,6 +24,7 @@ from sqlalchemy.orm import selectinload
 from app.api.deps import CurrentSession, DbSession
 from app.core.exceptions import NotFoundException
 from app.models.catalog import (
+    ACTIVITY_KIND_ASSESSMENT,
     ACTIVITY_KINDS,
     ACTIVITY_STATUS_PUBLISHED,
     Activity,
@@ -107,8 +108,14 @@ async def read_activity(code: str, session: CurrentSession, db: DbSession) -> An
 
 @router.get("/kinds", response_model=list[str])
 async def list_kinds(session: CurrentSession) -> list[str]:
-    """The kinds an activity may have, so a client need not hard-code them."""
-    return list(ACTIVITY_KINDS)
+    """The kinds the catalogue offers, so a client need not hard-code them.
+
+    An initiation assessment is a kind an activity may have, and it is
+    deliberately not one of these: nobody browses for it and nobody gives it —
+    the platform hands it to a child once, at activation. Offering it as a filter
+    would invite a parent to look for something they cannot use.
+    """
+    return [kind for kind in ACTIVITY_KINDS if kind != ACTIVITY_KIND_ASSESSMENT]
 
 
 def _filtered(
@@ -117,13 +124,19 @@ def _filtered(
     kind: str | None,
     max_duration: int | None,
 ) -> Select[Any]:
-    """Published only, then whatever the caller asked to narrow.
+    """Published, never an assessment, then whatever the caller asked to narrow.
+
+    The assessment is excluded here rather than left to a filter: the catalogue
+    is what a parent chooses from, and an assessment is not hers to choose.
 
     The competency filter joins rather than sub-selects, and the count above
     counts distinct activities: an activity working on two competencies is one
     activity, not two.
     """
-    statement = statement.where(Activity.status == ACTIVITY_STATUS_PUBLISHED)
+    statement = statement.where(
+        Activity.status == ACTIVITY_STATUS_PUBLISHED,
+        Activity.kind != ACTIVITY_KIND_ASSESSMENT,
+    )
     if competency is not None:
         statement = statement.join(
             ActivityCompetency, ActivityCompetency.activity_id == Activity.id

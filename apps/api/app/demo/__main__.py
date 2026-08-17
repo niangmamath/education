@@ -32,6 +32,7 @@ from sqlalchemy import create_engine, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
+from app.assessment import service as assessment
 from app.assignments import service as assignments
 from app.attempts import service as attempts
 from app.catalog.registration import RegistrationRefused, register_package
@@ -43,10 +44,13 @@ from app.core.exceptions import ConflictException, NotFoundException
 from app.core.security import generate_family_code, hash_password, hash_pin
 from app.demo import dataset
 from app.models.catalog import (
+    ACTIVITY_KIND_ASSESSMENT,
     ACTIVITY_KIND_H5P,
     ACTIVITY_STATUS_PUBLISHED,
     Activity,
     ActivityCompetency,
+    ActivityQuestion,
+    AssessmentQuestion,
 )
 from app.models.identity import CHILD_STATUS_ACTIVE, Child, Parent
 from app.referential.document import ReferentialDocument
@@ -163,6 +167,7 @@ def clean() -> int:
 async def build(spike: Path) -> None:
     _referential()
     _activities()
+    _assessment()
     packaged = _packages(spike)
 
     async with AsyncSessionFactory() as db:
@@ -228,6 +233,73 @@ def _activities() -> None:
                 session.add(
                     ActivityCompetency(
                         activity_id=activity.id, competency_code=competency
+                    )
+                )
+            session.commit()
+    finally:
+        engine.dispose()
+
+
+def _assessment() -> None:
+    """Install the initiation assessment, wording and attribution together.
+
+    Two tables: `assessment_questions` holds what is asked, and
+    `catalog_activity_questions` holds which competency each question works on.
+    The second already existed and is what the results engine reads — it must go
+    on reading one table whether an activity was imported or written here.
+    """
+    engine = create_engine(sync_database_url())
+    try:
+        with Session(engine) as session:
+            activity = session.scalar(
+                select(Activity).where(Activity.code == dataset.ASSESSMENT_CODE)
+            )
+            if activity is None:
+                activity = Activity(
+                    code=dataset.ASSESSMENT_CODE,
+                    title=dataset.ASSESSMENT_TITLE,
+                    kind=ACTIVITY_KIND_ASSESSMENT,
+                    status=ACTIVITY_STATUS_PUBLISHED,
+                    duration_minutes=dataset.ASSESSMENT_MINUTES,
+                )
+                session.add(activity)
+                session.flush()
+
+            existing = {
+                row.question_ref
+                for row in session.scalars(
+                    select(AssessmentQuestion).where(
+                        AssessmentQuestion.activity_id == activity.id
+                    )
+                )
+            }
+            for position, question in enumerate(dataset.ASSESSMENT, start=1):
+                if question["ref"] in existing:
+                    continue
+                session.add(
+                    AssessmentQuestion(
+                        activity_id=activity.id,
+                        position=position,
+                        question_ref=question["ref"],
+                        prompt=question["prompt"],
+                        choices=question["choices"],
+                        correct_index=question["correct"],
+                    )
+                )
+                session.add(
+                    ActivityQuestion(
+                        activity_id=activity.id,
+                        question_ref=question["ref"],
+                        competency_code=question["competency"],
+                    )
+                )
+                # Every competency the assessment can conclude on must also be
+                # declared on the activity, or the reading would find a question
+                # attributed to a competency the activity does not claim.
+                session.add(
+                    ActivityCompetency(
+                        activity_id=activity.id,
+                        competency_code=question["competency"],
                     )
                 )
             session.commit()
@@ -328,6 +400,10 @@ async def _families(db: AsyncSession) -> list[SeededFamily]:
                 )
                 db.add(child)
                 await db.flush()
+            # Activation is what gives the assessment, and these profiles are
+            # created already active. Giving it here is what the activation route
+            # would have done, not a shortcut around it.
+            await assessment.give_to(db, parent.id, child)
             children.append(SeededChild(child=child, pin=str(profile["pin"])))
 
         built.append(SeededFamily(parent=parent, children=children))
@@ -347,19 +423,24 @@ async def _history(families: list[SeededFamily]) -> None:
     """
     for family in families:
         for entry in family.children:
-            for past in dataset.HISTORY.get(entry.child.pseudonym, []):
-                await _work_through(family.parent.id, entry.child.id, past)
-
-            waiting = dataset.WAITING.get(entry.child.pseudonym)
-            if waiting is not None:
-                await _act(family.parent.id, entry.child.id, _give(waiting))
+            answers = dataset.ASSESSMENT_ANSWERS.get(entry.child.pseudonym)
+            if answers is not None:
+                await _take_assessment(family.parent.id, entry.child.id, answers)
 
 
-async def _work_through(
-    parent_id: uuid.UUID, child_id: uuid.UUID, past: dataset.PastActivity
+async def _take_assessment(
+    parent_id: uuid.UUID, child_id: uuid.UUID, answers: dict[str, bool]
 ) -> None:
-    """One activity, from given to finished, one session per act."""
-    assignment_id = await _act(parent_id, child_id, _give(past["activity"]))
+    """Let a child sit her initiation assessment, one act per session.
+
+    The assessment was given to her at activation, by the platform. From there
+    it is an ordinary activity: started, answered, finished — and the reading
+    that follows is produced by the rules, not written down beside them.
+
+    The answer chosen is the correct one or the first wrong one, which is enough
+    for a demonstration and keeps this file from restating what a right answer is.
+    """
+    assignment_id = await _act(parent_id, child_id, _pending_assessment())
     if assignment_id is None:
         return
 
@@ -372,8 +453,12 @@ async def _work_through(
     if attempt_id is None:
         return
 
-    for index, correct in enumerate(past["answers"], start=1):
-        await _act(parent_id, child_id, _answer(attempt_id, index, correct))
+    for question in dataset.ASSESSMENT:
+        wanted = answers.get(question["ref"])
+        if wanted is None:
+            continue
+        chosen = question["correct"] if wanted else _first_wrong(question)
+        await _act(parent_id, child_id, _answer(attempt_id, question["ref"], chosen))
 
     async def finish(db: AsyncSession, parent: Parent, child: Child) -> None:
         await attempts.complete(db, child, attempt_id)
@@ -381,24 +466,34 @@ async def _work_through(
     await _act(parent_id, child_id, finish)
 
 
-def _give(activity_code: str) -> Act[uuid.UUID]:
+def _first_wrong(question: dataset.ExamQuestion) -> int:
+    return next(
+        index
+        for index in range(len(question["choices"]))
+        if index != question["correct"]
+    )
+
+
+def _pending_assessment() -> Act[uuid.UUID]:
     async def act(db: AsyncSession, parent: Parent, child: Child) -> uuid.UUID:
-        assignment = await assignments.assign_activity(
-            db, parent, child.id, activity_code
-        )
-        return assignment.id
+        pending = await assessment.pending_for(db, child.id)
+        if pending is None:
+            raise NotFoundException(message="aucun examen d’initiation en attente")
+        return pending.id
 
     return act
 
 
-def _answer(attempt_id: uuid.UUID, index: int, correct: bool) -> Act[None]:
+def _answer(attempt_id: uuid.UUID, question_ref: str, chosen: int) -> Act[None]:
     async def act(db: AsyncSession, parent: Parent, child: Child) -> None:
+        attempt = await attempts.own_attempt(db, child, attempt_id)
+        answer, correct = await assessment.grade(db, attempt, question_ref, chosen)
         await attempts.record_response(
             db,
             child,
             attempt_id,
-            question_ref=f"q{index}",
-            response="vrai" if correct else "faux",
+            question_ref=question_ref,
+            response=answer,
             is_correct=correct,
         )
 

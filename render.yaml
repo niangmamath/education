@@ -1,0 +1,84 @@
+# Blueprint de démonstration StudentConnect.
+#
+# Ce qu'il déploie : l'API, le web, PostgreSQL et Redis. Tout le parcours
+# fonctionne — inscription, examen d'initiation, lecture par compétence,
+# diagnostic, remédiations proposées, tableaux de bord des deux espaces.
+#
+# Ce qu'il ne déploie PAS, et il faut le savoir avant de le lancer :
+# **l'origine de contenu**, donc les activités H5P ne se jouent pas ici.
+#
+# La raison n'est pas un oubli. En local, l'API écrit les contenus déployés dans
+# un volume et nginx les sert depuis ce même volume, en lecture seule ; c'est la
+# séparation d'origines qu'ADR-012 exige. Sur Render, un disque appartient à un
+# seul service : deux services ne peuvent pas partager ce volume. La bonne
+# solution est que l'origine de contenu lise les fichiers depuis le stockage
+# objet au lieu d'un disque, en gardant sa vérification de ticket — c'est un vrai
+# morceau de travail, pas un réglage à ajouter ici.
+#
+# L'examen d'initiation, lui, est écrit par la plateforme et ne dépend d'aucune
+# origine de contenu. C'est ce qui rend cette démonstration utile malgré tout :
+# un enfant inscrit ici passe son examen et repart avec un diagnostic complet.
+
+databases:
+  - name: studentconnect-db
+    databaseName: studentconnect
+    user: studentconnect
+    plan: free
+
+services:
+  - type: redis
+    name: studentconnect-redis
+    plan: free
+    # Les sessions et les tickets vivent ici. Rien n'y est durable par nature :
+    # une session perdue est une reconnexion, pas une donnée perdue.
+    ipAllowList: []
+
+  - type: web
+    name: studentconnect-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./apps/api/Dockerfile.dev
+    dockerContext: ./apps/api
+    healthCheckPath: /health/live
+    # Les migrations tournent avant que le service ne serve : un schéma en retard
+    # sur le code est une panne, pas un délai.
+    dockerCommand: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: studentconnect-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: studentconnect-redis
+          type: redis
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: "false"
+      # Le cookie de session est posé par le web sur sa propre origine ; l'API
+      # n'est jamais appelée par un navigateur. CORS n'a donc personne à laisser
+      # entrer, et la liste reste vide.
+      - key: CORS_ORIGINS
+        value: "[]"
+
+  - type: web
+    name: studentconnect-web
+    runtime: node
+    plan: free
+    rootDir: .
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @studentconnect/web run build
+    startCommand: pnpm --filter @studentconnect/web run start
+    envVars:
+      # Lu par le serveur Next et jamais par le navigateur : `API_URL` n'est pas
+      # `NEXT_PUBLIC_`, et c'est la décision d'ADR-016.
+      - key: API_URL
+        fromService:
+          name: studentconnect-api
+          type: web
+          property: hostport
+      - key: NODE_ENV
+        value: production

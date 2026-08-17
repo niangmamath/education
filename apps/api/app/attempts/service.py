@@ -118,7 +118,7 @@ async def record_response(
     runtime's own statements arrive by the xAPI route instead, and when the two
     describe the same question, `_prevailing` keeps the one the server read.
     """
-    attempt = await _own_attempt(db, child, attempt_id)
+    attempt = await own_attempt(db, child, attempt_id)
     if attempt.status != ATTEMPT_STATUS_IN_PROGRESS:
         raise ConflictException(message=ATTEMPT_CLOSED_MESSAGE)
 
@@ -143,7 +143,7 @@ async def complete(
     computing them again: an attempt is finished once, and a second request is
     the same request.
     """
-    attempt = await _own_attempt(db, child, attempt_id)
+    attempt = await own_attempt(db, child, attempt_id)
     if attempt.status == ATTEMPT_STATUS_COMPLETED:
         return attempt, list(attempt.results)
     if attempt.status == ATTEMPT_STATUS_ABANDONED:
@@ -329,10 +329,13 @@ async def _own_assignment(
     return assignment
 
 
-async def _own_attempt(
-    db: AsyncSession, child: Child, attempt_id: uuid.UUID
-) -> Attempt:
-    """One attempt of this child, or a refusal that says nothing more."""
+async def own_attempt(db: AsyncSession, child: Child, attempt_id: uuid.UUID) -> Attempt:
+    """One attempt of this child, or a refusal that says nothing more.
+
+    Public because the initiation assessment needs the same check before it
+    grades an answer, and a second implementation of "is this hers" is a second
+    chance to get it wrong.
+    """
     attempt = await db.scalar(
         select(Attempt)
         .join(Assignment, Assignment.id == Attempt.assignment_id)

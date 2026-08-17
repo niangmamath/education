@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { api } from '../../../../lib/api';
 import { requireChild } from '../../../../lib/session';
 import { InterfaceState } from '../../../../components/ui/interface-state';
@@ -53,8 +54,16 @@ export default async function JouerPage({
     );
   }
 
-  const running =
-    attempts.ok ? attempts.data.find((row) => row.status === 'in_progress') : undefined;
+  // An assessment is an activity, but it is not played in a frame: it was
+  // written here and it is answered here. Anyone arriving by its assignment URL
+  // — a bookmark, the ordinary list — is sent to the page that can ask it.
+  if (assignment.activity.kind === 'assessment') {
+    redirect('/eleve/examen');
+  }
+
+  const running = attempts.ok
+    ? attempts.data.find((row) => row.status === 'in_progress')
+    : undefined;
 
   if (!running) {
     return (

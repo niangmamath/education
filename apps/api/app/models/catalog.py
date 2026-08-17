@@ -34,7 +34,7 @@ from sqlalchemy import (
     UniqueConstraint,
     func,
 )
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base
@@ -45,7 +45,16 @@ from app.models.referential import CODE_LENGTH, LABEL_LENGTH
 ACTIVITY_KIND_H5P: Final = "h5p"
 ACTIVITY_KIND_PHET: Final = "phet"
 ACTIVITY_KIND_VIDEO: Final = "video"
-ACTIVITY_KINDS: Final = (ACTIVITY_KIND_H5P, ACTIVITY_KIND_PHET, ACTIVITY_KIND_VIDEO)
+# Authored here rather than imported: an initiation assessment ties each of its
+# questions to a competency of our referential, and no external bank can supply
+# a tie that exists nowhere but here.
+ACTIVITY_KIND_ASSESSMENT: Final = "assessment"
+ACTIVITY_KINDS: Final = (
+    ACTIVITY_KIND_H5P,
+    ACTIVITY_KIND_PHET,
+    ACTIVITY_KIND_VIDEO,
+    ACTIVITY_KIND_ASSESSMENT,
+)
 
 # An activity is prepared, then may be served, then stops being offered without
 # ever disappearing: results of steps 10 to 12 will keep pointing at it.
@@ -72,7 +81,7 @@ class Activity(Base):
     __table_args__ = (
         UniqueConstraint("code", name="uq_catalog_activities_code"),
         CheckConstraint(
-            "kind IN ('h5p', 'phet', 'video')",
+            "kind IN ('h5p', 'phet', 'video', 'assessment')",
             name="ck_catalog_activities_kind",
         ),
         CheckConstraint(
@@ -253,3 +262,48 @@ class H5PPackage(Base):
     )
 
     activity: Mapped[Activity] = relationship(back_populates="h5p_package")
+
+
+class AssessmentQuestion(Base):
+    """One question of an assessment this platform authored itself.
+
+    The wording lives here; the attribution — which competency the question
+    works on — stays in `catalog_activity_questions`, where it already was.
+    Splitting them is deliberate: the engine that reads a result must go on
+    reading one table for attribution, whether the activity was imported or
+    written here, and it must never learn the difference.
+
+    `correct_index` is what a client is never given. The question travels to the
+    browser without it, the answer comes back as an index, and the server is what
+    compares. An assessment whose answers ship with it is a questionnaire.
+    """
+
+    __tablename__ = "assessment_questions"
+    __table_args__ = (
+        UniqueConstraint(
+            "activity_id", "question_ref", name="uq_assessment_questions_ref"
+        ),
+        CheckConstraint("correct_index >= 0", name="ck_assessment_questions_correct"),
+        CheckConstraint(
+            "jsonb_array_length(choices) >= 2", name="ck_assessment_questions_choices"
+        ),
+        Index("ix_assessment_questions_activity", "activity_id"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    activity_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("catalog_activities.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    position: Mapped[int] = mapped_column(Integer, nullable=False)
+    # The same identifier the responses carry, so a reading joins to its wording
+    # without inventing a second convention.
+    question_ref: Mapped[str] = mapped_column(String(200), nullable=False)
+    prompt: Mapped[str] = mapped_column(Text, nullable=False)
+    choices: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
+    correct_index: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    activity: Mapped[Activity] = relationship()

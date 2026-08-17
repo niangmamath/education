@@ -3,34 +3,30 @@
 Every value here is fictional, as the project's decisions require, and every
 name is obviously so. Addresses belong to `example.com`, reserved by RFC 2606.
 
-The dataset is not a random filling of tables. It is arranged so that a
-five-minute demonstration walks through the platform's three least obvious
-behaviours without anybody having to set them up by hand:
+**The competencies are not invented.** They follow the structure of the French
+national *Repères* assessments taken at the start of CP and CE1: for French,
+letters and their sounds, syllables, phonemes, then reading and writing words;
+for mathematics, counting a collection, reading and comparing numbers, then
+adding, subtracting and solving a one-step problem. Borrowing that structure
+costs nothing and means nobody has to defend a carving of the subject we made up.
 
-1. **A prerequisite is worked before what depends on it.** Léa fails at counting
-   *and* at adding, and adding requires counting. The platform therefore
-   proposes only counting, and shows adding as deferred with the reason. Saying
-   "she is behind on additions" would be the ordinary answer and the wrong one.
-2. **A gap is a candidate, not a verdict.** Every conclusion on screen carries
-   the rule that produced it and the counts it was read from.
-3. **One family cannot see another.** A second family exists for exactly that:
-   signing in as the other parent shows nothing of the first.
+The prerequisites cross the two levels on purpose. A CE1 child who fails at
+adding is sent back to counting, which is CP — and that is the platform's most
+useful behaviour, not an edge case.
 
-Tom is here for contrast: everything he has done went well, so his dashboard is
-what a calm one looks like. A demonstration where every child is in difficulty
-teaches the wrong thing about the product.
+The dataset is arranged so a demonstration walks through the least obvious
+behaviours without anybody setting them up:
+
+1. **A new child starts full, not empty.** She is given the initiation
+   assessment at activation, and has readings from the moment she takes it.
+2. **A prerequisite is worked before what depends on it.**
+3. **A gap is a candidate**, carrying the rule and the counts it came from.
+4. **One family cannot see another.**
 """
 
 from __future__ import annotations
 
 from typing import Any, Final, TypedDict
-
-
-class PastActivity(TypedDict):
-    """One activity a demonstration child has already worked through."""
-
-    activity: str
-    answers: list[bool]
 
 
 class ChildProfile(TypedDict):
@@ -45,119 +41,293 @@ class FamilyProfile(TypedDict):
     children: list[ChildProfile]
 
 
+class ExamQuestion(TypedDict):
+    """One question of the initiation assessment."""
+
+    ref: str
+    competency: str
+    prompt: str
+    choices: list[str]
+    correct: int
+
+
 # Everything the demonstration creates carries this prefix, so `--reset` can
-# take back exactly what it put in and nothing else.
+# take back exactly what it put in and nothing else. Competency codes do not
+# need it: they live inside the edition, and go when it goes.
 PREFIX: Final = "demo-"
 
 EDITION_CODE: Final = f"{PREFIX}2026"
 
-COMP_COUNT: Final = f"{PREFIX}num-compter"
-COMP_ADD: Final = f"{PREFIX}num-additionner"
-COMP_COMPARE: Final = f"{PREFIX}num-comparer"
-COMP_SYLLABLES: Final = f"{PREFIX}lec-syllabes"
-COMP_WORDS: Final = f"{PREFIX}lec-mots"
+FR_LETTRES: Final = "cp-fr-lettres"
+FR_SYLLABES: Final = "cp-fr-syllabes"
+FR_PHONEMES: Final = "cp-fr-phonemes"
+FR_MOTS: Final = "ce1-fr-mots"
+FR_DICTEE: Final = "ce1-fr-dictee"
+FR_COMPREHENSION: Final = "ce1-fr-comprehension"
+
+MA_DENOMBRER: Final = "cp-ma-denombrer"
+MA_LIRE: Final = "cp-ma-lire-nombres"
+MA_COMPARER: Final = "cp-ma-comparer"
+MA_ADDITION: Final = "ce1-ma-addition"
+MA_SOUSTRACTION: Final = "ce1-ma-soustraction"
+MA_PROBLEME: Final = "ce1-ma-probleme"
 
 
-def referential() -> dict[str, Any]:
-    """One edition, two subjects, and a prerequisite that carries the demo.
-
-    `additionner` and `comparer` both require `compter`. That single edge is
-    what makes the deferral visible, and it is also true of the subject: a child
-    who cannot count to twenty cannot be helped by drilling additions.
-    """
+def _c(
+    code: str,
+    label: str,
+    domain: str,
+    level: str,
+    position: int,
+    prerequisites: list[str] | None = None,
+) -> dict[str, Any]:
     return {
-        "version": {"code": EDITION_CODE, "label": "Édition de démonstration"},
-        "levels": [{"code": "cp", "label": "Cours préparatoire", "position": 1}],
-        "subjects": [
-            {
-                "code": "math",
-                "label": "Mathématiques",
-                "position": 1,
-                "domains": [
-                    {"code": "math-num", "label": "Nombres et calcul", "position": 1}
-                ],
-            },
-            {
-                "code": "fr",
-                "label": "Français",
-                "position": 2,
-                "domains": [{"code": "fr-lec", "label": "Lecture", "position": 1}],
-            },
-        ],
-        "competencies": [
-            _competency(COMP_COUNT, "Compter jusqu’à 20", position=1),
-            _competency(
-                COMP_ADD,
-                "Additionner deux nombres jusqu’à 10",
-                position=2,
-                prerequisites=[COMP_COUNT],
-            ),
-            _competency(
-                COMP_COMPARE,
-                "Comparer deux nombres",
-                position=3,
-                prerequisites=[COMP_COUNT],
-            ),
-            _competency(
-                COMP_SYLLABLES,
-                "Reconnaître les syllabes d’un mot",
-                position=1,
-                domain="fr-lec",
-            ),
-            _competency(
-                COMP_WORDS,
-                "Lire des mots simples",
-                position=2,
-                domain="fr-lec",
-                prerequisites=[COMP_SYLLABLES],
-            ),
-        ],
-    }
-
-
-def _competency(code: str, label: str, **overrides: Any) -> dict[str, Any]:
-    payload: dict[str, Any] = {
         "code": code,
         "label": label,
         "description": None,
-        "position": 1,
-        "level": "cp",
-        "domain": "math-num",
-        "prerequisites": [],
+        "position": position,
+        "level": level,
+        "domain": domain,
+        "prerequisites": prerequisites or [],
     }
-    payload.update(overrides)
-    return payload
 
 
-# Two lengths, and the difference is the product's. A Quick Repair lasts three
-# to seven minutes; anything longer is never proposed as one, however well it
-# matches. The long ones here are what reveals a difficulty, the short ones are
-# what the platform offers to do about it.
+def referential() -> dict[str, Any]:
+    """Twelve competencies, two subjects, two levels, and a real tree.
+
+    The prerequisites are the pedagogical claim of the whole dataset: adding
+    requires comparing, which requires reading numbers, which requires counting.
+    A child who fails at additions is sent back along that chain rather than made
+    to drill additions.
+    """
+    return {
+        "version": {"code": EDITION_CODE, "label": "Repères CP et CE1, démonstration"},
+        "levels": [
+            {"code": "cp", "label": "Cours préparatoire", "position": 1},
+            {"code": "ce1", "label": "Cours élémentaire première année", "position": 2},
+        ],
+        "subjects": [
+            {
+                "code": "fr",
+                "label": "Français",
+                "position": 1,
+                "domains": [
+                    {"code": "fr-code", "label": "Étude de la langue", "position": 1},
+                    {"code": "fr-lire", "label": "Lire et écrire", "position": 2},
+                ],
+            },
+            {
+                "code": "ma",
+                "label": "Mathématiques",
+                "position": 2,
+                "domains": [
+                    {"code": "ma-nombres", "label": "Nombres", "position": 1},
+                    {
+                        "code": "ma-calcul",
+                        "label": "Calcul et problèmes",
+                        "position": 2,
+                    },
+                ],
+            },
+        ],
+        "competencies": [
+            _c(FR_LETTRES, "Reconnaître les lettres et leur son", "fr-code", "cp", 1),
+            _c(FR_SYLLABES, "Manipuler les syllabes", "fr-code", "cp", 2, [FR_LETTRES]),
+            _c(
+                FR_PHONEMES,
+                "Manipuler les phonèmes",
+                "fr-code",
+                "cp",
+                3,
+                [FR_SYLLABES],
+            ),
+            _c(FR_MOTS, "Lire des mots simples", "fr-lire", "ce1", 1, [FR_PHONEMES]),
+            _c(FR_DICTEE, "Écrire des mots dictés", "fr-lire", "ce1", 2, [FR_MOTS]),
+            _c(
+                FR_COMPREHENSION,
+                "Comprendre un texte lu seul",
+                "fr-lire",
+                "ce1",
+                3,
+                [FR_MOTS],
+            ),
+            _c(MA_DENOMBRER, "Dénombrer une collection", "ma-nombres", "cp", 1),
+            _c(
+                MA_LIRE,
+                "Lire et écrire les nombres jusqu’à 10",
+                "ma-nombres",
+                "cp",
+                2,
+                [MA_DENOMBRER],
+            ),
+            _c(
+                MA_COMPARER,
+                "Comparer et ranger des nombres",
+                "ma-nombres",
+                "cp",
+                3,
+                [MA_LIRE],
+            ),
+            _c(
+                MA_ADDITION,
+                "Additionner jusqu’à 20",
+                "ma-calcul",
+                "ce1",
+                1,
+                [MA_COMPARER],
+            ),
+            _c(
+                MA_SOUSTRACTION,
+                "Soustraire jusqu’à 20",
+                "ma-calcul",
+                "ce1",
+                2,
+                [MA_ADDITION],
+            ),
+            _c(
+                MA_PROBLEME,
+                "Résoudre un problème à une étape",
+                "ma-calcul",
+                "ce1",
+                3,
+                [MA_ADDITION],
+            ),
+        ],
+    }
+
+
+# The initiation assessment: one question per competency, and the correct answer
+# never leaves the server. No timer and no score shown — the point is to find a
+# starting place, not to rank a six-year-old.
+ASSESSMENT_CODE: Final = f"{PREFIX}examen-initiation"
+ASSESSMENT_TITLE: Final = "Pour faire connaissance"
+ASSESSMENT_MINUTES: Final = 10
+
+ASSESSMENT: Final[list[ExamQuestion]] = [
+    {
+        "ref": "q-fr-lettres",
+        "competency": FR_LETTRES,
+        "prompt": "Quelle lettre fait le son « mmm » ?",
+        "choices": ["M", "P", "T"],
+        "correct": 0,
+    },
+    {
+        "ref": "q-fr-syllabes",
+        "competency": FR_SYLLABES,
+        "prompt": "Combien de syllabes entends-tu dans « chocolat » ?",
+        "choices": ["Deux", "Trois", "Quatre"],
+        "correct": 1,
+    },
+    {
+        "ref": "q-fr-phonemes",
+        "competency": FR_PHONEMES,
+        "prompt": "Dans quel mot entends-tu le son « ou » ?",
+        "choices": ["Loup", "Lame", "Lit"],
+        "correct": 0,
+    },
+    {
+        "ref": "q-fr-mots",
+        "competency": FR_MOTS,
+        "prompt": "Quel mot est écrit correctement ?",
+        "choices": ["chapo", "chapeau", "chapiau"],
+        "correct": 1,
+    },
+    {
+        "ref": "q-fr-dictee",
+        "competency": FR_DICTEE,
+        "prompt": "On veut écrire « une jolie fleur ». Comment s’écrit « jolie » ?",
+        "choices": ["jolie", "joli", "jolies"],
+        "correct": 0,
+    },
+    {
+        "ref": "q-fr-comprehension",
+        "competency": FR_COMPREHENSION,
+        "prompt": "« Léa met son manteau car il neige. » Pourquoi met-elle son manteau ?",
+        "choices": [
+            "Parce qu’il neige",
+            "Parce qu’elle a faim",
+            "Parce qu’il fait chaud",
+        ],
+        "correct": 0,
+    },
+    {
+        "ref": "q-ma-denombrer",
+        "competency": MA_DENOMBRER,
+        "prompt": "Combien y a-t-il d’étoiles ?  ★ ★ ★ ★ ★ ★ ★",
+        "choices": ["Six", "Sept", "Huit"],
+        "correct": 1,
+    },
+    {
+        "ref": "q-ma-lire",
+        "competency": MA_LIRE,
+        "prompt": "Comment s’écrit le nombre « neuf » en chiffres ?",
+        "choices": ["6", "9", "19"],
+        "correct": 1,
+    },
+    {
+        "ref": "q-ma-comparer",
+        "competency": MA_COMPARER,
+        "prompt": "Quel nombre est le plus grand ?",
+        "choices": ["8", "12", "10"],
+        "correct": 1,
+    },
+    {
+        "ref": "q-ma-addition",
+        "competency": MA_ADDITION,
+        "prompt": "Combien font 7 + 6 ?",
+        "choices": ["12", "13", "14"],
+        "correct": 1,
+    },
+    {
+        "ref": "q-ma-soustraction",
+        "competency": MA_SOUSTRACTION,
+        "prompt": "Combien font 15 − 8 ?",
+        "choices": ["6", "7", "8"],
+        "correct": 1,
+    },
+    {
+        "ref": "q-ma-probleme",
+        "competency": MA_PROBLEME,
+        "prompt": "Tom a 12 billes. Il en donne 4 à Léa. Combien lui en reste-t-il ?",
+        "choices": ["6", "8", "16"],
+        "correct": 1,
+    },
+]
+
+
+# One repair per competency, so every difficulty the assessment can find has an
+# answer. All within the three-to-seven minute band that makes a repair quick.
 ACTIVITIES: Final[list[tuple[str, str, str, int]]] = [
-    # code, title, competency, minutes
-    (f"{PREFIX}eval-compter", "Compter les objets d’une image", COMP_COUNT, 12),
-    (f"{PREFIX}fix-compter", "Compter avec la bande numérique", COMP_COUNT, 5),
-    (f"{PREFIX}eval-additionner", "Additions à trous", COMP_ADD, 12),
-    (f"{PREFIX}fix-additionner", "Additionner avec ses doigts", COMP_ADD, 4),
-    (f"{PREFIX}eval-syllabes", "Frapper les syllabes", COMP_SYLLABLES, 10),
-    (f"{PREFIX}fix-syllabes", "Couper les mots en syllabes", COMP_SYLLABLES, 3),
-    (f"{PREFIX}decouverte-lecture", "Reconnaître les lettres", COMP_WORDS, 6),
+    (f"{PREFIX}fix-fr-lettres", "L’alphabet et ses sons", FR_LETTRES, 5),
+    (f"{PREFIX}fix-fr-syllabes", "Frapper les syllabes", FR_SYLLABES, 4),
+    (f"{PREFIX}fix-fr-phonemes", "Chasse aux sons", FR_PHONEMES, 5),
+    (f"{PREFIX}fix-fr-mots", "Lire des mots courts", FR_MOTS, 6),
+    (f"{PREFIX}fix-fr-dictee", "Écrire des mots simples", FR_DICTEE, 6),
+    (
+        f"{PREFIX}fix-fr-comprehension",
+        "Comprendre une petite histoire",
+        FR_COMPREHENSION,
+        7,
+    ),
+    (f"{PREFIX}fix-ma-denombrer", "Compter une collection", MA_DENOMBRER, 4),
+    (f"{PREFIX}fix-ma-lire", "Écrire les nombres jusqu’à 10", MA_LIRE, 5),
+    (f"{PREFIX}fix-ma-comparer", "Plus grand, plus petit", MA_COMPARER, 5),
+    (f"{PREFIX}fix-ma-addition", "Additionner avec la bande numérique", MA_ADDITION, 6),
+    (f"{PREFIX}fix-ma-soustraction", "Soustraire pas à pas", MA_SOUSTRACTION, 6),
+    (f"{PREFIX}fix-ma-probleme", "Un problème, une étape", MA_PROBLEME, 7),
 ]
 
 # Only one activity actually plays, and the platform is what decides that: a
 # package belongs to one activity, and the pilot holds exactly one vetted
-# package. Rather than work around that rule for a demonstration, the one
-# playable activity is the one the demonstration ends on — the repair the
-# platform proposes for Léa, which the parent gives and the child then does.
-# The others furnish the lists, and the script says which is which rather than
-# letting somebody find out by clicking.
-PLAYABLE: Final = (f"{PREFIX}fix-compter",)
+# package. Rather than work around that rule for a demonstration, the playable
+# one is a repair the assessment is likely to propose.
+PLAYABLE: Final = (f"{PREFIX}fix-ma-denombrer",)
 
 PASSWORD: Final = "demonstration-2026"
 
 # Two families, because isolation is a claim until somebody tries the other
-# account. Diallo has one child and no history: it is there to be signed into,
-# not to be read.
+# account. Noa has taken nothing: she shows what a brand new profile looks like —
+# the assessment waiting, and nothing else.
 FAMILIES: Final[list[FamilyProfile]] = [
     {
         "email": f"{PREFIX}parent.martin@example.com",
@@ -176,26 +346,28 @@ FAMILIES: Final[list[FamilyProfile]] = [
     },
 ]
 
-# What each child has already done. `correct` says how the questions went; the
-# platform's own rules turn that into a reading, so nothing here states an
-# outcome directly — stating one would let the demonstration disagree with the
-# product.
+# How each child answered her initiation assessment. Nothing here states an
+# outcome: the platform's rules turn these answers into a reading, so the
+# demonstration cannot disagree with the product.
 #
-# Léa: counting and adding both went badly, syllables went well. Since adding
-# requires counting, the platform proposes counting alone.
-# Tom: everything went well, which is what a calm dashboard looks like.
-HISTORY: Final[dict[str, list[PastActivity]]] = {
-    "lea": [
-        {"activity": f"{PREFIX}eval-compter", "answers": [False, False, True]},
-        {"activity": f"{PREFIX}eval-additionner", "answers": [False, False]},
-        {"activity": f"{PREFIX}eval-syllabes", "answers": [True, True, True]},
-    ],
-    "tom": [
-        {"activity": f"{PREFIX}eval-compter", "answers": [True, True, True]},
-        {"activity": f"{PREFIX}eval-syllabes", "answers": [True, True]},
-    ],
+# Léa stumbles on counting and on everything built above it — the chain the tree
+# describes. Tom is solid throughout, because a demonstration where every child
+# is in difficulty teaches the wrong thing about the product. Noa is absent from
+# this map on purpose: her assessment is waiting, untaken.
+ASSESSMENT_ANSWERS: Final[dict[str, dict[str, bool]]] = {
+    "lea": {
+        "q-fr-lettres": True,
+        "q-fr-syllabes": True,
+        "q-fr-phonemes": False,
+        "q-fr-mots": False,
+        "q-fr-dictee": False,
+        "q-fr-comprehension": True,
+        "q-ma-denombrer": False,
+        "q-ma-lire": True,
+        "q-ma-comparer": False,
+        "q-ma-addition": False,
+        "q-ma-soustraction": False,
+        "q-ma-probleme": True,
+    },
+    "tom": {question["ref"]: True for question in ASSESSMENT},
 }
-
-# Given and not started, so the Élève space has something to open during the
-# demonstration rather than only a history to read.
-WAITING: Final[dict[str, str]] = {"lea": f"{PREFIX}decouverte-lecture"}
