@@ -27,7 +27,7 @@ from app.models.catalog import (
     Activity,
     ActivityCompetency,
     ActivityQuestion,
-    AssessmentQuestion,
+    AuthoredQuestion,
 )
 
 TEST_CODE_PREFIX = "test-exam-"
@@ -70,7 +70,7 @@ def assessment(engine: Engine) -> Iterator[str]:
             start=1,
         ):
             session.add(
-                AssessmentQuestion(
+                AuthoredQuestion(
                     activity_id=row.id,
                     position=position,
                     question_ref=ref,

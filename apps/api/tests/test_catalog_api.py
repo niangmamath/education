@@ -285,9 +285,12 @@ class TestWhatIsServed:
     def test_the_kinds_are_served_so_a_client_need_not_hard_code_them(
         self, client: TestClient, parent: dict[str, str]
     ) -> None:
-        """The initiation assessment is a kind, and deliberately not offered here:
-        nobody browses for it and nobody gives it."""
-        assert client.get(KINDS_URL).json() == ["h5p", "phet", "video"]
+        """A remediation sheet belongs here and an assessment does not, which is
+        the whole difference between the two authored kinds: a parent chooses a
+        sheet and gives it, whereas the assessment is handed to a child once, by
+        the platform, at activation. Offering the assessment as a filter would
+        invite a parent to look for something that is not hers to give."""
+        assert client.get(KINDS_URL).json() == ["h5p", "phet", "video", "remediation"]
 
 
 class TestFilters:

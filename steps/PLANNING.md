@@ -171,6 +171,30 @@ appelant. La boucle complète du MVP — activité donnée, contenu joué, évé
 capturé, lacune et score recalculés, tableau de bord mis à jour — a été jouée de
 bout en bout sur la pile vivante.
 
+### Phase 9 bis, travaux hors étape du 17 août 2026
+
+Menés après la clôture de l’étape 13, sur autorisation permanente du
+propriétaire, parce qu’ils bloquaient l’usage réel de la plateforme plutôt qu’une
+étape à venir.
+
+| ID | Travail | Dépendances | Statut | Preuve |
+|---|---|---|---|---|
+| HORS-01 | Examen d’initiation | DASH-04 | Terminé | Douze questions, une par compétence, donnée par la plateforme ; la bonne réponse ne quitte pas le serveur |
+| HORS-02 | Rendre la création de comptes possible | HORS-01 | Terminé | Quatre pages d’authentification distinctes ; le remplissage automatique fonctionne au lieu d’être désactivé |
+| HORS-03 | Identité visuelle « le cahier » | HORS-02 | Terminé | Le rouge réservé aux pannes, le fil de prérequis, contrastes AA vérifiés, PR #41 |
+| HORS-04 | Fiches de remédiation | HORS-03 | Terminé | Douze fiches écrites ici, 1103 tests, ADR-017 |
+
+`HORS-01` referme la première flèche du MVP, qui n’avait jamais été construite :
+un enfant inscrit n’avait aucune compétence observée, donc aucun diagnostic.
+`HORS-04` referme la dernière : les douze remédiations étaient des lignes de
+catalogue sans rien derrière, et le diagnostic proposait des réparations qui
+s’ouvraient sur une page vide.
+
+L’examen et les fiches partagent leur correction et **pas** ce qu’ils répondent :
+une fiche explique, l’examen se tait. Cette asymétrie a ouvert une faille — poster
+ses réponses d’examen à la route des fiches — refermée par un contrôle de la
+nature de l’activité. ADR-017 consigne l’ensemble.
+
 ### Prochaine tâche
 
 Ouvrir l’étape 14, notifications. La page « Ce qui a changé » livrée par

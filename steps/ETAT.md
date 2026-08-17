@@ -3,7 +3,7 @@
 ## Référence
 
 - Projet : StudentConnect
-- Date : 16 août 2026
+- Date : 17 août 2026
 - Dépôt : `Tidianesarrndiaye/StudentConnect`
 - Branche : `main`
 - Version cible : `V0.1`
@@ -1307,6 +1307,110 @@ Pile vivante : l'acteur revendiqué n'est pas conservé, un pseudonyme l'est
 Pile vivante : la tentative terminée rend « 1 réponse évaluée, dont 1 juste »
 Pile vivante : le parent voit la santé académique et sa phrase
 ```
+
+## Travaux hors étape, 17 août 2026
+
+Menés après la clôture de l'étape 13 et avant l'ouverture de l'étape 14, sur
+autorisation permanente du propriétaire.
+
+### Examen d'initiation et création de comptes
+
+- [x] **La première marche du parcours, qui manquait.** La définition du MVP dit
+      « parent crée un enfant → enfant réalise un diagnostic → … » ; la deuxième
+      flèche n'existait pas. Un enfant inscrit n'avait aucune compétence
+      observée, donc aucun diagnostic, donc aucune recommandation. Un examen de
+      douze questions, une par compétence, est donné par la plateforme à
+      l'activation — le seul endroit où elle assigne quoi que ce soit.
+- [x] Défaut trouvé et corrigé : l'examen n'était donné qu'à l'*activation*, ce
+      qui n'arrive jamais pour un profil qu'un parent crée lui-même, puisqu'il
+      naît actif. Le chemin le plus probable était celui qui menait à un tableau
+      de bord vide.
+- [x] **Le balayage de tests supprimait des comptes qui n'étaient pas à lui.**
+      Il effaçait tout compte en `example.com`, domaine réservé par la RFC 2606
+      et donc exactement celui qu'une personne tape pour se créer un compte à la
+      main. Il ne reconnaît plus qu'une **forme** générée — préfixe, tiret, les
+      trente-deux caractères d'un `uuid4().hex` — et quinze tests nomment des
+      adresses qu'un humain écrirait.
+- [x] Quatre pages d'authentification distinctes (`/connexion`,
+      `/connexion/eleve`, `/inscription`, `/inscription/eleve`). Les deux
+      connexions partageaient une adresse derrière des onglets : un navigateur ne
+      peut pas distinguer deux formulaires à une même adresse, et versait le mot
+      de passe du parent dans « Code de la famille ». **Le remplissage
+      automatique n'est pas désactivé** — c'est un service rendu, et la correction
+      consiste à décrire les formulaires correctement, pas à les refuser.
+- [x] La moitié des questions de français **contenaient leur réponse**. Réécrites,
+      et quatorze propriétés les tiennent désormais.
+
+### Identité visuelle, « le cahier »
+
+- [x] Papeterie scolaire française — réglure Seyès, trait de marge, encre
+      bleu-noir — et **une règle prise dans le produit : le rouge ne dit jamais
+      qu'un enfant s'est trompé.** Ce qui demande du travail est ocre ; le rouge
+      reste aux pannes techniques, derrière un jeton distinct.
+- [x] Signature : le **fil de prérequis**, une chaîne rendue où une compétence
+      reportée se lit derrière celle qui la bloque. Il n'existe que là où une
+      relation de prérequis existe.
+- [x] Atkinson Hyperlegible pour le texte courant, choisie parce qu'elle a été
+      dessinée pour que le b et le d cessent de se ressembler — ce que l'examen
+      mesure justement.
+- [x] L'indicateur de santé n'est plus un chiffre géant : son explication passe
+      devant. Un grand nombre isolé se lit comme une note.
+- [x] Trois jetons de couleur échouaient au contraste AA et ont été assombris.
+- [x] Pull Request #41 fusionnée, commit `0866010`.
+
+### Fiches de remédiation, ADR-017
+
+- [x] **Les douze remédiations étaient des lignes de catalogue sans rien
+      derrière.** Le diagnostic proposait des réparations qui s'ouvraient sur une
+      page vide. Douze fiches écrites ici : trois à sept minutes, une leçon, quatre
+      questions, une explication après chacune.
+- [x] Décision consignée en ADR-017 : écrire plutôt qu'importer. Le rattachement
+      question-compétence n'existe nulle part ailleurs, ADR-012 n'autorise qu'une
+      bibliothèque, l'origine de contenu n'est pas déployable sur Render, et une
+      réparation doit enseigner avant d'interroger.
+- [x] `assessment_questions` devient `authored_questions` : la table sert les deux
+      natures écrites ici. La correction est mutualisée, **ce que chacune répond
+      ne l'est pas** — une fiche explique, l'examen se tait, sans quoi il
+      cesserait de mesurer.
+- [x] **Une faille ouverte par cette asymétrie, et fermée.** Sans contrôle de la
+      nature de l'activité, une enfant pouvait poster ses réponses d'examen à la
+      route des fiches et se faire dire, une par une, si elles étaient justes.
+      L'examen serait devenu franchissable par la porte ouverte pour l'aider.
+- [x] Quatre questions ont été prises en défaut par les propriétés et réécrites :
+      trois dont la réponse était recopiable dans l'énoncé, une sans point
+      d'interrogation.
+- [x] Le paquet H5P vérifié garde une activité à lui, en dehors des douze
+      réparations : le runtime de contenu reste démontrable, et plus rien du
+      parcours ne dépend de son déploiement.
+- [x] Migration `0014_remediation_sheets`, réversible, vérifiée par
+      `downgrade base` puis `upgrade head`.
+
+## Résultats techniques du 17 août 2026
+
+```text
+Ruff        : vert, format inclus
+Mypy        : vert sur 84 fichiers
+Pytest      : 1103 tests réussis
+TypeScript  : vert
+ESLint      : vert
+Build Next  : vert, 20 routes
+Migrations  : 0014 réversible, aller-retour complet vérifié
+Base        : 12 compétences, examen à 12 questions, 12 fiches à 4 questions
+              expliquées chacune ; l'examen n'a aucune explication, par décision
+```
+
+## Dettes connues
+
+- **Aucun test automatisé du web.** `vitest` est déclaré sans être installé.
+  C'est la dette principale, inchangée depuis l'étape 13.
+- **Aucun son.** Les questions de phonologie, dans l'examen comme dans les
+  fiches, parlent de mots écrits. C'est la première chose à ajouter si la
+  plateforme sert en vrai.
+- **Aucune image.** Le dénombrement se fait sur des rangées de symboles
+  typographiques : cela tient jusqu'à une dizaine.
+- **Un appel d'API par enfant** sur le tableau de bord Parent.
+- **Aucun écran d'administration des profils** : étape 15.
+- **ADR-012** : antivirus et vérification de licence encore partiels.
 
 ## Prochaine action
 

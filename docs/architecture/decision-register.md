@@ -1,6 +1,6 @@
 # Registre des Décisions d'Architecture (ADR Register)
 
-> **Dernière mise à jour : 16 août 2026**
+> **Dernière mise à jour : 17 août 2026**
 > **Statut : à jour, reconstruit depuis les fichiers d'ADR**
 
 Ce document est le **registre central** de toutes les Architecture Decision Records (ADR) du projet StudentConnect. Chaque ADR documente une décision architecturale structurante prise par l'équipe.
@@ -18,7 +18,7 @@ Ce document est le **registre central** de toutes les Architecture Decision Reco
 
 ## Structure des dossiers
 
-Les dix-sept ADR existent toutes en fichier ; ce registre les résume et ne les
+Les dix-huit ADR existent toutes en fichier ; ce registre les résume et ne les
 remplace pas.
 
 ```
@@ -40,7 +40,8 @@ docs/
 │   ├── ADR-013-catalogue-lie-par-code.md      # Catalogue lié par code métier
 │   ├── ADR-014-ingestion-xapi.md              # Ingestion xAPI, acteur pseudonyme, prééminence
 │   ├── ADR-015-diagnostic-explicable.md       # Diagnostic explicable et non stocké
-│   └── ADR-016-web-parle-a-l-api-par-le-serveur.md  # Le web appelle l’API par son serveur
+│   ├── ADR-016-web-parle-a-l-api-par-le-serveur.md  # Le web appelle l’API par son serveur
+│   └── ADR-017-fiches-de-remediation-ecrites-ici.md # Fiches de remédiation écrites ici
 └── architecture/
     └── decision-register.md                   # Ce fichier
 ```
@@ -347,6 +348,23 @@ docs/
 | **Impact** | Frontend, Sécurité |
 
 **Résumé** : Un appel direct depuis le navigateur exigerait un cookie tiers, la forme que les navigateurs suppriment, et exposerait la session à tout ce que la page charge. Les mutations passent par des actions serveur nommées une par une plutôt que par un proxy générique. La seule route d'API du web relaie les événements xAPI du runtime, avec un contrôle d'origine du `postMessage` comme mesure de sécurité de la boucle.
+
+---
+
+### ADR-017 : Les fiches de remédiation sont écrites ici
+
+| Champ | Valeur |
+|-------|--------|
+| **Titre** | Les fiches de remédiation sont écrites ici, pas importées |
+| **Statut** | ✅ **Accepted** |
+| **Date** | 17 août 2026 |
+| **Auteur** | Équipe StudentConnect |
+| **Décision** | Une remédiation est une activité de nature `remediation` écrite dans la plateforme : une leçon, quatre questions, une explication après chacune |
+| **Fichier** | [docs/adr/ADR-017-fiches-de-remediation-ecrites-ici.md](../adr/ADR-017-fiches-de-remediation-ecrites-ici.md) |
+| **Dépendances** | ADR-012, ADR-013, ADR-015 |
+| **Impact** | Contenu, Backend, Frontend |
+
+**Résumé** : Aucune banque ne peut livrer une question rattachée à `cp-ma-denombrer` — ce code est le nôtre — et une preuve qu'on ne peut pas rattacher ne prouve rien. ADR-012 n'autorise qu'une bibliothèque H5P, et l'origine de contenu n'est pas déployable sur Render, où un disque appartient à un seul service. Surtout, une réparation doit enseigner avant d'interroger, ce qu'une question importée ne fait pas. L'examen et les fiches partagent la correction (`authored_questions`) mais pas ce qu'ils répondent : une fiche explique, l'examen se tait, sans quoi il cesserait de mesurer. La route des fiches refuse donc une tentative d'examen, faute de quoi l'examen serait franchissable question par question.
 
 ---
 

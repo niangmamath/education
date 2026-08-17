@@ -4,9 +4,15 @@ import { api } from '../../../../lib/api';
 import { requireChild } from '../../../../lib/session';
 import { InterfaceState } from '../../../../components/ui/interface-state';
 import { ContentPlayer } from '../../../../components/eleve/content-player';
+import { FicheForm } from '../../../../components/eleve/fiche-form';
 import { StartActivityButton } from '../../../../components/eleve/start-activity-button';
 import { FinishAttemptButton } from '../../../../components/eleve/finish-attempt-button';
-import type { ActivityContent, Attempt, ChildAssignment } from '../../../../lib/types';
+import type {
+  ActivityContent,
+  Attempt,
+  ChildAssignment,
+  Fiche,
+} from '../../../../lib/types';
 
 export const metadata = { title: 'Activité' };
 
@@ -65,6 +71,19 @@ export default async function JouerPage({
     ? attempts.data.find((row) => row.status === 'in_progress')
     : undefined;
 
+  // Une fiche de remédiation est écrite ici, comme l'examen : elle se lit et se
+  // répond sur cette page, sans cadre et sans origine de contenu. C'est aussi
+  // pourquoi elle fonctionne là où le runtime H5P n'est pas déployé.
+  if (assignment.activity.kind === 'remediation') {
+    return (
+      <FichePage
+        assignment={assignment}
+        assignmentId={assignmentId}
+        attemptId={running?.id ?? null}
+      />
+    );
+  }
+
   if (!running) {
     return (
       <>
@@ -119,6 +138,96 @@ export default async function JouerPage({
           Revenir plus tard
         </Link>
       </div>
+    </>
+  );
+}
+
+/**
+ * Une fiche : la leçon d'abord, les questions ensuite.
+ *
+ * La leçon est visible avant même que la tentative soit ouverte, et elle le
+ * reste pendant qu'on répond. Une enfant qui vient d'apprendre qu'elle bute
+ * quelque part doit pouvoir relire ce qu'on lui explique autant de fois qu'elle
+ * veut, sans que cela ressemble à de la triche : la fiche répare, elle ne
+ * mesure pas.
+ */
+async function FichePage({
+  assignment,
+  assignmentId,
+  attemptId,
+}: {
+  assignment: ChildAssignment;
+  assignmentId: string;
+  attemptId: string | null;
+}) {
+  const fiche = await api<Fiche>(`/me/activities/${assignmentId}/fiche`);
+
+  if (!fiche.ok) {
+    return (
+      <>
+        <h1 className="h3 mb-3">{assignment.activity.title}</h1>
+        <InterfaceState
+          kind={assignment.status === 'completed' ? 'success' : 'unavailable'}
+          title={
+            assignment.status === 'completed'
+              ? 'Tu l’as déjà terminée'
+              : 'Cette fiche n’a pas pu être ouverte'
+          }
+          description={
+            assignment.status === 'completed'
+              ? 'Bravo. Tu peux en reprendre une autre quand tu veux.'
+              : fiche.message
+          }
+          action={
+            <Link href="/eleve/activites" className="btn btn-outline-primary">
+              Voir mes activités
+            </Link>
+          }
+        />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <header className="mb-4">
+        <p className="sc-oeilleton">Pour s’entraîner · environ {fiche.data.duration_minutes} minutes</p>
+        <h1 className="mb-0">{fiche.data.title}</h1>
+      </header>
+
+      {fiche.data.guidance ? (
+        <section className="card sc-student-hero mb-4" aria-labelledby="lecon-title">
+          <div className="card-body p-4 p-lg-5">
+            <h2 id="lecon-title" className="h5 mb-3">
+              Ce qu’il faut retenir
+            </h2>
+            {fiche.data.guidance.split('\n\n').map((paragraph) => (
+              <p className="mb-3" key={paragraph.slice(0, 40)}>
+                {paragraph}
+              </p>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {attemptId ? (
+        <>
+          <FicheForm attemptId={attemptId} questions={fiche.data.questions} />
+          <div className="d-flex flex-wrap gap-2">
+            <FinishAttemptButton assignmentId={assignmentId} attemptId={attemptId} />
+            <Link href="/eleve/activites" className="btn btn-outline-secondary">
+              Revenir plus tard
+            </Link>
+          </div>
+        </>
+      ) : (
+        <div className="d-flex flex-wrap gap-2">
+          <StartActivityButton assignmentId={assignmentId} label="Commencer les questions" />
+          <Link href="/eleve/activites" className="btn btn-outline-secondary">
+            Revenir plus tard
+          </Link>
+        </div>
+      )}
     </>
   );
 }

@@ -307,33 +307,21 @@ ASSESSMENT: Final[list[ExamQuestion]] = [
 ]
 
 
-# One repair per competency, so every difficulty the assessment can find has an
-# answer. All within the three-to-seven minute band that makes a repair quick.
-ACTIVITIES: Final[list[tuple[str, str, str, int]]] = [
-    (f"{PREFIX}fix-fr-lettres", "L’alphabet et ses sons", FR_LETTRES, 5),
-    (f"{PREFIX}fix-fr-syllabes", "Frapper les syllabes", FR_SYLLABES, 4),
-    (f"{PREFIX}fix-fr-phonemes", "Chasse aux sons", FR_PHONEMES, 5),
-    (f"{PREFIX}fix-fr-mots", "Lire des mots courts", FR_MOTS, 6),
-    (f"{PREFIX}fix-fr-dictee", "Écrire des mots simples", FR_DICTEE, 6),
-    (
-        f"{PREFIX}fix-fr-comprehension",
-        "Comprendre une petite histoire",
-        FR_COMPREHENSION,
-        7,
-    ),
-    (f"{PREFIX}fix-ma-denombrer", "Compter une collection", MA_DENOMBRER, 4),
-    (f"{PREFIX}fix-ma-lire", "Écrire les nombres jusqu’à 10", MA_LIRE, 5),
-    (f"{PREFIX}fix-ma-comparer", "Plus grand, plus petit", MA_COMPARER, 5),
-    (f"{PREFIX}fix-ma-addition", "Additionner avec la bande numérique", MA_ADDITION, 6),
-    (f"{PREFIX}fix-ma-soustraction", "Soustraire pas à pas", MA_SOUSTRACTION, 6),
-    (f"{PREFIX}fix-ma-probleme", "Un problème, une étape", MA_PROBLEME, 7),
-]
+# The twelve repairs live in `app.demo.fiches`: they are sheets written here,
+# with a lesson and four questions each, and they were long enough to deserve
+# their own module.
+#
+# What stays here is the one imported activity. The pilot holds exactly one
+# vetted H5P package, and ADR-012 allows exactly one library, so it cannot be
+# spread over twelve repairs — but the content runtime is real work and has to
+# stay demonstrable. It therefore gets an activity of its own, outside the
+# repairs, and nothing in the parcours depends on it playing.
+H5P_DEMO_CODE: Final = f"{PREFIX}h5p-vrai-faux"
+H5P_DEMO_TITLE: Final = "Vrai ou faux : compter jusqu’à 20"
+H5P_DEMO_COMPETENCY: Final = MA_DENOMBRER
+H5P_DEMO_MINUTES: Final = 4
 
-# Only one activity actually plays, and the platform is what decides that: a
-# package belongs to one activity, and the pilot holds exactly one vetted
-# package. Rather than work around that rule for a demonstration, the playable
-# one is a repair the assessment is likely to propose.
-PLAYABLE: Final = (f"{PREFIX}fix-ma-denombrer",)
+PLAYABLE: Final = (H5P_DEMO_CODE,)
 
 PASSWORD: Final = "demonstration-2026"
 

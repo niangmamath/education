@@ -14,37 +14,31 @@ diagnostic that does not happen, and everything downstream — the reading, the
 gaps, the repairs — has nothing to work from until it does. Remediation stays
 what it was: proposed, never given.
 
-**Answers are graded here, never in the browser.** The questions travel without
-their correct index; an answer comes back as a position in the list, and the
-server compares. Shipping the answers with the questions would make the
-assessment a questionnaire.
+What is left here is **policy**: which assessment is in force, who gets one, and
+when. Reading its questions and grading an answer are the same for every activity
+this platform writes, so they live in `app.authored.service` and are shared with
+the remediation sheets.
 """
 
 from __future__ import annotations
 
 import uuid
-from collections.abc import Sequence
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import ConflictException, NotFoundException
 from app.models.assignment import (
     ASSIGNMENT_OPEN_STATUSES,
     ASSIGNMENT_STATUS_COMPLETED,
     Assignment,
 )
-from app.models.attempt import Attempt
 from app.models.catalog import (
     ACTIVITY_KIND_ASSESSMENT,
     ACTIVITY_STATUS_PUBLISHED,
     Activity,
-    AssessmentQuestion,
 )
 from app.models.identity import Child
 
 NO_ASSESSMENT_MESSAGE = "Aucun examen d’initiation n’est publié"
-QUESTION_UNKNOWN_MESSAGE = "Cette question n’appartient pas à cet examen"
 
 
 async def published_assessment(db: AsyncSession) -> Activity | None:
@@ -63,17 +57,6 @@ async def published_assessment(db: AsyncSession) -> Activity | None:
         .order_by(Activity.created_at.desc())
         .limit(1)
     )
-
-
-async def questions_of(
-    db: AsyncSession, activity_id: uuid.UUID
-) -> Sequence[AssessmentQuestion]:
-    rows = await db.scalars(
-        select(AssessmentQuestion)
-        .where(AssessmentQuestion.activity_id == activity_id)
-        .order_by(AssessmentQuestion.position, AssessmentQuestion.question_ref)
-    )
-    return rows.all()
 
 
 async def give_to(db: AsyncSession, parent_id: uuid.UUID, child: Child) -> None:
@@ -135,34 +118,3 @@ async def pending_for(db: AsyncSession, child_id: uuid.UUID) -> Assignment | Non
         )
         .limit(1)
     )
-
-
-async def grade(
-    db: AsyncSession, attempt: Attempt, question_ref: str, chosen: int
-) -> tuple[str, bool]:
-    """Say what was answered and whether it was right, from the server's copy.
-
-    Returns the text of the chosen answer and its correctness, so the response
-    recorded afterwards holds something a parent can read rather than an index
-    only this table can interpret.
-
-    A question that does not belong to the assessment behind this attempt is
-    refused: an answer has to be an answer to something.
-    """
-    assignment = await db.get(Assignment, attempt.assignment_id)
-    if assignment is None:
-        raise NotFoundException(message=QUESTION_UNKNOWN_MESSAGE)
-
-    question = await db.scalar(
-        select(AssessmentQuestion).where(
-            AssessmentQuestion.activity_id == assignment.activity_id,
-            AssessmentQuestion.question_ref == question_ref,
-        )
-    )
-    if question is None:
-        raise NotFoundException(message=QUESTION_UNKNOWN_MESSAGE)
-
-    if chosen < 0 or chosen >= len(question.choices):
-        raise ConflictException(message="Cette réponse n’est pas proposée")
-
-    return question.choices[chosen], chosen == question.correct_index
