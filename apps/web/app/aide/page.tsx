@@ -67,7 +67,7 @@ export default function AidePage() {
           <span className="sc-feature-icon mb-3" aria-hidden="true">
             <CircleHelp size={24} />
           </span>
-          <h1 className="display-6 fw-bold">Aide</h1>
+          <h1>Aide</h1>
           <p className="lead text-secondary">
             Comment la plateforme fonctionne, et ce qu’elle s’interdit de faire.
           </p>

@@ -1,26 +1,55 @@
 import Link from 'next/link';
-import { ArrowRight, BarChart3, BookOpen, Rocket, Users } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
+import { PrerequisiteThread, type ThreadLink } from '../components/ui/prerequisite-thread';
 
-const features = [
+/**
+ * La page d'accueil ouvre sur ce que le produit sait faire et que personne
+ * d'autre ne montre : remonter d'une difficulté visible au prérequis qui la
+ * cause. Pas une promesse, un exemple travaillé — le même que celui qu'un
+ * parent verra sur la fiche de son enfant, avec le même fil.
+ */
+
+const CHAIN: ThreadLink[] = [
   {
-    icon: BookOpen,
-    title: 'Arbre de compétences',
-    description: 'Une compétence dont le prérequis coince n’est pas proposée : on travaille ce qui bloque.',
+    title: 'Poser une soustraction',
+    state: 'reporte',
+    verdict: 'Reportée',
+    note: 'Deux tentatives, la même erreur au même endroit. Cette compétence dépend du dénombrement, qui n’est pas assuré : la proposer maintenant reviendrait à refaire échouer au même mur.',
   },
   {
-    icon: BarChart3,
-    title: 'Suivi compréhensible',
-    description: 'Des indicateurs expliqués aux familles, jamais une note présentée comme un niveau.',
+    title: 'Dénombrer une collection jusqu’à 20',
+    state: 'travail',
+    verdict: 'À travailler maintenant',
+    note: 'Le prérequis. C’est ici que la difficulté commence, et c’est donc ici qu’on travaille.',
   },
   {
-    icon: Users,
-    title: 'Espaces distincts',
-    description: 'Le parent voit le diagnostic. L’enfant voit ce qu’il peut faire maintenant.',
+    title: '« Compter les jetons » — 4 minutes',
+    state: 'neutre',
+    verdict: 'Proposée au parent',
+    note: 'Une activité courte sur cette seule difficulté. Elle vous est proposée : c’est vous qui la donnez, ou pas.',
+  },
+];
+
+const REFUSALS = [
+  {
+    rule: 'Une note ne remplace jamais une compétence.',
+    why: 'Un pourcentage dit qu’il y a un problème sans dire lequel. Chaque réponse est rattachée à une compétence du référentiel, et c’est cette lecture-là qui est affichée.',
   },
   {
-    icon: Rocket,
-    title: 'Activités courtes',
-    description: 'De trois à sept minutes, sur une seule difficulté à la fois.',
+    rule: 'Une lacune est un candidat, pas un verdict.',
+    why: 'Elle arrive accompagnée de la règle qui l’a produite et des réponses dont elle vient. Vous pouvez la lire, et ne pas être d’accord.',
+  },
+  {
+    rule: 'Une observation n’écrase jamais l’historique.',
+    why: 'Une réévaluation s’ajoute à ce qui a été observé. Rien ne réécrit le passé d’un enfant.',
+  },
+  {
+    rule: 'Aucun enfant n’est comparé à un autre.',
+    why: 'Pas de classement, pas de moyenne de classe, aucun niveau attribué. L’indicateur de santé scolaire s’explique en une phrase et ne se compare à rien.',
+  },
+  {
+    rule: 'Rien n’est donné à votre place.',
+    why: 'La plateforme propose les remédiations, elle ne les assigne pas. La seule exception est le test d’entrée, sans lequel elle ne sait rien.',
   },
 ];
 
@@ -33,53 +62,59 @@ export default function HomePage() {
             <Link href="/" className="d-inline-flex align-items-center gap-3 text-decoration-none">
               <span className="sc-brand-mark" aria-hidden="true">SC</span>
               <span>
-                <span className="d-block fw-bold text-dark">StudentConnect</span>
-                <span className="d-block small text-secondary">Plateforme EdTech</span>
+                <span className="sc-marque-nom d-block">StudentConnect</span>
+                <span className="sc-marque-role d-block">Français et mathématiques · 6 à 11 ans</span>
               </span>
             </Link>
-            
+            <nav className="d-flex align-items-center gap-2" aria-label="Accès au compte">
+              <Link href="/aide" className="btn btn-link btn-sm">Comment ça marche</Link>
+              <Link href="/connexion" className="btn btn-outline-primary btn-sm">Se connecter</Link>
+            </nav>
           </div>
         </div>
       </header>
 
       <main id="contenu-principal" className="flex-grow-1">
-        <section className="sc-hero py-5">
+        <section className="sc-hero sc-reglure py-5" aria-labelledby="these-title">
           <div className="container py-lg-4">
-            <div className="row align-items-center g-5">
-              <div className="col-lg-7">
-                
-                <h1 className="display-4 fw-bold mb-3">Suivre les apprentissages, simplement.</h1>
-                <p className="lead text-secondary mb-4">
-                  Un court test pour savoir où en est votre enfant, puis de petites activités sur ce qui coince. Pour les 6 à 11 ans, en français et en mathématiques.
+            <div className="row g-5 align-items-start">
+              <div className="col-lg-6 sc-entree">
+                <p className="sc-oeilleton sc-oeilleton-indigo">Ce que fait la plateforme</p>
+                <h1 id="these-title" className="sc-titre-geant mb-4">
+                  Votre enfant rate ses soustractions.
+                  <br />
+                  Le problème est peut-être le&nbsp;dénombrement.
+                </h1>
+                <p className="lead mb-4">
+                  Un court test d’entrée, lu réponse par réponse et compétence par
+                  compétence. Quand une difficulté apparaît, la plateforme remonte
+                  jusqu’au prérequis qui la cause, et propose de travailler
+                  celui-là.
                 </p>
-                <div className="d-flex flex-wrap gap-3">
+                <div className="d-flex flex-wrap gap-2 mb-3">
                   <Link href="/inscription" className="btn btn-primary btn-lg">
-                    Créer un compte
+                    Créer un compte parent
                   </Link>
-                  <Link href="/connexion" className="btn btn-outline-primary btn-lg">
-                    Se connecter
-                    <ArrowRight className="ms-2" size={20} aria-hidden="true" />
+                  <Link href="/connexion/eleve" className="btn btn-outline-primary btn-lg">
+                    Je suis un élève
+                    <ArrowRight className="ms-2" size={19} aria-hidden="true" />
                   </Link>
-                  <Link href="/aide" className="btn btn-outline-primary btn-lg">Comment ça marche</Link>
                 </div>
-                <p className="small text-secondary mt-3 mb-0">
-                  Chaque conclusion affichée porte la règle qui l’a produite et les réponses dont elle vient.
+                <p className="small text-secondary mb-0">
+                  Un compte enfant ne demande ni adresse e-mail ni numéro de
+                  téléphone : un pseudo et le code de votre famille suffisent.
                 </p>
               </div>
-              <div className="col-lg-5">
-                <div className="card border-0 shadow-sm sc-highlight-card">
+
+              <div className="col-lg-6 sc-entree sc-entree-2">
+                <div className="card sc-highlight-card h-100">
                   <div className="card-body p-4 p-lg-5">
-                    <h2 className="h4">Deux expériences complémentaires</h2>
-                    <ul className="list-unstyled mb-0 mt-4">
-                      <li className="d-flex gap-3 mb-3">
-                        <span className="sc-list-marker" aria-hidden="true">1</span>
-                        <span><strong>Espace Parent</strong><br /><span className="text-secondary">Ce qui est acquis, ce qui coince, et pourquoi la plateforme le dit.</span></span>
-                      </li>
-                      <li className="d-flex gap-3">
-                        <span className="sc-list-marker" aria-hidden="true">2</span>
-                        <span><strong>Espace Élève</strong><br /><span className="text-secondary">Une activité à la fois, sa durée, et ce qu’il a déjà réussi.</span></span>
-                      </li>
-                    </ul>
+                    <p className="sc-oeilleton">Exemple · Léa, CE1</p>
+                    <h2 className="h4 mb-4">Comment cette conclusion a été obtenue</h2>
+                    <PrerequisiteThread
+                      links={CHAIN}
+                      label="Chaîne de prérequis, de la difficulté observée à l’activité proposée"
+                    />
                   </div>
                 </div>
               </div>
@@ -87,41 +122,74 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="py-5 bg-white" aria-labelledby="fonctionnalites-title">
+        <section className="py-5" aria-labelledby="refus-title">
           <div className="container">
-            <div className="mb-4">
-              <p className="text-uppercase fw-semibold text-primary small mb-2">Vision du MVP</p>
-              <h2 id="fonctionnalites-title" className="h1 mb-2">Un accompagnement lisible</h2>
-              <p className="text-secondary mb-0">Ces éléments décrivent le périmètre cible, pas des fonctions déjà disponibles.</p>
-            </div>
-            <div className="row g-4">
-              {features.map((feature) => {
-                const Icon = feature.icon;
-                return (
-                  <div className="col-md-6 col-xl-3" key={feature.title}>
-                    <article className="card h-100 border-0 shadow-sm">
-                      <div className="card-body p-4">
-                        <span className="sc-feature-icon mb-3" aria-hidden="true"><Icon size={24} /></span>
-                        <h3 className="h5">{feature.title}</h3>
-                        <p className="text-secondary mb-0">{feature.description}</p>
-                      </div>
-                    </article>
-                  </div>
-                );
-              })}
+            <div className="row g-5">
+              <div className="col-lg-4">
+                <p className="sc-oeilleton">Règles du produit</p>
+                <h2 id="refus-title" className="h1 mb-3">
+                  Cinq choses que la plateforme ne fera pas
+                </h2>
+                <p className="text-secondary mb-0">
+                  Ce ne sont pas des fonctions manquantes. Ce sont des décisions,
+                  tenues par les tests, et c’est à elles qu’on reconnaît un
+                  diagnostic d’un bulletin.
+                </p>
+              </div>
+              <div className="col-lg-8">
+                <ul className="list-unstyled d-flex flex-column gap-4 mb-0">
+                  {REFUSALS.map((item) => (
+                    <li className="sc-marge" key={item.rule}>
+                      <h3 className="h5 mb-1">{item.rule}</h3>
+                      <p className="text-secondary mb-0">{item.why}</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </div>
         </section>
 
-        <section className="py-5" aria-labelledby="etat-title">
+        <section className="py-5 bg-white border-top" aria-labelledby="espaces-title">
           <div className="container">
-            <div className="card border-primary-subtle bg-primary-subtle">
-              <div className="card-body p-4 p-lg-5 d-lg-flex align-items-center justify-content-between gap-4">
-                <div>
-                  <h2 id="etat-title" className="h3">Le socle technique est en cours de construction</h2>
-                  <p className="mb-0 text-secondary">Consultez la route technique pour vérifier l’état local des services.</p>
-                </div>
-                <Link href="/health" className="btn btn-primary mt-3 mt-lg-0 flex-shrink-0">Vérifier l’état technique</Link>
+            <p className="sc-oeilleton">Deux publics, deux écrans</p>
+            <h2 id="espaces-title" className="h1 mb-4">
+              Le parent lit le raisonnement. L’enfant voit une activité.
+            </h2>
+            <div className="row g-4">
+              <div className="col-md-6">
+                <article className="card h-100">
+                  <div className="card-body p-4 p-lg-5">
+                    <p className="sc-oeilleton sc-oeilleton-indigo">Espace parent</p>
+                    <h3 className="h4 mb-3">Ce qui est acquis, ce qui coince, et pourquoi</h3>
+                    <p className="text-secondary mb-3">
+                      Chaque compétence porte son état et la lecture dont il vient.
+                      Une difficulté reportée reste visible : elle est expliquée,
+                      pas cachée.
+                    </p>
+                    <p className="text-secondary mb-0">
+                      Les remédiations vous sont proposées une par une, avec leur
+                      durée et la compétence qu’elles visent.
+                    </p>
+                  </div>
+                </article>
+              </div>
+              <div className="col-md-6">
+                <article className="card h-100">
+                  <div className="card-body p-4 p-lg-5">
+                    <p className="sc-oeilleton">Espace élève</p>
+                    <h3 className="h4 mb-3">Une seule chose à faire, et le temps qu’elle prend</h3>
+                    <p className="text-secondary mb-3">
+                      Aucun diagnostic n’apparaît de ce côté-ci : ni lacune, ni
+                      score, ni nom de règle. Une activité, sa durée, et ce qui a
+                      déjà été réussi.
+                    </p>
+                    <p className="text-secondary mb-0">
+                      Les activités durent de trois à sept minutes et ne portent
+                      que sur une difficulté à la fois.
+                    </p>
+                  </div>
+                </article>
               </div>
             </div>
           </div>
@@ -129,9 +197,13 @@ export default function HomePage() {
       </main>
 
       <footer className="border-top bg-white py-4">
-        <div className="container d-flex flex-column flex-sm-row justify-content-between gap-2 small text-secondary">
-          <span>© 2026 StudentConnect.</span>
-          <span>Next.js 16 et Bootstrap 5.3.8.</span>
+        <div className="container d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 small text-secondary">
+          <span>© 2026 StudentConnect</span>
+          <nav className="d-flex flex-wrap gap-3" aria-label="Liens de bas de page">
+            <Link href="/aide" className="text-secondary">Aide</Link>
+            <Link href="/accessibilite" className="text-secondary">Accessibilité</Link>
+            <Link href="/health" className="text-secondary">État des services</Link>
+          </nav>
         </div>
       </footer>
     </div>

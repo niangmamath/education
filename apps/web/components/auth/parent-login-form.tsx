@@ -1,7 +1,6 @@
 'use client';
 
 import { useActionState } from 'react';
-import { LockKeyhole } from 'lucide-react';
 import { loginParent, type FormState } from '../../lib/actions';
 
 const EMPTY: FormState = { error: null };
@@ -24,10 +23,7 @@ export function ParentLoginForm() {
 
   return (
     <form action={action} noValidate>
-      <span className="sc-feature-icon mb-3" aria-hidden="true">
-        <LockKeyhole size={24} />
-      </span>
-      <h2 className="h4">Espace Parent</h2>
+      <h2 className="h5 mb-4">Se connecter</h2>
 
       {state.error ? (
         <div className="alert alert-danger" role="alert">
@@ -62,7 +58,7 @@ export function ParentLoginForm() {
         />
       </div>
 
-      <button type="submit" className="btn btn-primary" disabled={pending}>
+      <button type="submit" className="btn btn-primary w-100" disabled={pending}>
         {pending ? 'Connexion…' : 'Se connecter'}
       </button>
     </form>

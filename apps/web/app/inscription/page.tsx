@@ -10,21 +10,34 @@ export const metadata = {
 export default function InscriptionParentPage() {
   return (
     <main className="container py-5">
-      <div className="mx-auto" style={{ maxWidth: '34rem' }}>
-        <Link href="/" className="d-inline-flex align-items-center gap-2 mb-4">
-          <ArrowLeft size={18} aria-hidden="true" />
-          Retour à l’accueil
-        </Link>
+      <Link href="/" className="d-inline-flex align-items-center gap-2 mb-5">
+        <ArrowLeft size={18} aria-hidden="true" />
+        Retour à l’accueil
+      </Link>
 
-        <div className="card border-0 shadow-sm">
-          <div className="card-body p-4 p-lg-5">
-            <ParentSignUpForm />
-          </div>
+      <div className="row g-5 justify-content-center align-items-start">
+        <div className="col-lg-5 col-xl-4">
+          <p className="sc-oeilleton sc-oeilleton-indigo">Inscription</p>
+          <h1 className="mb-3">Ouvrir un compte parent</h1>
+          <p className="text-secondary">
+            Le compte parent est le premier : c’est lui qui reçoit le code de la
+            famille, et c’est ce code qui rattache les profils de vos enfants.
+          </p>
+          <p className="sc-marge mb-0 text-secondary">
+            Un profil enfant ne demande ni adresse e-mail ni téléphone. Vous
+            pouvez le créer vous-même, ou laisser votre enfant le faire avec le
+            code de la famille — vous l’acceptez ensuite.
+          </p>
         </div>
 
-        <div className="d-flex flex-column gap-2 mt-4">
-          <p className="mb-0">Tu es un élève ? <Link href="/inscription/eleve">Rejoindre ta famille</Link></p>
-          <p className="mb-0">Vous avez déjà un compte ? <Link href="/connexion">Se connecter</Link></p>
+        <div className="col-lg-6 col-xl-5">
+          <div className="sc-feuille-auth">
+            <ParentSignUpForm />
+          </div>
+
+          <p className="mt-4 mb-0 text-secondary">
+            Vous avez déjà un compte ? <Link href="/connexion">Se connecter</Link>
+          </p>
         </div>
       </div>
     </main>

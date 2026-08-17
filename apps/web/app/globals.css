@@ -1,83 +1,974 @@
+/* StudentConnect — « le cahier ».
+ *
+ * L'identité vient de la papeterie scolaire française, parce que c'est le monde
+ * matériel du sujet : la réglure Seyès, la marge verticale, l'encre bleu-noir.
+ *
+ * Une règle traverse tout le fichier et vient du produit, pas du goût : **le
+ * rouge ne dit jamais qu'un enfant s'est trompé**. Le rouge est le stylo de la
+ * correction, et cette plateforme refuse le verdict — une lacune y est un
+ * candidat explicable, jamais une faute. Ce qui demande du travail est ocre. Le
+ * rouge est réservé aux pannes : un service qui ne répond pas, une connexion
+ * refusée. Deux jetons distincts, `--sc-travail` et `--sc-panne`, pour que la
+ * confusion soit impossible à commettre par distraction.
+ *
+ * Le thème est clair et assumé comme tel : le papier est une matière claire, et
+ * un cahier sombre serait un déguisement. Chaque couleur est donc peinte
+ * explicitement, sans jamais emprunter au navigateur.
+ */
 
 :root {
-  --sc-primary: #2457c5;
-  --sc-primary-dark: #173f98;
-  --sc-secondary: #087f8c;
-  --sc-surface: #f5f7fb;
-  --sc-text: #172033;
-  --sc-focus: #ffbf47;
-  --bs-primary: var(--sc-primary);
-  --bs-primary-rgb: 36, 87, 197;
-  --bs-link-color: var(--sc-primary);
-  --bs-link-hover-color: var(--sc-primary-dark);
-  --bs-body-color: var(--sc-text);
-  --bs-body-bg: var(--sc-surface);
-  --bs-border-radius: 0.75rem;
-  --bs-border-radius-lg: 1rem;
+  /* Encres */
+  --sc-encre: #1a2340;
+  --sc-encre-claire: #5a6484;
+  --sc-encre-tenue: #666d8b;
+
+  /* Papiers */
+  --sc-papier: #fafaf6;
+  --sc-feuille: #ffffff;
+  --sc-feuille-creuse: #f3f4ef;
+
+  /* Réglure : le bleu-violet des lignes du cahier Seyès. */
+  --sc-seyes: #b9c3e4;
+  --sc-seyes-pale: #dde2f2;
+
+  /* Encre vive, celle avec laquelle on écrit vraiment. */
+  --sc-indigo: #3b3fa8;
+  --sc-indigo-sombre: #2b2e82;
+  --sc-indigo-pale: #e8e9f8;
+
+  /* Sémantique pédagogique. */
+  --sc-acquis: #2f6f5e;
+  --sc-acquis-pale: #e3efea;
+  --sc-travail: #8f5109;
+  --sc-travail-pale: #f7eddf;
+  --sc-reporte: #565d85;
+  --sc-reporte-pale: #eef0f7;
+
+  /* Sémantique technique. Le seul rouge du produit. */
+  --sc-panne: #a33a2e;
+  --sc-panne-pale: #f7e7e4;
+
+  --sc-focus: #b26b18;
+
+  --sc-rythme: 1.65rem;
+  --sc-rayon: 4px;
+  --sc-rayon-large: 8px;
+
+  --sc-display: var(--font-display), 'Trebuchet MS', system-ui, sans-serif;
+  --sc-texte: var(--font-texte), system-ui, -apple-system, sans-serif;
+  --sc-chiffres: var(--font-chiffres), ui-monospace, 'SFMono-Regular', monospace;
+
+  /* Bootstrap parle par variables : on les réécrit plutôt que de lutter
+     contre ses sélecteurs. */
+  --bs-primary: var(--sc-indigo);
+  --bs-primary-rgb: 59, 63, 168;
+  --bs-secondary-color: var(--sc-encre-claire);
+  --bs-link-color: var(--sc-indigo);
+  --bs-link-hover-color: var(--sc-indigo-sombre);
+  --bs-link-underline-opacity: 0.35;
+  --bs-body-color: var(--sc-encre);
+  --bs-body-bg: var(--sc-papier);
+  --bs-body-font-family: var(--sc-texte);
+  --bs-body-font-size: 1.0625rem;
+  --bs-body-line-height: 1.6;
+  --bs-border-color: var(--sc-seyes-pale);
+  --bs-border-radius: var(--sc-rayon);
+  --bs-border-radius-sm: 3px;
+  --bs-border-radius-lg: var(--sc-rayon-large);
+  --bs-border-radius-xl: var(--sc-rayon-large);
+  --bs-border-radius-pill: 999px;
+  --bs-emphasis-color: var(--sc-encre);
+  --bs-heading-color: var(--sc-encre);
+  --bs-focus-ring-color: rgba(178, 107, 24, 0.35);
 }
 
-html { scroll-behavior: smooth; }
-body { min-width: 320px; }
+/* ── Fondations ──────────────────────────────────────────────────────────── */
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-width: 320px;
+  background: var(--sc-papier);
+  color: var(--sc-encre);
+  font-family: var(--sc-texte);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  text-rendering: optimizeLegibility;
+}
 
 :focus-visible {
   outline: 3px solid var(--sc-focus);
-  outline-offset: 3px;
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
-.sc-public-page { background: var(--sc-surface); color: var(--sc-text); }
-.sc-brand-mark {
-  display: inline-flex;
-  width: 2.75rem;
-  height: 2.75rem;
-  align-items: center;
-  justify-content: center;
-  border-radius: 0.8rem;
-  background: var(--sc-primary);
-  color: #fff;
-  font-weight: 700;
+::selection {
+  background: var(--sc-indigo-pale);
+  color: var(--sc-indigo-sombre);
 }
-.sc-hero { background: linear-gradient(135deg, #eef3ff 0%, #ecfbfa 100%); }
-.sc-highlight-card { border-radius: 1.25rem; }
-.sc-list-marker,
-.sc-feature-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;
-  background: #dfe9ff;
-  color: var(--sc-primary-dark);
-  font-weight: 700;
-}
-.sc-list-marker { width: 2rem; height: 2rem; border-radius: 50%; }
-.sc-feature-icon { width: 3rem; height: 3rem; border-radius: 0.8rem; }
 
 @media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
-.sc-parent-nav { overflow-x: auto; }
-.sc-parent-nav .nav-link { color: var(--sc-text); white-space: nowrap; min-height: 44px; }
-.sc-parent-nav .nav-link:hover { background: #e8eefc; color: var(--sc-primary-dark); }
-.sc-parent-nav .nav-link.active { background: var(--sc-primary); color: #fff; }
-@media (min-width: 992px) { .sc-parent-nav { position: sticky; top: 1rem; overflow: visible; } }
+/* ── Typographie ─────────────────────────────────────────────────────────── */
 
-.sc-student-page { background: linear-gradient(180deg, #f4f8ff 0%, #f8fbfa 100%); }
-.sc-student-brand,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.h1,
+.h2,
+.h3,
+.h4,
+.h5,
+.h6,
+.display-1,
+.display-2,
+.display-3,
+.display-4,
+.display-5,
+.display-6 {
+  font-family: var(--sc-display);
+  color: var(--sc-encre);
+  text-wrap: balance;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+}
+
+.display-4,
+.sc-titre-geant {
+  font-size: clamp(2.5rem, 5.6vw, 4.1rem);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variation-settings: 'wdth' 88, 'opsz' 72;
+}
+
+h1,
+.h1 {
+  font-size: clamp(1.8rem, 3.2vw, 2.4rem);
+  font-variation-settings: 'wdth' 92, 'opsz' 40;
+}
+
+h2,
+.h2 {
+  font-size: clamp(1.45rem, 2.4vw, 1.8rem);
+  font-variation-settings: 'wdth' 94, 'opsz' 28;
+}
+
+h3,
+.h3 {
+  font-size: 1.35rem;
+}
+
+h4,
+.h4 {
+  font-size: 1.18rem;
+}
+
+h5,
+.h5 {
+  font-size: 1.05rem;
+  letter-spacing: -0.005em;
+}
+
+.lead {
+  font-family: var(--sc-texte);
+  font-size: clamp(1.09rem, 1.5vw, 1.24rem);
+  line-height: 1.55;
+  font-weight: 400;
+  color: var(--sc-encre-claire);
+  max-width: 62ch;
+  text-wrap: pretty;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+.text-secondary,
+.text-body-secondary {
+  color: var(--sc-encre-claire) !important;
+}
+
+.text-primary {
+  color: var(--sc-indigo) !important;
+}
+
+.text-warning-emphasis {
+  color: var(--sc-travail) !important;
+}
+
+.text-success-emphasis {
+  color: var(--sc-acquis) !important;
+}
+
+.text-danger-emphasis {
+  color: var(--sc-panne) !important;
+}
+
+.text-dark {
+  color: var(--sc-encre) !important;
+}
+
+/* L'œilleton : la mention en petites capitales qui nomme la nature de ce qui
+   suit. Elle est en chasse fixe parce qu'elle étiquette, elle ne raconte pas. */
+.sc-oeilleton {
+  display: block;
+  font-family: var(--sc-chiffres);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--sc-encre-tenue);
+  margin-bottom: 0.55rem;
+}
+
+.sc-oeilleton-indigo {
+  color: var(--sc-indigo);
+}
+
+/* Codes de compétence, durées, décomptes : tout ce qui s'aligne en colonne. */
+.sc-code,
+.sc-nombre {
+  font-family: var(--sc-chiffres);
+  font-variant-numeric: tabular-nums;
+}
+
+.sc-code {
+  font-size: 0.82em;
+  color: var(--sc-encre-claire);
+  background: var(--sc-feuille-creuse);
+  border: 1px solid var(--sc-seyes-pale);
+  border-radius: 3px;
+  padding: 0.05em 0.4em;
+}
+
+/* ── Le papier ───────────────────────────────────────────────────────────── */
+
+/* La réglure Seyès. Elle n'apparaît qu'à un seul endroit par page, sinon elle
+   cesse d'être une signature pour devenir un fond d'écran. */
+.sc-reglure {
+  position: relative;
+  background-color: var(--sc-feuille);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(var(--sc-rythme) - 1px),
+    var(--sc-seyes-pale) calc(var(--sc-rythme) - 1px),
+    var(--sc-seyes-pale) var(--sc-rythme)
+  );
+  background-position: 0 0.6rem;
+}
+
+/* La marge du cahier : le trait vertical, en ocre, à gauche de la feuille. */
+.sc-marge {
+  position: relative;
+  padding-left: 1.5rem;
+}
+
+.sc-marge::before {
+  content: '';
+  position: absolute;
+  inset-block: 0.1em 0.1em;
+  left: 0;
+  width: 2px;
+  background: var(--sc-travail);
+  opacity: 0.55;
+  border-radius: 2px;
+}
+
+.sc-marge-seyes::before {
+  background: var(--sc-seyes);
+  opacity: 1;
+}
+
+/* Le relief d'une feuille posée : un bord, pas une ombre portée. Bootstrap
+   applique `.shadow-sm` un peu partout, on le redéfinit une fois pour toutes. */
+.shadow-sm,
+.shadow {
+  box-shadow:
+    0 1px 0 rgba(26, 35, 64, 0.04),
+    0 1px 2px rgba(26, 35, 64, 0.05) !important;
+}
+
+.bg-white,
+.bg-body-tertiary,
+.bg-light {
+  background-color: var(--sc-feuille) !important;
+}
+
+.bg-body-tertiary {
+  background-color: var(--sc-papier) !important;
+}
+
+.border-bottom,
+.border-top,
+.border {
+  border-color: var(--sc-seyes-pale) !important;
+}
+
+/* ── Feuilles (cartes) ───────────────────────────────────────────────────── */
+
+.card {
+  --bs-card-bg: var(--sc-feuille);
+  --bs-card-border-color: var(--sc-seyes-pale);
+  --bs-card-border-radius: var(--sc-rayon);
+  --bs-card-inner-border-radius: 3px;
+  --bs-card-color: var(--sc-encre);
+  border: 1px solid var(--sc-seyes-pale);
+}
+
+/* Beaucoup de vues demandent `border-0` pour effacer la bordure de Bootstrap ;
+   ici la bordure fine EST la feuille, on la remet. */
+.card.border-0 {
+  border: 1px solid var(--sc-seyes-pale) !important;
+}
+
+/* ── Boutons ─────────────────────────────────────────────────────────────── */
+
+.btn {
+  --bs-btn-font-family: var(--sc-display);
+  --bs-btn-font-weight: 600;
+  --bs-btn-border-radius: var(--sc-rayon);
+  --bs-btn-padding-y: 0.55rem;
+  --bs-btn-padding-x: 1.1rem;
+  --bs-btn-focus-box-shadow: none;
+  letter-spacing: 0.005em;
+  transition:
+    background-color 0.14s ease,
+    border-color 0.14s ease,
+    transform 0.14s ease;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn-lg {
+  --bs-btn-padding-y: 0.75rem;
+  --bs-btn-padding-x: 1.5rem;
+  --bs-btn-font-size: 1.05rem;
+}
+
+.btn-primary {
+  --bs-btn-bg: var(--sc-indigo);
+  --bs-btn-border-color: var(--sc-indigo);
+  --bs-btn-color: #fff;
+  --bs-btn-hover-bg: var(--sc-indigo-sombre);
+  --bs-btn-hover-border-color: var(--sc-indigo-sombre);
+  --bs-btn-active-bg: var(--sc-indigo-sombre);
+  --bs-btn-active-border-color: var(--sc-indigo-sombre);
+  --bs-btn-disabled-bg: var(--sc-encre-tenue);
+  --bs-btn-disabled-border-color: var(--sc-encre-tenue);
+  --bs-btn-disabled-opacity: 0.75;
+}
+
+.btn-outline-primary {
+  --bs-btn-color: var(--sc-indigo-sombre);
+  --bs-btn-border-color: var(--sc-seyes);
+  --bs-btn-bg: var(--sc-feuille);
+  --bs-btn-hover-bg: var(--sc-indigo-pale);
+  --bs-btn-hover-border-color: var(--sc-indigo);
+  --bs-btn-hover-color: var(--sc-indigo-sombre);
+  --bs-btn-active-bg: var(--sc-indigo-pale);
+  --bs-btn-active-border-color: var(--sc-indigo);
+  --bs-btn-active-color: var(--sc-indigo-sombre);
+  --bs-btn-disabled-color: var(--sc-encre-tenue);
+  --bs-btn-disabled-border-color: var(--sc-seyes-pale);
+}
+
+.btn-outline-secondary {
+  --bs-btn-color: var(--sc-encre-claire);
+  --bs-btn-border-color: var(--sc-seyes-pale);
+  --bs-btn-bg: var(--sc-feuille);
+  --bs-btn-hover-bg: var(--sc-feuille-creuse);
+  --bs-btn-hover-border-color: var(--sc-seyes);
+  --bs-btn-hover-color: var(--sc-encre);
+}
+
+/* Le bouton d'une action pédagogique : ocre, jamais rouge. */
+.btn-travail {
+  --bs-btn-color: #fff;
+  --bs-btn-bg: var(--sc-travail);
+  --bs-btn-border-color: var(--sc-travail);
+  --bs-btn-hover-bg: #8d520b;
+  --bs-btn-hover-border-color: #8d520b;
+  --bs-btn-hover-color: #fff;
+}
+
+.btn-link {
+  --bs-btn-color: var(--sc-encre-claire);
+  --bs-btn-hover-color: var(--sc-indigo-sombre);
+  --bs-btn-font-weight: 500;
+  text-underline-offset: 0.2em;
+}
+
+/* ── Formulaires ─────────────────────────────────────────────────────────── */
+
+.form-label {
+  font-family: var(--sc-display);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--sc-encre);
+  margin-bottom: 0.35rem;
+}
+
+.form-control,
+.form-select {
+  background-color: var(--sc-feuille);
+  border: 1px solid var(--sc-seyes);
+  border-radius: var(--sc-rayon);
+  color: var(--sc-encre);
+  padding: 0.6rem 0.8rem;
+  font-size: 1.02rem;
+  min-height: 46px;
+  transition:
+    border-color 0.14s ease,
+    box-shadow 0.14s ease;
+}
+
+.form-control::placeholder {
+  color: var(--sc-encre-tenue);
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--sc-indigo);
+  box-shadow: 0 0 0 3px var(--sc-indigo-pale);
+  outline: none;
+}
+
+.form-control:focus-visible,
+.form-select:focus-visible {
+  outline: 3px solid var(--sc-focus);
+  outline-offset: 1px;
+}
+
+.form-text {
+  color: var(--sc-encre-claire);
+  font-size: 0.86rem;
+}
+
+/* Le navigateur remplit les champs : c'est un service rendu, pas une gêne. On
+   se contente d'accorder sa teinte au papier au lieu de la refuser. */
+.form-control:autofill,
+.form-control:-webkit-autofill {
+  -webkit-text-fill-color: var(--sc-encre);
+  box-shadow: 0 0 0 100px var(--sc-indigo-pale) inset;
+}
+
+.form-check-input {
+  border-color: var(--sc-seyes);
+  width: 1.15em;
+  height: 1.15em;
+  margin-top: 0.2em;
+}
+
+.form-check-input:checked {
+  background-color: var(--sc-indigo);
+  border-color: var(--sc-indigo);
+}
+
+.form-check-input:focus {
+  border-color: var(--sc-indigo);
+  box-shadow: 0 0 0 3px var(--sc-indigo-pale);
+}
+
+/* ── Alertes, badges, listes ─────────────────────────────────────────────── */
+
+.alert {
+  --bs-alert-border-radius: var(--sc-rayon);
+  border-width: 1px;
+  border-left-width: 3px;
+  padding: 0.85rem 1rem;
+}
+
+.alert-danger {
+  --bs-alert-bg: var(--sc-panne-pale);
+  --bs-alert-border-color: var(--sc-panne);
+  --bs-alert-color: #7d2b21;
+}
+
+.alert-warning {
+  --bs-alert-bg: var(--sc-travail-pale);
+  --bs-alert-border-color: var(--sc-travail);
+  --bs-alert-color: #7a460a;
+}
+
+.alert-success {
+  --bs-alert-bg: var(--sc-acquis-pale);
+  --bs-alert-border-color: var(--sc-acquis);
+  --bs-alert-color: #23543f;
+}
+
+.alert-info,
+.alert-primary {
+  --bs-alert-bg: var(--sc-indigo-pale);
+  --bs-alert-border-color: var(--sc-indigo);
+  --bs-alert-color: var(--sc-indigo-sombre);
+}
+
+.badge {
+  font-family: var(--sc-display);
+  font-weight: 600;
+  font-size: 0.76rem;
+  letter-spacing: 0.02em;
+  padding: 0.36em 0.7em;
+  border-radius: 3px;
+}
+
+.text-bg-primary {
+  background-color: var(--sc-indigo) !important;
+  color: #fff !important;
+}
+
+.text-bg-secondary {
+  background-color: var(--sc-feuille-creuse) !important;
+  color: var(--sc-encre-claire) !important;
+}
+
+/* Les trois états d'une compétence. La forme les distingue autant que la
+   couleur : un liseré à gauche, dont l'épaisseur dit la charge. */
+.sc-etat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--sc-display);
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.28em 0.65em 0.28em 0.5em;
+  border-radius: 3px;
+  border-left: 3px solid currentColor;
+  white-space: nowrap;
+}
+
+.sc-etat-acquis {
+  color: var(--sc-acquis);
+  background: var(--sc-acquis-pale);
+}
+
+.sc-etat-travail {
+  color: var(--sc-travail);
+  background: var(--sc-travail-pale);
+}
+
+.sc-etat-reporte {
+  color: var(--sc-reporte);
+  background: var(--sc-reporte-pale);
+}
+
+/* « Non acquise » n'est pas une faute : c'est l'endroit où le travail commence.
+   Elle se marque donc en neutre, pas en rouge et pas en ocre. */
+.sc-etat-non-acquis {
+  color: var(--sc-encre-claire);
+  background: var(--sc-feuille-creuse);
+}
+
+.list-group-item {
+  background: var(--sc-feuille);
+  border-color: var(--sc-seyes-pale);
+  color: var(--sc-encre);
+}
+
+hr {
+  border-color: var(--sc-seyes-pale);
+  opacity: 1;
+}
+
+/* Atkinson Hyperlegible n'a que le régulier et le gras. Bootstrap demande du
+   600 un peu partout ; sans cette règle le navigateur le fabrique lui-même, et
+   une graisse synthétique abîme exactement les formes de lettres pour
+   lesquelles cette fonte a été choisie. */
+.fw-semibold {
+  font-weight: 700 !important;
+}
+
+/* ── La signature : le fil de prérequis ──────────────────────────────────── */
+
+/*
+ * Ce que le produit sait faire et que personne d'autre ne montre : quand une
+ * compétence coince, il remonte au prérequis et travaille CELUI-LÀ. Le fil rend
+ * ce raisonnement visible — chaque maillon est un nœud, le trait qui les relie
+ * est la dépendance, et la compétence reportée se lit littéralement derrière
+ * celle qui la bloque.
+ *
+ * Le fil n'existe que là où une relation de prérequis existe vraiment. Ce n'est
+ * pas une numérotation décorative posée sur une liste quelconque.
+ */
+.sc-fil {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sc-fil-maillon {
+  position: relative;
+  padding-left: 2.25rem;
+  padding-bottom: 1.15rem;
+}
+
+.sc-fil-maillon:last-child {
+  padding-bottom: 0;
+}
+
+/* Le trait de dépendance. */
+.sc-fil-maillon::before {
+  content: '';
+  position: absolute;
+  left: 0.5rem;
+  top: 1.5rem;
+  bottom: -0.15rem;
+  width: 2px;
+  background: var(--sc-seyes);
+}
+
+.sc-fil-maillon:last-child::before {
+  display: none;
+}
+
+/* Le nœud. */
+.sc-fil-maillon::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.42rem;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  border: 2px solid var(--sc-seyes);
+  background: var(--sc-feuille);
+}
+
+.sc-fil-maillon[data-etat='travail']::after {
+  border-color: var(--sc-travail);
+  background: var(--sc-travail);
+  box-shadow: 0 0 0 4px var(--sc-travail-pale);
+}
+
+.sc-fil-maillon[data-etat='acquis']::after {
+  border-color: var(--sc-acquis);
+  background: var(--sc-acquis);
+}
+
+.sc-fil-maillon[data-etat='reporte']::after {
+  border-style: dashed;
+  border-color: var(--sc-reporte);
+  background: var(--sc-feuille);
+}
+
+.sc-fil-titre {
+  font-family: var(--sc-display);
+  font-weight: 600;
+  font-size: 1.02rem;
+  line-height: 1.3;
+  margin: 0 0 0.2rem;
+  font-variation-settings: 'wdth' 96;
+}
+
+.sc-fil-note {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--sc-encre-claire);
+}
+
+/* ── Marques et pictogrammes ─────────────────────────────────────────────── */
+
+.sc-brand-mark,
+.sc-student-brand {
+  display: inline-flex;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--sc-rayon);
+  background: var(--sc-indigo);
+  color: #fff;
+  font-family: var(--sc-display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: -0.02em;
+}
+
+.sc-student-brand {
+  background: var(--sc-acquis);
+  border-radius: 50%;
+}
+
+.sc-marque-nom {
+  font-family: var(--sc-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+  color: var(--sc-encre);
+  font-variation-settings: 'wdth' 90;
+}
+
+.sc-marque-role {
+  font-family: var(--sc-chiffres);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sc-encre-tenue);
+}
+
+.sc-feature-icon,
 .sc-student-icon,
+.sc-list-marker,
 .sc-student-illustration {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--sc-primary-dark);
-  background: #dfe9ff;
+  flex: 0 0 auto;
+  background: var(--sc-indigo-pale);
+  color: var(--sc-indigo-sombre);
+  font-family: var(--sc-chiffres);
+  font-weight: 500;
 }
-.sc-student-brand { width: 2.75rem; height: 2.75rem; border-radius: 50%; font-weight: 700; }
-.sc-student-icon { width: 3.25rem; height: 3.25rem; border-radius: 1rem; }
-.sc-student-illustration { width: 8rem; height: 8rem; border-radius: 2rem; }
-.sc-student-hero { border-radius: 1.25rem; background: linear-gradient(135deg, #ffffff 0%, #eaf2ff 100%); }
-.sc-student-nav { overflow-x: auto; }
-.sc-student-nav .nav-link { color: var(--sc-text); white-space: nowrap; min-height: 44px; }
-.sc-student-nav .nav-link:hover { background: #e2f4f2; color: var(--sc-primary-dark); }
-.sc-student-nav .nav-link.active { background: var(--sc-secondary); color: #fff; }
-@media (min-width: 992px) { .sc-student-nav { position: sticky; top: 1rem; overflow: visible; } }
+
+.sc-feature-icon {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--sc-rayon);
+}
+
+.sc-list-marker {
+  width: 1.8rem;
+  height: 1.8rem;
+  border-radius: 50%;
+  font-size: 0.85rem;
+}
+
+.sc-student-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--sc-rayon-large);
+  background: var(--sc-acquis-pale);
+  color: var(--sc-acquis);
+}
+
+.sc-student-illustration {
+  width: 7rem;
+  height: 7rem;
+  border-radius: var(--sc-rayon-large);
+  background: var(--sc-acquis-pale);
+  color: var(--sc-acquis);
+}
+
+/* ── Pages publiques ─────────────────────────────────────────────────────── */
+
+.sc-public-page {
+  background: var(--sc-papier);
+  color: var(--sc-encre);
+}
+
+/* Volontairement sans `background` : la couleur et la réglure viennent de
+   `.sc-reglure`, avec laquelle cette classe est toujours employée. Un raccourci
+   `background` ici écraserait l'image de fond de l'autre règle — les deux
+   sélecteurs ont la même spécificité, et c'est le dernier écrit qui gagnerait. */
+.sc-hero {
+  border-bottom: 1px solid var(--sc-seyes-pale);
+}
+
+.sc-highlight-card {
+  border-radius: var(--sc-rayon-large);
+}
+
+/* La feuille d'authentification : une seule colonne, largeur de lecture. */
+.sc-feuille-auth {
+  max-width: 27rem;
+  width: 100%;
+  margin-inline: auto;
+  background: var(--sc-feuille);
+  border: 1px solid var(--sc-seyes-pale);
+  border-radius: var(--sc-rayon-large);
+  padding: clamp(1.5rem, 4vw, 2.25rem);
+  box-shadow:
+    0 1px 0 rgba(26, 35, 64, 0.04),
+    0 2px 6px rgba(26, 35, 64, 0.05);
+}
+
+/* ── Navigation des deux espaces ─────────────────────────────────────────── */
+
+.sc-parent-nav,
+.sc-student-nav {
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.sc-parent-nav .nav-link,
+.sc-student-nav .nav-link {
+  color: var(--sc-encre-claire);
+  white-space: nowrap;
+  min-height: 44px;
+  border-radius: var(--sc-rayon);
+  font-family: var(--sc-display);
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding-inline: 0.7rem;
+  border-left: 3px solid transparent;
+  transition:
+    background-color 0.14s ease,
+    color 0.14s ease,
+    border-color 0.14s ease;
+}
+
+.sc-parent-nav .nav-link:hover,
+.sc-student-nav .nav-link:hover {
+  background: var(--sc-feuille-creuse);
+  color: var(--sc-encre);
+}
+
+/* L'onglet courant est marqué par le trait de marge, pas par un aplat plein :
+   la navigation reste au second plan, ce qui est lu passe devant. */
+.sc-parent-nav .nav-link.active {
+  background: var(--sc-indigo-pale);
+  color: var(--sc-indigo-sombre);
+  border-left-color: var(--sc-indigo);
+}
+
+.sc-student-nav .nav-link.active {
+  background: var(--sc-acquis-pale);
+  color: var(--sc-acquis);
+  border-left-color: var(--sc-acquis);
+}
+
+@media (min-width: 992px) {
+  .sc-parent-nav,
+  .sc-student-nav {
+    position: sticky;
+    top: 1rem;
+    overflow: visible;
+  }
+}
+
+/* ── Espace élève ────────────────────────────────────────────────────────── */
+
+/* Chez l'enfant, le vert remplace l'indigo et les angles s'arrondissent un peu.
+   C'est le même cahier, tenu par quelqu'un d'autre. */
+.sc-student-page {
+  background: var(--sc-papier);
+}
+
+.sc-student-page .btn-primary {
+  --bs-btn-bg: var(--sc-acquis);
+  --bs-btn-border-color: var(--sc-acquis);
+  --bs-btn-hover-bg: #24594b;
+  --bs-btn-hover-border-color: #24594b;
+  --bs-btn-active-bg: #24594b;
+  --bs-btn-active-border-color: #24594b;
+  --bs-btn-border-radius: var(--sc-rayon-large);
+}
+
+.sc-student-page .btn-outline-primary {
+  --bs-btn-color: var(--sc-acquis);
+  --bs-btn-hover-bg: var(--sc-acquis-pale);
+  --bs-btn-hover-border-color: var(--sc-acquis);
+  --bs-btn-hover-color: var(--sc-acquis);
+  --bs-btn-active-bg: var(--sc-acquis-pale);
+  --bs-btn-active-color: var(--sc-acquis);
+  --bs-btn-border-radius: var(--sc-rayon-large);
+}
+
+.sc-student-page .text-bg-primary {
+  background-color: var(--sc-acquis) !important;
+}
+
+.sc-student-page .card {
+  --bs-card-border-radius: var(--sc-rayon-large);
+  border-radius: var(--sc-rayon-large);
+}
+
+.sc-student-page .text-primary {
+  color: var(--sc-acquis) !important;
+}
+
+.sc-student-hero {
+  border-radius: var(--sc-rayon-large);
+  background-color: var(--sc-feuille);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(var(--sc-rythme) - 1px),
+    var(--sc-seyes-pale) calc(var(--sc-rythme) - 1px),
+    var(--sc-seyes-pale) var(--sc-rythme)
+  );
+  background-position: 0 1.2rem;
+}
+
+/* ── Écran d'état ────────────────────────────────────────────────────────── */
+
+.sc-etat-ecran {
+  border: 1px solid var(--sc-seyes-pale);
+  border-left: 3px solid var(--sc-seyes);
+  border-radius: var(--sc-rayon);
+  background: var(--sc-feuille);
+}
+
+.sc-etat-ecran-panne {
+  border-left-color: var(--sc-panne);
+  background: var(--sc-panne-pale);
+}
+
+.sc-etat-ecran-travail {
+  border-left-color: var(--sc-travail);
+  background: var(--sc-travail-pale);
+}
+
+.sc-etat-ecran-acquis {
+  border-left-color: var(--sc-acquis);
+  background: var(--sc-acquis-pale);
+}
+
+/* ── Entrée de page ──────────────────────────────────────────────────────── */
+
+/* Un seul mouvement, à l'ouverture, sur le bloc qui porte la thèse. Le reste de
+   l'interface ne bouge pas : une page de diagnostic n'a pas à être animée. */
+@keyframes sc-monte {
+  from {
+    opacity: 0;
+    transform: translateY(0.6rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.sc-entree {
+  animation: sc-monte 0.5s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+.sc-entree-2 {
+  animation-delay: 0.09s;
+}
+
+.sc-entree-3 {
+  animation-delay: 0.18s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sc-entree {
+    animation: none;
+  }
+}

@@ -6,10 +6,10 @@ import type { ParentAssignment } from '../../../lib/types';
 export const metadata = { title: 'Activités' };
 
 const LABELS: Record<ParentAssignment['status'], { label: string; className: string }> = {
-  assigned: { label: 'Donnée', className: 'text-bg-primary' },
-  in_progress: { label: 'En cours', className: 'text-bg-info' },
-  completed: { label: 'Terminée', className: 'text-bg-success' },
-  cancelled: { label: 'Annulée', className: 'text-bg-secondary' },
+  assigned: { label: 'Donnée', className: 'sc-etat sc-etat-reporte' },
+  in_progress: { label: 'En cours', className: 'sc-etat sc-etat-travail' },
+  completed: { label: 'Terminée', className: 'sc-etat sc-etat-acquis' },
+  cancelled: { label: 'Annulée', className: 'sc-etat sc-etat-non-acquis' },
 };
 
 /**
@@ -53,7 +53,7 @@ export default async function ParentActivitiesPage() {
           {assignments.data.map((assignment) => (
             <li className="list-group-item py-3" key={assignment.id}>
               <div className="d-flex flex-wrap align-items-center gap-2 mb-1">
-                <span className={`badge rounded-pill ${LABELS[assignment.status].className}`}>
+                <span className={LABELS[assignment.status].className}>
                   {LABELS[assignment.status].label}
                 </span>
                 <span className="fw-semibold">{assignment.activity.title}</span>

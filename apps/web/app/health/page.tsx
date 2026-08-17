@@ -68,7 +68,7 @@ export default function HealthCheckPage() {
 
       <main className="container flex-grow-1 py-5">
         <div className="text-center mb-5">
-          <p className="text-uppercase fw-semibold text-primary small mb-2">Diagnostic local</p>
+          <p className="sc-oeilleton sc-oeilleton-indigo">Diagnostic local</p>
           <h1 className="display-5 fw-bold">État de santé</h1>
           <p className="lead text-secondary mb-0">{status === 'loading' ? 'Chargement…' : 'StudentConnect Frontend'}</p>
         </div>
@@ -107,9 +107,9 @@ export default function HealthCheckPage() {
             <div className="card-body p-4">
               <h2 id="summary-title" className="h4 mb-4">Résumé</h2>
               <div className="row g-3 text-center">
-                <div className="col-12 col-sm-4"><div className="border rounded-3 p-3"><strong className="d-block display-6 text-success">{counts.passed}</strong><span>Réussis</span></div></div>
-                <div className="col-12 col-sm-4"><div className="border rounded-3 p-3"><strong className="d-block display-6 text-warning-emphasis">{counts.warning}</strong><span>Avertissements</span></div></div>
-                <div className="col-12 col-sm-4"><div className="border rounded-3 p-3"><strong className="d-block display-6 text-danger">{counts.failed}</strong><span>Échecs</span></div></div>
+                <div className="col-12 col-sm-4"><div className="border rounded-3 p-3"><strong className="d-block display-6 sc-nombre text-success">{counts.passed}</strong><span>Réussis</span></div></div>
+                <div className="col-12 col-sm-4"><div className="border rounded-3 p-3"><strong className="d-block display-6 sc-nombre text-warning-emphasis">{counts.warning}</strong><span>Avertissements</span></div></div>
+                <div className="col-12 col-sm-4"><div className="border rounded-3 p-3"><strong className="d-block display-6 sc-nombre text-danger">{counts.failed}</strong><span>Échecs</span></div></div>
               </div>
             </div>
           </section>
