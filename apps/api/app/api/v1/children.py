@@ -85,7 +85,18 @@ async def _add_child(
     payload: ChildCreateRequest,
     child_status: str,
 ) -> Child:
-    """Attach a child profile to a family, in the state its creator earns it."""
+    """Attach a child profile to a family, in the state its creator earns it.
+
+    A profile that comes out **usable** is also handed its initiation
+    assessment, here rather than only in the activation route. That was the bug:
+    a parent who adds a child from her own space never activates anything —
+    there is nothing to activate — so the assessment was given to children who
+    joined by the family code and to nobody else. The one path a parent is most
+    likely to take was the one that led to an empty dashboard.
+
+    Giving it wherever a profile becomes usable is what makes the rule true:
+    "a child who can sign in has an assessment waiting".
+    """
     existing = await _find_child(db, parent_id, payload.pseudonym)
     if existing is not None:
         raise ConflictException(message=PSEUDONYM_TAKEN_MESSAGE)
@@ -108,6 +119,10 @@ async def _add_child(
         await db.rollback()
         raise ConflictException(message=PSEUDONYM_TAKEN_MESSAGE) from exc
 
+    if child_status == CHILD_STATUS_ACTIVE:
+        await assessment.give_to(db, parent_id, child)
+        await db.commit()
+
     await db.refresh(child)
     return child
 
@@ -120,7 +135,11 @@ async def _add_child(
 async def create_child(
     payload: ChildCreateRequest, parent: CurrentParent, db: DbSession
 ) -> Child:
-    """Open a child profile from the parent's own space, usable straight away."""
+    """Open a child profile from the parent's own space, usable straight away.
+
+    Usable means it also has its initiation assessment: the first thing the
+    platform knows how to ask a child is where she stands.
+    """
     return await _add_child(db, parent.id, payload, CHILD_STATUS_ACTIVE)
 
 

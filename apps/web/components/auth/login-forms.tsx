@@ -13,6 +13,15 @@ const EMPTY: FormState = { error: null };
  * to a server action and never to an API address the browser knows. There is no
  * `fetch` here, and there is nothing in this file a script could read a session
  * from.
+ *
+ * **Every field says what it is, so the browser can fill it.** Autofill is a
+ * feature for the person typing, not a nuisance to switch off — and when it
+ * misfires the form is usually to blame. It was here: nothing told the browser
+ * what a family code is, so it read the lone text field above a password field
+ * as the username and filled it with the six-digit code secret. Naming the three
+ * fields properly — the family as an `organization`, the pseudonym as the
+ * `username`, the code secret as the password — is what makes the guess
+ * unnecessary.
  */
 export function LoginForms({ defaultTab }: { defaultTab: 'parent' | 'eleve' }) {
   const [tab, setTab] = useState<'parent' | 'eleve'>(defaultTab);
@@ -119,7 +128,13 @@ export function LoginForms({ defaultTab }: { defaultTab: 'parent' | 'eleve' }) {
                 id="family_code"
                 name="family_code"
                 className="form-control text-uppercase"
-                autoComplete="off"
+                // The family is the organisation this child belongs to, and
+                // naming it as one is what stops the browser guessing. Left to
+                // guess, it read the lone text field above a password field as
+                // the username and filled it with the six-digit code secret.
+                autoComplete="organization"
+                autoCapitalize="characters"
+                spellCheck={false}
                 required
               />
             </div>
