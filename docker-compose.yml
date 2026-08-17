@@ -122,7 +122,10 @@ services:
       api:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost/health"]
+      # `127.0.0.1` and not `localhost`: inside the container the name resolves
+      # to `::1` first, and nginx listens on IPv4 only, so the probe was refused
+      # and the origin reported itself unhealthy while serving perfectly.
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/health"]
       interval: 10s
       timeout: 5s
       retries: 10
