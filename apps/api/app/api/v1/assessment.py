@@ -17,11 +17,12 @@ from fastapi import APIRouter, status
 from app.api.deps import CurrentChild, DbSession
 from app.assessment import service
 from app.attempts import service as attempts
+from app.authored import service as authored
 from app.core.exceptions import NotFoundException
 from app.schemas.assessment import (
     AssessmentAnswerRequest,
     AssessmentPublic,
-    AssessmentQuestionPublic,
+    AuthoredQuestionPublic,
 )
 from app.schemas.attempt import ResponsePublic
 
@@ -46,13 +47,13 @@ async def read_my_assessment(child: CurrentChild, db: DbSession) -> Any:
     if assessment is None:
         raise NotFoundException(message=service.NO_ASSESSMENT_MESSAGE)
 
-    questions = await service.questions_of(db, assessment.id)
+    questions = await authored.questions_of(db, assessment.id)
     return AssessmentPublic(
         done=done,
         assignment_id=pending.id,
         title=assessment.title,
         questions=[
-            AssessmentQuestionPublic(
+            AuthoredQuestionPublic(
                 question_ref=row.question_ref,
                 prompt=row.prompt,
                 # The correct index is not in this model, and cannot be added to
@@ -84,7 +85,9 @@ async def answer_question(
     import uuid as _uuid
 
     attempt = await attempts.own_attempt(db, child, _uuid.UUID(attempt_id))
-    answer, correct = await service.grade(
+    # The explanation is deliberately dropped: an assessment does not teach as
+    # it measures, and a route that returned one would make the exam walkable.
+    answer, correct, _ = await authored.grade(
         db, attempt, payload.question_ref, payload.chosen_index
     )
     recorded = await attempts.record_response(

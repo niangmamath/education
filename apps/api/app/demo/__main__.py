@@ -23,16 +23,17 @@ import argparse
 import asyncio
 import sys
 import uuid
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Final, TypeVar
+from typing import Any, Final, TypeVar
 
 from sqlalchemy import create_engine, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
 from app.assessment import service as assessment
+from app.authored import service as authored
 from app.assignments import service as assignments
 from app.attempts import service as attempts
 from app.catalog.registration import RegistrationRefused, register_package
@@ -42,15 +43,16 @@ from app.core.config import settings
 from app.core.db import AsyncSessionFactory, sync_database_url
 from app.core.exceptions import ConflictException, NotFoundException
 from app.core.security import generate_family_code, hash_password, hash_pin
-from app.demo import dataset
+from app.demo import dataset, fiches
 from app.models.catalog import (
     ACTIVITY_KIND_ASSESSMENT,
     ACTIVITY_KIND_H5P,
+    ACTIVITY_KIND_REMEDIATION,
     ACTIVITY_STATUS_PUBLISHED,
     Activity,
     ActivityCompetency,
     ActivityQuestion,
-    AssessmentQuestion,
+    AuthoredQuestion,
 )
 from app.models.identity import CHILD_STATUS_ACTIVE, Child, Parent
 from app.referential.document import ReferentialDocument
@@ -178,7 +180,7 @@ async def build(spike: Path, families: bool = True) -> None:
     would put fictional children next to real ones.
     """
     _referential()
-    _activities()
+    _fiches()
     _assessment()
     packaged = _packages(spike)
 
@@ -230,25 +232,123 @@ def _referential() -> None:
         engine.dispose()
 
 
-def _activities() -> None:
+def _install_authored(
+    session: Session,
+    activity: Activity,
+    questions: Sequence[Mapping[str, Any]],
+) -> None:
+    """Write an authored activity's questions, wording and attribution together.
+
+    Two tables, and the split is deliberate. `authored_questions` holds what is
+    asked; `catalog_activity_questions` holds which competency each question
+    works on. The second already existed and is what the results engine reads —
+    it must go on reading one table whether an activity was imported or written
+    here, and never learn the difference.
+
+    The competency is also declared on the activity itself, or a reading would
+    find a question attributed to something the activity does not claim to work
+    on.
+    """
+    existing = {
+        row.question_ref
+        for row in session.scalars(
+            select(AuthoredQuestion).where(AuthoredQuestion.activity_id == activity.id)
+        )
+    }
+    claimed = {
+        row.competency_code
+        for row in session.scalars(
+            select(ActivityCompetency).where(
+                ActivityCompetency.activity_id == activity.id
+            )
+        )
+    }
+
+    for position, question in enumerate(questions, start=1):
+        ref = str(question["ref"])
+        competency = str(question["competency"])
+        if competency not in claimed:
+            session.add(
+                ActivityCompetency(activity_id=activity.id, competency_code=competency)
+            )
+            claimed.add(competency)
+        if ref in existing:
+            continue
+        session.add(
+            AuthoredQuestion(
+                activity_id=activity.id,
+                position=position,
+                question_ref=ref,
+                prompt=str(question["prompt"]),
+                choices=question["choices"],
+                correct_index=int(question["correct"]),  # type: ignore[call-overload]
+                explanation=question.get("explanation"),
+            )
+        )
+        session.add(
+            ActivityQuestion(
+                activity_id=activity.id,
+                question_ref=ref,
+                competency_code=competency,
+            )
+        )
+
+
+def _fiches() -> None:
+    """The twelve remediation sheets, and the one imported activity beside them.
+
+    A sheet is a repair a child can actually do: a short lesson, four questions
+    on one competency, and an explanation after each. Before this, the twelve
+    repairs were catalogue rows with nothing behind them — the diagnostic could
+    propose a repair that opened on an empty page.
+    """
     engine = create_engine(sync_database_url())
     try:
         with Session(engine) as session:
-            for code, title, competency, minutes in dataset.ACTIVITIES:
-                if session.scalar(select(Activity).where(Activity.code == code)):
-                    continue
-                activity = Activity(
-                    code=code,
-                    title=title,
+            for sheet in fiches.FICHES:
+                activity = session.scalar(
+                    select(Activity).where(Activity.code == sheet["code"])
+                )
+                if activity is None:
+                    activity = Activity(
+                        code=sheet["code"],
+                        title=sheet["title"],
+                        kind=ACTIVITY_KIND_REMEDIATION,
+                        status=ACTIVITY_STATUS_PUBLISHED,
+                        duration_minutes=sheet["minutes"],
+                        guidance=sheet["guidance"],
+                    )
+                    session.add(activity)
+                    session.flush()
+
+                _install_authored(
+                    session,
+                    activity,
+                    [
+                        {**question, "competency": sheet["competency"]}
+                        for question in sheet["questions"]
+                    ],
+                )
+
+            # The imported activity, kept apart from the repairs so that the
+            # content runtime stays demonstrable without the parcours depending
+            # on a package that cannot be deployed everywhere.
+            if not session.scalar(
+                select(Activity).where(Activity.code == dataset.H5P_DEMO_CODE)
+            ):
+                imported = Activity(
+                    code=dataset.H5P_DEMO_CODE,
+                    title=dataset.H5P_DEMO_TITLE,
                     kind=ACTIVITY_KIND_H5P,
                     status=ACTIVITY_STATUS_PUBLISHED,
-                    duration_minutes=minutes,
+                    duration_minutes=dataset.H5P_DEMO_MINUTES,
                 )
-                session.add(activity)
+                session.add(imported)
                 session.flush()
                 session.add(
                     ActivityCompetency(
-                        activity_id=activity.id, competency_code=competency
+                        activity_id=imported.id,
+                        competency_code=dataset.H5P_DEMO_COMPETENCY,
                     )
                 )
             session.commit()
@@ -257,12 +357,11 @@ def _activities() -> None:
 
 
 def _assessment() -> None:
-    """Install the initiation assessment, wording and attribution together.
+    """Install the initiation assessment.
 
-    Two tables: `assessment_questions` holds what is asked, and
-    `catalog_activity_questions` holds which competency each question works on.
-    The second already existed and is what the results engine reads — it must go
-    on reading one table whether an activity was imported or written here.
+    Its questions carry no explanation, and that is policy rather than an
+    omission: telling a child the answer to a question that is measuring her
+    corrupts the reading being taken.
     """
     engine = create_engine(sync_database_url())
     try:
@@ -281,43 +380,7 @@ def _assessment() -> None:
                 session.add(activity)
                 session.flush()
 
-            existing = {
-                row.question_ref
-                for row in session.scalars(
-                    select(AssessmentQuestion).where(
-                        AssessmentQuestion.activity_id == activity.id
-                    )
-                )
-            }
-            for position, question in enumerate(dataset.ASSESSMENT, start=1):
-                if question["ref"] in existing:
-                    continue
-                session.add(
-                    AssessmentQuestion(
-                        activity_id=activity.id,
-                        position=position,
-                        question_ref=question["ref"],
-                        prompt=question["prompt"],
-                        choices=question["choices"],
-                        correct_index=question["correct"],
-                    )
-                )
-                session.add(
-                    ActivityQuestion(
-                        activity_id=activity.id,
-                        question_ref=question["ref"],
-                        competency_code=question["competency"],
-                    )
-                )
-                # Every competency the assessment can conclude on must also be
-                # declared on the activity, or the reading would find a question
-                # attributed to a competency the activity does not claim.
-                session.add(
-                    ActivityCompetency(
-                        activity_id=activity.id,
-                        competency_code=question["competency"],
-                    )
-                )
+            _install_authored(session, activity, list(dataset.ASSESSMENT))
             session.commit()
     finally:
         engine.dispose()
@@ -503,7 +566,7 @@ def _pending_assessment() -> Act[uuid.UUID]:
 def _answer(attempt_id: uuid.UUID, question_ref: str, chosen: int) -> Act[None]:
     async def act(db: AsyncSession, parent: Parent, child: Child) -> None:
         attempt = await attempts.own_attempt(db, child, attempt_id)
-        answer, correct = await assessment.grade(db, attempt, question_ref, chosen)
+        answer, correct, _ = await authored.grade(db, attempt, question_ref, chosen)
         await attempts.record_response(
             db,
             child,
@@ -551,7 +614,7 @@ def _content_report(packaged: list[str]) -> None:
     print(
         f"  Examen        : {dataset.ASSESSMENT_CODE}, {len(dataset.ASSESSMENT)} questions"
     )
-    print(f"  Remédiations  : {len(dataset.ACTIVITIES)}")
+    print(f"  Remédiations  : {len(fiches.FICHES)} fiches")
     if packaged:
         print(f"  Jouable       : {', '.join(packaged)}")
     else:

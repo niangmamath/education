@@ -1,24 +1,24 @@
 """What an initiation assessment looks like on the wire.
 
-The correct answer is absent **by construction** rather than by filtering: there
-is no field for it on the public model, so no later edit can leak one through
-this schema. The same trick the parent and child schemas already use for
-password and PIN hashes.
+The question and answer shapes are shared with the remediation sheets and live
+in `app.schemas.authored`; what remains here is the one thing specific to the
+assessment — whether a child has one waiting, and whether she has already been
+through it.
 """
 
 from __future__ import annotations
 
 import uuid
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Field
 
+from app.schemas.authored import AuthoredQuestionPublic
 
-class AssessmentQuestionPublic(BaseModel):
-    """One question, as it is asked."""
+# Kept so callers may go on importing the request model from here; the assessment
+# and the sheets send exactly the same payload to answer a question.
+from app.schemas.authored import AuthoredAnswerRequest as AssessmentAnswerRequest
 
-    question_ref: str
-    prompt: str
-    choices: list[str]
+__all__ = ["AssessmentAnswerRequest", "AssessmentPublic", "AuthoredQuestionPublic"]
 
 
 class AssessmentPublic(BaseModel):
@@ -32,17 +32,4 @@ class AssessmentPublic(BaseModel):
     done: bool
     assignment_id: uuid.UUID | None
     title: str | None
-    questions: list[AssessmentQuestionPublic] = Field(default_factory=list)
-
-
-class AssessmentAnswerRequest(BaseModel):
-    """One answer: which question, and which choice.
-
-    Never whether it was right. That is the server's to say, and a payload that
-    offered to say it would be one forgotten check away from being believed.
-    """
-
-    model_config = ConfigDict(extra="forbid")
-
-    question_ref: str = Field(min_length=1, max_length=200)
-    chosen_index: int = Field(ge=0)
+    questions: list[AuthoredQuestionPublic] = Field(default_factory=list)

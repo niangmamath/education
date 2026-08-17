@@ -18,7 +18,12 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { SESSION_COOKIE, apiWithToken } from './api';
-import type { AppliedRemediation, Attempt, ChildAssignment } from './types';
+import type {
+  AnswerFeedback,
+  AppliedRemediation,
+  Attempt,
+  ChildAssignment,
+} from './types';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:8000';
 
@@ -325,6 +330,35 @@ export async function submitAssessment(
   revalidatePath('/eleve');
   revalidatePath('/eleve/progression');
   redirect(`/eleve/activites/${assignmentId}/resultat`);
+}
+
+/**
+ * Répondre à une question d'une fiche, et rapporter ce qu'elle dit.
+ *
+ * Une action serveur plutôt qu'un appel depuis le navigateur, parce que
+ * `API_URL` ne quitte jamais le serveur (ADR-016) — mais une action par
+ * question, et non un envoi unique à la fin comme pour l'examen. La différence
+ * est le sujet même de la fiche : elle explique au fur et à mesure, sinon elle
+ * n'apprend rien et redevient un contrôle.
+ *
+ * L'appelant reçoit `null` en cas d'échec plutôt qu'une exception : une réponse
+ * perdue ne doit pas faire disparaître la fiche sous les yeux d'une enfant.
+ */
+export async function answerFicheQuestion(
+  attemptId: string,
+  questionRef: string,
+  chosenIndex: number,
+): Promise<AnswerFeedback | null> {
+  const store = await cookies();
+  const token = store.get(SESSION_COOKIE)?.value;
+
+  const said = await apiWithToken<AnswerFeedback>(
+    `/me/fiches/attempts/${attemptId}/answers`,
+    token,
+    { method: 'POST', body: { question_ref: questionRef, chosen_index: chosenIndex } },
+  );
+
+  return said.ok ? said.data : null;
 }
 
 /**

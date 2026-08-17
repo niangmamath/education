@@ -28,10 +28,17 @@ export type ParentProfile = {
   display_name: string;
 };
 
+/**
+ * Les cinq natures d'activité. Les deux dernières sont écrites par la
+ * plateforme : ni l'une ni l'autre ne se joue dans un cadre, et toutes deux se
+ * répondent sur une page à nous.
+ */
+export type ActivityKind = 'h5p' | 'phet' | 'video' | 'assessment' | 'remediation';
+
 export type AssignedActivity = {
   code: string;
   title: string;
-  kind: 'h5p' | 'phet' | 'video' | 'assessment';
+  kind: ActivityKind;
   duration_minutes: number;
 };
 
@@ -170,6 +177,31 @@ export type Assessment = {
   assignment_id: string | null;
   title: string | null;
   questions: AssessmentQuestion[];
+};
+
+/**
+ * Une fiche de remédiation : la même question qu'un examen, plus ce qui
+ * l'entoure. `guidance` est la leçon, dite avant qu'on demande quoi que ce soit
+ * — c'est ce qui sépare une réparation d'un second contrôle.
+ */
+export type Fiche = {
+  assignment_id: string;
+  activity_code: string;
+  title: string;
+  guidance: string | null;
+  duration_minutes: number;
+  questions: AssessmentQuestion[];
+};
+
+/**
+ * Ce qu'une fiche répond une fois la question traitée. L'explication est celle
+ * de la question et ne change pas avec la réponse donnée : une fiche explique ce
+ * qui est vrai, elle ne commente pas l'enfant.
+ */
+export type AnswerFeedback = {
+  question_ref: string;
+  correct: boolean;
+  explanation: string | null;
 };
 
 export type NextSteps = { steps: NextStep[]; computed_at: string };

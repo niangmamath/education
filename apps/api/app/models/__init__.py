@@ -4,7 +4,7 @@ from app.models.assignment import Assignment
 from app.models.attempt import Attempt, AttemptResponse, AttemptResult
 from app.models.catalog import (
     Activity,
-    AssessmentQuestion,
+    AuthoredQuestion,
     ActivityCompetency,
     ActivityQuestion,
     H5PPackage,
@@ -23,7 +23,7 @@ from app.models.xapi import XapiStatement
 __all__ = [
     "Activity",
     "ActivityCompetency",
-    "AssessmentQuestion",
+    "AuthoredQuestion",
     "ActivityQuestion",
     "Assignment",
     "Attempt",
