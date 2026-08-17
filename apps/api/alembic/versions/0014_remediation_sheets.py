@@ -67,9 +67,7 @@ def upgrade() -> None:
     op.add_column(
         "authored_questions", sa.Column("explanation", sa.Text(), nullable=True)
     )
-    op.add_column(
-        "catalog_activities", sa.Column("guidance", sa.Text(), nullable=True)
-    )
+    op.add_column("catalog_activities", sa.Column("guidance", sa.Text(), nullable=True))
 
     op.drop_constraint("ck_catalog_activities_kind", "catalog_activities")
     op.create_check_constraint(
