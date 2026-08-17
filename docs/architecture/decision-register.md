@@ -36,7 +36,7 @@ docs/
 │   ├── ADR-009-redis-et-celery.md             # Redis et Celery
 │   ├── ADR-010-planning-markdown.md           # Planning en Markdown
 │   ├── ADR-011-sqlalchemy-async.md            # SQLAlchemy async et asyncpg
-│   ├── ADR-012-h5p-standalone-pilote.md       # Type H5P unique, accepté sous conditions
+│   ├── ADR-012-h5p-standalone-pilote.md       # Types H5P autorisés, accepté sous conditions
 │   ├── ADR-013-catalogue-lie-par-code.md      # Catalogue lié par code métier
 │   ├── ADR-014-ingestion-xapi.md              # Ingestion xAPI, acteur pseudonyme, prééminence
 │   ├── ADR-015-diagnostic-explicable.md       # Diagnostic explicable et non stocké
@@ -274,12 +274,12 @@ docs/
 | **Statut** | ✅ **Accepted sous conditions** |
 | **Date** | 13 août 2026 |
 | **Auteur** | Équipe StudentConnect |
-| **Décision** | `H5P.TrueFalse 1.8` seul type autorisé |
+| **Décision** | Liste blanche de types H5P, tenue par une contrainte en base ; huit types depuis l’amendement du 17 août 2026 |
 | **Fichier** | [docs/adr/ADR-012-h5p-standalone-pilote.md](../adr/ADR-012-h5p-standalone-pilote.md) |
 | **Dépendances** | ADR-006 |
 | **Impact** | Contenus |
 
-**Résumé** : Tout autre type est refusé par défaut jusqu'à un test et une décision explicites. La contrainte est portée par la base depuis l'étape 08.2.
+**Résumé** : Tout type non listé est refusé par défaut jusqu'à un test et une décision explicites. La contrainte est portée par la base depuis l'étape 08.2. **Amendée le 17 août 2026** : un seul type ne peut pas porter une matière — une dictée doit s'entendre, un rangement doit se manipuler — et la liste passe à huit, dont `H5P.Dictation`, le seul qui paie une dette réelle puisque tout le reste peut déjà être demandé dans une fiche écrite ici. `QuestionSet` reste refusé faute d'attribution par sous-contenu, `ArithmeticQuiz` parce qu'il chronomètre un enfant. La version cesse d'être épinglée : le gel est assuré par l'empreinte, qui distingue deux compilations d'une même version là où une chaîne de version ne le peut pas.
 
 ---
 

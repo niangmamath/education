@@ -230,10 +230,14 @@ class ActivityQuestion(Base):
 class H5PPackage(Base):
     """The vetted H5P file an activity of kind `h5p` plays.
 
-    ADR-012 allows exactly one library for the pilot and refuses everything else
-    by default. That refusal is a check constraint rather than an application
-    rule: adding a type then requires a migration and an amended ADR, which is
-    the deliberate friction the decision asked for.
+    ADR-012 refuses every type by default and admits only those decided on. That
+    refusal is a check constraint rather than an application rule: adding a type
+    requires a migration and an amended ADR, which is the deliberate friction the
+    decision asked for.
+
+    The version is **not** constrained. Freezing is done by the digest, which is
+    what actually says "these are the bytes that were vetted"; two builds of one
+    version are not the same file, and a version string cannot tell them apart.
 
     The digest and the size are recorded because a package is vetted once and
     served many times; anything that no longer matches its digest is no longer
@@ -245,7 +249,10 @@ class H5PPackage(Base):
         UniqueConstraint("activity_id", name="uq_catalog_h5p_packages_activity"),
         UniqueConstraint("sha256", name="uq_catalog_h5p_packages_sha256"),
         CheckConstraint(
-            "library_name = 'H5P.TrueFalse' AND library_version = '1.8'",
+            "library_name IN ("
+            "'H5P.TrueFalse', 'H5P.MultiChoice', 'H5P.SingleChoiceSet', "
+            "'H5P.Blanks', 'H5P.MarkTheWords', 'H5P.DragText', "
+            "'H5P.DragQuestion', 'H5P.Dictation')",
             name="ck_catalog_h5p_packages_allowed_library",
         ),
         CheckConstraint("size_bytes > 0", name="ck_catalog_h5p_packages_size"),

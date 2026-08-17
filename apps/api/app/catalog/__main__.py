@@ -34,6 +34,11 @@ from app.core.config import settings
 from app.core.db import DATABASE_URL, sync_database_url
 from app.models.catalog import Activity
 
+# Où le projet garde son arbre de bibliothèques : `deploy-runtime` le pose tel
+# quel dans l'origine de contenu, et `libraries` y ajoute ce que de nouveaux
+# paquets apportent.
+PREPARED_LIBRARIES: Final = Path("experiments/h5p-spike/player/runtime/content")
+
 EXIT_OK: Final = 0
 EXIT_REFUSED: Final = 3
 EXIT_DATABASE: Final = 4
@@ -79,6 +84,20 @@ def main(argv: list[str] | None = None) -> int:
         "dossier", type=Path, help="dossier préparé contenant libraries/ et player/"
     )
 
+    libraries_parser = verbs.add_parser(
+        "libraries",
+        help="installer les bibliothèques que portent des paquets .h5p téléchargés",
+    )
+    libraries_parser.add_argument(
+        "fichiers", type=Path, nargs="+", help="fichiers .h5p à dépouiller"
+    )
+    libraries_parser.add_argument(
+        "--vers",
+        type=Path,
+        default=PREPARED_LIBRARIES,
+        help=f"arbre de bibliothèques préparé (défaut : {PREPARED_LIBRARIES})",
+    )
+
     arguments = parser.parse_args(argv)
     if arguments.verbe == "check":
         return _check(arguments.database_url)
@@ -86,6 +105,8 @@ def main(argv: list[str] | None = None) -> int:
         return _deploy(arguments.activite, arguments.database_url)
     if arguments.verbe == "deploy-runtime":
         return _deploy_runtime(arguments.dossier)
+    if arguments.verbe == "libraries":
+        return _libraries(arguments.fichiers, arguments.vers)
     return _register(
         arguments.activite,
         arguments.fichier,
@@ -93,6 +114,61 @@ def main(argv: list[str] | None = None) -> int:
         arguments.source,
         arguments.database_url,
     )
+
+
+def _libraries(packages: list[Path], prepared: Path) -> int:
+    """Take the libraries out of downloaded packages and put them where the
+    player looks.
+
+    This is the step that used to be called "preparing the libraries offline",
+    and it turns out to be nothing more than this: an `.h5p` already carries
+    everything it needs to play. Nothing is fetched from the network here.
+    """
+    added: list[str] = []
+    barren: list[str] = []
+    for package in packages:
+        try:
+            report = runtime.merge_libraries(prepared, package)
+        except (runtime.DeploymentRefused, OSError) as refusal:
+            print(f"{package.name} : {refusal}", file=sys.stderr)
+            return EXIT_REFUSED
+
+        if not report.found:
+            barren.append(package.name)
+            print(
+                f"{package.name} : AUCUNE bibliothèque dans l’archive.",
+                file=sys.stderr,
+            )
+            continue
+
+        added.extend(report.added)
+        print(
+            f"{package.name} : {len(report.found)} bibliothèque(s) portée(s), "
+            f"{len(report.added)} nouvelle(s)"
+        )
+        for library in report.added:
+            print(f"  + {library}")
+
+    if barren:
+        print(
+            "\nCes archives ne contiennent que « h5p.json » et « content/ » : "
+            "ce sont des exports « contenu seul ». Elles ne joueront pas tant que "
+            "leurs bibliothèques ne sont pas dans l’arbre. Sur h5p.org, reprenez "
+            "le téléchargement depuis la page du contenu — le bouton « Reuse » "
+            "propose parfois la forme sans bibliothèques.",
+            file=sys.stderr,
+        )
+
+    if not added:
+        print("Aucune bibliothèque nouvelle installée.")
+    else:
+        print(f"\n{len(set(added))} bibliothèque(s) installée(s) dans {prepared}.")
+        print("Déployez maintenant le runtime pour que l’origine les serve :")
+        print(
+            "  python -m app.catalog deploy-runtime "
+            "experiments/h5p-spike/player/runtime"
+        )
+    return EXIT_OK
 
 
 def _register(

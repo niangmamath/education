@@ -163,7 +163,7 @@ class TestRegistration:
                 session,
                 store,
                 activity_code=activity.code,
-                path=package_file(tmp_path / "autre.h5p", library="H5P.MultiChoice"),
+                path=package_file(tmp_path / "autre.h5p", library="H5P.QuestionSet"),
                 licence="CC BY 4.0",
                 source="https://example.com/essai",
             )

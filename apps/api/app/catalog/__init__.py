@@ -7,7 +7,7 @@ is no editor, per ADR-006 and ADR-012. See `docs/backend/catalogue-activites.md`
 
 from app.catalog.checks import CheckReport, check_catalogue
 from app.catalog.h5p import (
-    ALLOWED_LIBRARY,
+    ALLOWED_LIBRARIES,
     PackageFacts,
     PackageRefused,
     inspect_package,
@@ -19,7 +19,7 @@ from app.catalog.registration import (
 )
 
 __all__ = [
-    "ALLOWED_LIBRARY",
+    "ALLOWED_LIBRARIES",
     "CheckReport",
     "PackageFacts",
     "PackageRefused",

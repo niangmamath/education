@@ -1385,16 +1385,53 @@ autorisation permanente du propriétaire.
 - [x] Migration `0014_remediation_sheets`, réversible, vérifiée par
       `downgrade base` puis `upgrade head`.
 
+### Contenus H5P et PhET, ADR-012 amendée
+
+- [x] **ADR-012 amendée sur validation du propriétaire : huit types au lieu
+      d'un.** Un seul type ne peut pas porter une matière — une dictée doit
+      s'entendre, un rangement doit se manipuler. `H5P.Dictation` est le seul qui
+      paie une dette réelle : tout le reste, la plateforme sait déjà le demander
+      dans une fiche qu'elle a écrite.
+- [x] `QuestionSet` reste refusé faute d'attribution par sous-contenu,
+      `ArithmeticQuiz` parce qu'il chronomètre un enfant.
+- [x] **La version cesse d'être épinglée.** Le gel est assuré par l'empreinte,
+      qui distingue deux compilations d'une même version là où une chaîne de
+      version ne le peut pas. Migration `0015_h5p_allowed_libraries`, réversible.
+- [x] `python -m app.catalog libraries` extrait les bibliothèques d'un `.h5p`
+      téléchargé et les fusionne dans l'arbre partagé, **sans jamais écraser**
+      une bibliothèque déjà vérifiée.
+- [x] **Piège consigné et signalé par la commande** : un `.h5p` peut ne contenir
+      aucune bibliothèque. Le paquet du pilote lui-même est de cette forme —
+      c'est pourquoi ses bibliothèques avaient dû être préparées à la main.
+      Répondre « rien à ajouter » aurait été indiscernable du cas anodin.
+- [x] Liste de courses écrite : `docs/contenus/a-telecharger.md`.
+
+### Démonstration par tunnel
+
+- [x] **Ce qui bloque Render, en une phrase** : l'API écrit les contenus dans un
+      dossier, nginx les lit dans ce même dossier, et sur Render un disque
+      n'appartient qu'à un seul service. Ce n'est pas un défaut, c'est une limite
+      d'hébergeur qui rencontre l'exigence d'origine séparée d'ADR-012.
+- [x] **Un tunnel n'est pas un contournement** : la pile locale est la pile
+      complète, origine isolée et tickets compris. Elle montre plus que Render ne
+      pourrait, H5P compris.
+- [x] **Défaut trouvé avant la démonstration** : Next vérifie l'origine de chaque
+      action serveur, et derrière un tunnel l'hôte public ne correspond pas —
+      *toute connexion aurait échoué*, puisque se connecter est une action
+      serveur. `PUBLIC_HOST` déclare l'hôte du tunnel ; sans la variable, rien
+      n'est ouvert.
+- [x] Recette écrite : `docs/deploiement/demonstration-par-tunnel.md`.
+
 ## Résultats techniques du 17 août 2026
 
 ```text
 Ruff        : vert, format inclus
 Mypy        : vert sur 84 fichiers
-Pytest      : 1103 tests réussis
+Pytest      : 1135 tests réussis
 TypeScript  : vert
 ESLint      : vert
 Build Next  : vert, 20 routes
-Migrations  : 0014 réversible, aller-retour complet vérifié
+Migrations  : 0014 et 0015 réversibles, aller-retour complet vérifié
 Base        : 12 compétences, examen à 12 questions, 12 fiches à 4 questions
               expliquées chacune ; l'examen n'a aucune explication, par décision
 ```

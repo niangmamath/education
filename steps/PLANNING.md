@@ -182,7 +182,9 @@ propriétaire, parce qu’ils bloquaient l’usage réel de la plateforme plutô
 | HORS-01 | Examen d’initiation | DASH-04 | Terminé | Douze questions, une par compétence, donnée par la plateforme ; la bonne réponse ne quitte pas le serveur |
 | HORS-02 | Rendre la création de comptes possible | HORS-01 | Terminé | Quatre pages d’authentification distinctes ; le remplissage automatique fonctionne au lieu d’être désactivé |
 | HORS-03 | Identité visuelle « le cahier » | HORS-02 | Terminé | Le rouge réservé aux pannes, le fil de prérequis, contrastes AA vérifiés, PR #41 |
-| HORS-04 | Fiches de remédiation | HORS-03 | Terminé | Douze fiches écrites ici, 1103 tests, ADR-017 |
+| HORS-04 | Fiches de remédiation | HORS-03 | Terminé | Douze fiches écrites ici, ADR-017 |
+| HORS-05 | Ouvrir le catalogue H5P | HORS-04 | Terminé | ADR-012 amendée à huit types, migration 0015, commande `libraries`, 1135 tests |
+| HORS-06 | Rendre la démonstration montrable | HORS-05 | Terminé | Recette par tunnel ; `PUBLIC_HOST` sans quoi toute connexion échouerait derrière un tunnel |
 
 `HORS-01` referme la première flèche du MVP, qui n’avait jamais été construite :
 un enfant inscrit n’avait aucune compétence observée, donc aucun diagnostic.
