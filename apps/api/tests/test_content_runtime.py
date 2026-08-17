@@ -21,6 +21,7 @@ import pytest
 import redis.asyncio as redis
 from fastapi.testclient import TestClient
 
+from app.content import deploy
 from app.content.deploy import (
     DeploymentRefused,
     deploy_libraries,
@@ -312,3 +313,119 @@ class TestWhatTheOriginAsks:
         assert allowed.content == b""
         assert b"ticket" not in refused.content.lower()
         await revoke_ticket(client_redis, token)
+
+
+class TestImportingLibrariesFromAPackage:
+    """Taking a downloaded package's libraries into the shared tree.
+
+    This is the whole of "preparing a library offline" once a new type is
+    admitted: an `.h5p` already carries what it needs to play, so nothing is
+    fetched from the network and nothing is built.
+    """
+
+    def _package(self, path: Path, libraries: dict[str, str]) -> Path:
+        with zipfile.ZipFile(path, "w") as archive:
+            archive.writestr("h5p.json", json.dumps({"title": "Essai"}))
+            archive.writestr("content/content.json", "{}")
+            for folder, payload in libraries.items():
+                archive.writestr(f"{folder}/library.json", payload)
+        return path
+
+    def test_a_package_gives_up_its_libraries(self, tmp_path: Path) -> None:
+        prepared = tmp_path / "libraries"
+        prepared.mkdir()
+        package = self._package(
+            tmp_path / "essai.h5p",
+            {"H5P.Blanks-1.14": "{}", "H5P.Question-1.5": "{}"},
+        )
+
+        report = deploy.merge_libraries(prepared, package)
+
+        assert report.added == ["H5P.Blanks-1.14", "H5P.Question-1.5"]
+        assert (prepared / "H5P.Blanks-1.14" / "library.json").is_file()
+
+    def test_a_second_package_does_not_take_the_first_one_s_libraries_away(
+        self, tmp_path: Path
+    ) -> None:
+        """`deploy_libraries` wipes the tree, which is right for laying it out
+        once and would be catastrophic here: importing a second type must not
+        remove the first."""
+        prepared = tmp_path / "libraries"
+        prepared.mkdir()
+        deploy.merge_libraries(
+            prepared, self._package(tmp_path / "un.h5p", {"H5P.Blanks-1.14": "{}"})
+        )
+
+        deploy.merge_libraries(
+            prepared, self._package(tmp_path / "deux.h5p", {"H5P.DragText-1.10": "{}"})
+        )
+
+        assert (prepared / "H5P.Blanks-1.14").is_dir()
+        assert (prepared / "H5P.DragText-1.10").is_dir()
+
+    def test_a_library_already_present_is_left_exactly_as_it_is(
+        self, tmp_path: Path
+    ) -> None:
+        """Two packages often share a dependency, and the first to arrive is the
+        one that was vetted with it. Overwriting it would change what an already
+        deployed content plays without changing its digest."""
+        prepared = tmp_path / "libraries"
+        (prepared / "H5P.Question-1.5").mkdir(parents=True)
+        (prepared / "H5P.Question-1.5" / "library.json").write_text("vérifiée")
+        package = self._package(tmp_path / "essai.h5p", {"H5P.Question-1.5": "autre"})
+
+        report = deploy.merge_libraries(prepared, package)
+
+        assert report.added == []
+        assert report.found == ["H5P.Question-1.5"]
+        assert (
+            prepared / "H5P.Question-1.5" / "library.json"
+        ).read_text() == "vérifiée"
+
+    def test_a_content_only_export_is_reported_as_carrying_nothing(
+        self, tmp_path: Path
+    ) -> None:
+        """The trap. h5p.org hands out archives holding nothing but `h5p.json`
+        and `content/`; they look like packages and cannot play alone. The
+        pilot's own vetted file is one of those. Reporting it as « nothing to
+        add » would be indistinguishable from the harmless case."""
+        prepared = tmp_path / "libraries"
+        prepared.mkdir()
+        package = self._package(tmp_path / "seul.h5p", {})
+
+        report = deploy.merge_libraries(prepared, package)
+
+        assert report.found == []
+        assert report.added == []
+
+    def test_the_content_folder_is_never_taken_for_a_library(
+        self, tmp_path: Path
+    ) -> None:
+        """`content/` is laid out per content by `deploy_package`, not shared."""
+        prepared = tmp_path / "libraries"
+        prepared.mkdir()
+        package = self._package(tmp_path / "essai.h5p", {"H5P.Blanks-1.14": "{}"})
+
+        deploy.merge_libraries(prepared, package)
+
+        assert not (prepared / "content").exists()
+
+    def test_an_entry_climbing_out_of_the_tree_is_refused(self, tmp_path: Path) -> None:
+        prepared = tmp_path / "libraries"
+        prepared.mkdir()
+        package = tmp_path / "hostile.h5p"
+        with zipfile.ZipFile(package, "w") as archive:
+            archive.writestr("h5p.json", "{}")
+            archive.writestr("H5P.Blanks-1.14/../../dehors.txt", "non")
+
+        with pytest.raises(deploy.DeploymentRefused):
+            deploy.merge_libraries(prepared, package)
+
+    def test_a_file_that_is_not_an_archive_is_refused(self, tmp_path: Path) -> None:
+        prepared = tmp_path / "libraries"
+        prepared.mkdir()
+        package = tmp_path / "pas-un-zip.h5p"
+        package.write_text("bonjour")
+
+        with pytest.raises(deploy.DeploymentRefused):
+            deploy.merge_libraries(prepared, package)

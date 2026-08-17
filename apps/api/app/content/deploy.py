@@ -117,6 +117,102 @@ def deploy_libraries(runtime_root: Path, prepared: Path) -> dict[str, str]:
     return inventory
 
 
+@dataclass(frozen=True)
+class LibraryImport:
+    """What a package turned out to carry, and what of it was new.
+
+    The two numbers must not be confused, and the difference is the whole reason
+    this returns a pair. `found` empty means the archive is a **content-only
+    export**: it will not play unless its libraries are already in the tree, and
+    the operator has to go back and download the full package. `found` non-empty
+    with `added` empty means everything it carries was already there, which is
+    the ordinary and harmless case.
+    """
+
+    found: list[str]
+    added: list[str]
+
+
+def merge_libraries(prepared: Path, package: Path) -> LibraryImport:
+    """Add a package's own libraries to the prepared tree, without replacing it.
+
+    An `.h5p` archive carries its libraries beside its content — one folder per
+    library, named `H5P.Blanks-1.14` and so on — which is exactly what the player
+    needs and exactly what the shared tree is missing when a new type arrives.
+    Pulling them out of the file the operator downloaded is therefore the whole
+    of "preparing a library offline": there is nothing to fetch from the network,
+    and nothing to build.
+
+    **Merged, never replaced.** `deploy_libraries` wipes the tree and copies a
+    prepared folder over it, which is right for laying the whole thing out at
+    once and wrong here: importing a second package must not take the first
+    one's libraries away with it.
+
+    A library already present is left exactly as it is, and its name is not
+    returned. Two packages often share a dependency, and the first one to arrive
+    is the one that was vetted with it — replacing it silently would change what
+    a deployed content plays without changing its digest.
+
+    Beware the content-only export: h5p.org will hand you an archive holding
+    nothing but `h5p.json` and `content/`, which looks like a package and cannot
+    play on its own. The pilot's own vetted file is one of those, which is why
+    its libraries had to be prepared by hand. The report says so rather than
+    reporting "nothing to add", because the two look identical from here and mean
+    opposite things.
+    """
+    if not prepared.is_dir():
+        raise DeploymentRefused(f"« {prepared} » n’est pas un dossier.")
+    if not zipfile.is_zipfile(package):
+        raise DeploymentRefused(f"« {package} » n’est pas une archive .h5p.")
+
+    found: set[str] = set()
+    added: set[str] = set()
+    with zipfile.ZipFile(package) as archive:
+        entries = archive.infolist()
+        if len(entries) > MAX_ENTRIES:
+            raise DeploymentRefused(
+                f"L’archive contient {len(entries)} entrées, au-delà du plafond."
+            )
+        if sum(entry.file_size for entry in entries) > MAX_UNPACKED_BYTES:
+            raise DeploymentRefused(
+                "L’archive se déploie au-delà du plafond de taille."
+            )
+
+        for entry in entries:
+            if entry.is_dir():
+                continue
+            library = _library_folder_of(entry.filename)
+            if library is None:
+                continue
+            found.add(library)
+            if (prepared / library).exists():
+                continue
+
+            added.add(library)
+            destination = _safe_destination(prepared, entry.filename)
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            with archive.open(entry) as source, destination.open("wb") as handle:
+                _copy(source, handle)
+
+    return LibraryImport(found=sorted(found), added=sorted(added))
+
+
+def _library_folder_of(name: str) -> str | None:
+    """The library folder an archive entry belongs to, if it belongs to one.
+
+    A library folder is named `Machine.Name-major.minor`. The archive's other
+    top-level entries — `h5p.json`, `content/` — are not libraries and are laid
+    out by `deploy_package` instead, per content.
+    """
+    head, separator, _ = name.replace("\\", "/").partition("/")
+    if not separator or head in {"content", ".."} or head.startswith("."):
+        return None
+    stem, dash, version = head.rpartition("-")
+    if not dash or not stem or not version[:1].isdigit():
+        return None
+    return head
+
+
 def deploy_player(runtime_root: Path, prepared: Path) -> int:
     """Put the player bundle and our page in place.
 

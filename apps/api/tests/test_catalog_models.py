@@ -214,29 +214,65 @@ class TestH5PPackage:
         session.commit()
 
     @pytest.mark.parametrize(
-        ("name", "version"),
+        "name",
         [
-            ("H5P.MultiChoice", "1.16"),
-            ("H5P.TrueFalse", "1.7"),
-            ("H5P.TrueFalse", "2.0"),
-            ("h5p.truefalse", "1.8"),
+            "H5P.QuestionSet",
+            "H5P.ArithmeticQuiz",
+            "H5P.InteractiveVideo",
+            # La casse compte : un nom écrit autrement est une autre bibliothèque.
+            "h5p.truefalse",
+            "H5P.Truefalse",
         ],
     )
-    def test_any_other_library_is_refused_by_the_database(
-        self, session: Session, name: str, version: str
+    def test_a_library_outside_the_list_is_refused_by_the_database(
+        self, session: Session, name: str
     ) -> None:
-        """ADR-012 refuses every other type by default, and says so in the schema.
+        """ADR-012 refuse par défaut, et le dit dans le schéma.
 
-        An application rule could be relaxed by a configuration change; a check
-        constraint takes a migration and an amended ADR, which is the friction
-        the decision asked for. The last case matters too: the name is compared
-        exactly, so a differently-cased spelling is another library.
+        Une règle applicative se relâcherait par un changement de configuration ;
+        une contrainte de vérification coûte une migration et un amendement
+        d'ADR, ce qui est la friction que la décision réclamait.
         """
         row = build_activity(session)
 
         with pytest.raises(IntegrityError):
-            build_package(session, row, library_name=name, library_version=version)
+            build_package(session, row, library_name=name)
             session.commit()
+
+    @pytest.mark.parametrize(
+        "name",
+        [
+            "H5P.TrueFalse",
+            "H5P.MultiChoice",
+            "H5P.SingleChoiceSet",
+            "H5P.Blanks",
+            "H5P.MarkTheWords",
+            "H5P.DragText",
+            "H5P.DragQuestion",
+            "H5P.Dictation",
+        ],
+    )
+    def test_each_admitted_library_is_accepted(
+        self, session: Session, name: str
+    ) -> None:
+        """Les huit de l'amendement du 17 août 2026."""
+        row = build_activity(session)
+        build_package(session, row, library_name=name)
+
+        session.commit()
+
+    @pytest.mark.parametrize("version", ["1.7", "1.8", "2.0", "1.16"])
+    def test_the_version_is_no_longer_constrained(
+        self, session: Session, version: str
+    ) -> None:
+        """Le gel est assuré par l'empreinte, qui distingue deux compilations
+        d'une même version là où une chaîne de version ne le peut pas. Épingler
+        la version ne refusait qu'un paquet trop récent pour une constante que
+        personne n'avait relevée."""
+        row = build_activity(session)
+        build_package(session, row, library_version=version)
+
+        session.commit()
 
     def test_a_digest_that_is_not_a_sha256_is_refused(self, session: Session) -> None:
         row = build_activity(session)

@@ -1,9 +1,14 @@
 """Inspect an H5P package before it is ever allowed near the platform.
 
-ADR-012 allows exactly one library for the pilot, `H5P.TrueFalse 1.8`, and
-refuses every other type by default until it has been tested and explicitly
-decided on. This module is where that refusal happens for a file, before any
-byte reaches the bucket and before any row reaches the database.
+ADR-012 refuses every content type by default and admits only those that have
+been tested and explicitly decided on. This module is where that refusal happens
+for a file, before any byte reaches the bucket and before any row reaches the
+database.
+
+The pilot admitted exactly one type, `H5P.TrueFalse 1.8`. The amendment of 17
+August 2026 widens the list to eight, because one type cannot carry a subject:
+a dictation needs to be heard, an ordering needs to be dragged, and a
+true-or-false question can express neither.
 
 An `.h5p` file is a zip archive, and a zip archive is an untrusted input. The
 inspection therefore reads entries without extracting them: nothing is written
@@ -25,9 +30,39 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Final
 
-# ADR-012: the only library the pilot admits. The database repeats this rule as
-# a check constraint, so the two must be changed together, along with the ADR.
-ALLOWED_LIBRARY: Final = ("H5P.TrueFalse", "1.8")
+# ADR-012, amended: the libraries this platform admits. The database repeats this
+# list as a check constraint, so the two must be changed together, along with the
+# ADR — that friction is the decision, not an inconvenience.
+#
+# Each one is here because it does something the others cannot, and because one
+# package answers for **one** competency: a single content, a single score, a
+# single reading. `H5P.QuestionSet` is deliberately absent for that reason — it
+# bundles several questions under one activity, and attributing each of them
+# would mean reading sub-content identifiers out of the archive by hand. It can
+# be added, but not for free, and not by accident.
+#
+# `H5P.Dictation` is the one that pays a real debt: everything else this
+# platform can ask, it can already ask in a sheet it wrote itself. Hearing a
+# sound is the one thing it cannot, and phonology without sound is a pis-aller
+# we have written down as one since the initiation assessment.
+ALLOWED_LIBRARIES: Final[frozenset[str]] = frozenset(
+    {
+        "H5P.TrueFalse",
+        "H5P.MultiChoice",
+        "H5P.SingleChoiceSet",
+        "H5P.Blanks",
+        "H5P.MarkTheWords",
+        "H5P.DragText",
+        "H5P.DragQuestion",
+        "H5P.Dictation",
+    }
+)
+
+# The version is recorded rather than pinned in code. Freezing is done by the
+# digest, which is what actually says "this is the file that was vetted": two
+# builds of the same library version are not the same bytes, and the digest
+# knows it while a version string does not. Pinning versions here would only
+# refuse a file for being newer than a constant nobody remembered to raise.
 
 MAX_PACKAGE_BYTES: Final = 20 * 1024 * 1024
 MAX_ENTRIES: Final = 500
@@ -85,8 +120,8 @@ def inspect_package(path: Path) -> PackageFacts:
         manifest = _read_manifest(archive)
 
     name, version = _library_of(manifest)
-    if (name, version) != ALLOWED_LIBRARY:
-        allowed = f"{ALLOWED_LIBRARY[0]} {ALLOWED_LIBRARY[1]}"
+    if name not in ALLOWED_LIBRARIES:
+        allowed = ", ".join(sorted(ALLOWED_LIBRARIES))
         raise PackageRefused(
             f"Type H5P « {name} {version} » refusé. ADR-012 n’autorise que "
             f"{allowed} ; tout autre type demande un test et une décision "

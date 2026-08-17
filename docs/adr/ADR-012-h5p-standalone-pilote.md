@@ -1,11 +1,40 @@
 # ADR-012, H5P Standalone pour le pilote
 
 - Statut : Accepté sous conditions
-- Date : 13 août 2026
+- Date : 13 août 2026, **amendée le 17 août 2026**
 
 ## Décision
 
-Utiliser `h5p-standalone` comme base du lecteur H5P du pilote StudentConnect avec `H5P.TrueFalse 1.8` comme seul type actuellement autorisé. Tout autre type est refusé par défaut jusqu’à un test et une décision explicites.
+Utiliser `h5p-standalone` comme base du lecteur H5P du pilote StudentConnect. Tout type non listé est refusé par défaut jusqu’à un test et une décision explicites.
+
+## Amendement du 17 août 2026, huit types au lieu d’un
+
+Le pilote n’autorisait que `H5P.TrueFalse 1.8`. **Un seul type ne peut pas porter une matière** : une dictée doit s’entendre, un rangement doit se manipuler, et une question vrai-ou-faux n’exprime ni l’un ni l’autre. Le propriétaire a amendé la décision et validé la liste.
+
+| Type | Ce qu’il apporte que les autres n’ont pas |
+|---|---|
+| `H5P.Dictation` | **Le son.** C’est le seul qui paie une dette réelle : tout le reste, la plateforme sait déjà le demander dans une fiche qu’elle a écrite |
+| `H5P.DragText` | Remettre en ordre |
+| `H5P.DragQuestion` | Le geste sur une image |
+| `H5P.MarkTheWords` | Repérer dans un texte |
+| `H5P.Blanks` | Le texte à trous |
+| `H5P.MultiChoice` | Le QCM avec image |
+| `H5P.SingleChoiceSet` | Une suite de choix uniques |
+| `H5P.TrueFalse` | Vrai ou faux, déjà en place |
+
+**Trois refus argumentés**, pour qu’ils ne soient pas repris par inadvertance :
+
+- `H5P.QuestionSet` regroupe plusieurs questions sous une activité. Rattacher chacune à sa compétence demande de lire les identifiants de sous-contenu dans l’archive. C’est faisable et ce n’est pas gratuit ;
+- `H5P.ArithmeticQuiz` chronomètre l’enfant, ce que cette plateforme ne fait pas ;
+- `H5P.InteractiveVideo`, `H5P.Column`, `H5P.Accordion` sont des conteneurs et ne produisent aucune lecture.
+
+**La version cesse d’être figée dans le code**, et c’est un relâchement délibéré. Le gel est assuré par le `sha256`, qui dit « voici les octets qui ont été vérifiés » — ce qu’une chaîne de version ne dit pas, puisque deux compilations d’une même version ne sont pas le même fichier. Épingler la version ne refusait jamais qu’un paquet trop récent pour une constante que personne n’avait pensé à relever.
+
+La contrainte de vérification en base reste une contrainte : ajouter un type coûte toujours une migration et un amendement, et rien ne peut entrer dans le catalogue par une simple modification applicative. C’est `0015_h5p_allowed_libraries`.
+
+**La condition 3 change de sens sans changer d’exigence.** « Bibliothèques préparées hors ligne » se lisait comme un travail manuel ; il s’avère qu’un `.h5p` complet porte déjà ses bibliothèques, et `python -m app.catalog libraries` les en extrait sans rien télécharger. Une bibliothèque déjà présente n’est jamais écrasée : c’est celle qui a été vérifiée avec le premier paquet, et la remplacer changerait ce que joue un contenu déjà déployé sans changer son empreinte.
+
+Un piège est consigné parce qu’il coûte une soirée : **un `.h5p` peut ne contenir aucune bibliothèque**. Il n’a alors que `h5p.json` et `content/`, ressemble à un paquet complet, et ne jouera jamais seul. Le paquet du pilote lui-même est de cette forme. La commande le signale explicitement au lieu de répondre « rien à ajouter ».
 
 ## Conditions
 

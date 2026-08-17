@@ -23,7 +23,7 @@ from typing import Any
 import pytest
 
 from app.catalog.h5p import (
-    ALLOWED_LIBRARY,
+    ALLOWED_LIBRARIES,
     MAX_ENTRIES,
     MAX_PACKAGE_BYTES,
     PackageRefused,
@@ -78,29 +78,57 @@ class TestAllowedLibrary:
 
         facts = inspect_package(package)
 
-        assert (facts.library_name, facts.library_version) == ALLOWED_LIBRARY
+        assert facts.library_name in ALLOWED_LIBRARIES
+        assert facts.library_version == "1.8"
 
     @pytest.mark.parametrize(
-        ("library", "major", "minor"),
+        "library",
         [
-            ("H5P.MultiChoice", "1", "16"),
-            ("H5P.DragQuestion", "1", "14"),
-            ("H5P.TrueFalse", "1", "7"),
-            ("H5P.TrueFalse", "2", "0"),
+            # Bundles several questions under one activity; attributing each of
+            # them means reading sub-content identifiers by hand, which is work
+            # nobody has done. It can be added, but not by accident.
+            "H5P.QuestionSet",
+            # Times the child. This platform does not time a six-year-old.
+            "H5P.ArithmeticQuiz",
+            "H5P.InteractiveVideo",
+            "H5P.Column",
+            "H5P.Accordion",
         ],
     )
-    def test_every_other_type_is_refused(
-        self, tmp_path: Path, library: str, major: str, minor: str
+    def test_a_type_outside_the_list_is_refused(
+        self, tmp_path: Path, library: str
     ) -> None:
         """The refusal is by default, so a new type is a decision, not a surprise."""
-        package = write_package(
-            tmp_path / "autre.h5p", manifest(library=library, major=major, minor=minor)
-        )
+        package = write_package(tmp_path / "autre.h5p", manifest(library=library))
 
         with pytest.raises(PackageRefused) as refusal:
             inspect_package(package)
 
         assert "ADR-012" in str(refusal.value)
+
+    @pytest.mark.parametrize("library", sorted(ALLOWED_LIBRARIES))
+    def test_every_admitted_type_is_accepted(
+        self, tmp_path: Path, library: str
+    ) -> None:
+        """The eight of the amended ADR-012, each because it does something the
+        others cannot express."""
+        package = write_package(tmp_path / "admis.h5p", manifest(library=library))
+
+        assert inspect_package(package).library_name == library
+
+    @pytest.mark.parametrize(("major", "minor"), [("1", "7"), ("1", "8"), ("2", "0")])
+    def test_the_version_is_recorded_rather_than_pinned(
+        self, tmp_path: Path, major: str, minor: str
+    ) -> None:
+        """Freezing is done by the digest, which says « these are the bytes that
+        were vetted » — something a version string cannot say, since two builds
+        of one version are not the same file. Pinning versions here would only
+        refuse a package for being newer than a constant nobody raised."""
+        package = write_package(
+            tmp_path / "version.h5p", manifest(major=major, minor=minor)
+        )
+
+        assert inspect_package(package).library_version == f"{major}.{minor}"
 
     def test_a_package_that_hides_its_version_is_refused(self, tmp_path: Path) -> None:
         payload = manifest()
