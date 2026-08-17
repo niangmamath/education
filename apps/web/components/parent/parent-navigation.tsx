@@ -8,7 +8,7 @@ const items = [
   { href: '/parent', label: 'Accueil', icon: House, exact: true },
   { href: '/parent/enfants', label: 'Enfants', icon: Users },
   { href: '/parent/activites', label: 'Activités', icon: BookOpen },
-  { href: '/parent/notifications', label: 'Notifications', icon: Bell },
+  { href: '/parent/notifications', label: 'Ce qui a changé', icon: Bell },
   { href: '/parent/parametres', label: 'Paramètres', icon: Settings },
 ];
 

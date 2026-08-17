@@ -107,6 +107,11 @@ def main(argv: list[str] | None = None) -> int:
         help="retirer les données de démonstration et s’arrêter",
     )
     parser.add_argument(
+        "--contenus",
+        action="store_true",
+        help="n’installer que le référentiel, les activités et l’examen, sans comptes",
+    )
+    parser.add_argument(
         "--spike",
         type=Path,
         default=SPIKE,
@@ -123,7 +128,7 @@ def main(argv: list[str] | None = None) -> int:
             return EXIT_OK
 
     try:
-        asyncio.run(build(arguments.spike))
+        asyncio.run(build(arguments.spike, families=not arguments.contenus))
     except Exception as error:  # pragma: no cover - operator feedback
         print(f"Échec : {error}", file=sys.stderr)
         return EXIT_FAILED
@@ -164,22 +169,33 @@ def clean() -> int:
     return removed
 
 
-async def build(spike: Path) -> None:
+async def build(spike: Path, families: bool = True) -> None:
+    """Install the content, and the demonstration families unless told otherwise.
+
+    `--contenus` exists for the case where the accounts are to be created by
+    hand: the referential, the activities and the initiation assessment are what
+    a real account needs to have anything to do, and seeding families alongside
+    would put fictional children next to real ones.
+    """
     _referential()
     _activities()
     _assessment()
     packaged = _packages(spike)
 
+    if not families:
+        _content_report(packaged)
+        return
+
     async with AsyncSessionFactory() as db:
-        families = await _families(db)
+        seeded = await _families(db)
         await db.commit()
-        for family in families:
+        for family in seeded:
             for entry in family.children:
                 await db.refresh(entry.child)
             await db.refresh(family.parent)
 
-    await _history(families)
-    _report(families, packaged)
+    await _history(seeded)
+    _report(seeded, packaged)
 
 
 def _referential() -> None:
@@ -523,6 +539,26 @@ async def _act(parent_id: uuid.UUID, child_id: uuid.UUID, act: Act[T]) -> T | No
             await db.rollback()
             print(f"  {missing.message}", file=sys.stderr)
             return None
+
+
+def _content_report(packaged: list[str]) -> None:
+    """What was installed when no account was."""
+    print()
+    print("Contenus installés. Aucun compte créé.")
+    print()
+    print(f"  Référentiel   : {dataset.EDITION_CODE}, en vigueur")
+    print(f"  Compétences   : {len(dataset.referential()['competencies'])}")
+    print(
+        f"  Examen        : {dataset.ASSESSMENT_CODE}, {len(dataset.ASSESSMENT)} questions"
+    )
+    print(f"  Remédiations  : {len(dataset.ACTIVITIES)}")
+    if packaged:
+        print(f"  Jouable       : {', '.join(packaged)}")
+    else:
+        print("  Jouable       : aucune ; le stockage ou le volume n’a pas répondu")
+    print()
+    print("Créez maintenant les comptes depuis l’interface : un profil enfant")
+    print("activé reçoit l’examen d’initiation automatiquement.")
 
 
 def _report(families: list[SeededFamily], packaged: list[str]) -> None:

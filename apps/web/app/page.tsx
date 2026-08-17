@@ -5,22 +5,22 @@ const features = [
   {
     icon: BookOpen,
     title: 'Arbre de compétences',
-    description: 'Modélisation des prérequis et dépendances entre compétences.',
+    description: 'Une compétence dont le prérequis coince n’est pas proposée : on travaille ce qui bloque.',
   },
   {
     icon: BarChart3,
     title: 'Suivi compréhensible',
-    description: 'Des indicateurs expliqués aux familles, sans score fictif présenté comme réel.',
+    description: 'Des indicateurs expliqués aux familles, jamais une note présentée comme un niveau.',
   },
   {
     icon: Users,
     title: 'Espaces distincts',
-    description: 'Des parcours séparés pour les parents et les élèves de 6 à 11 ans.',
+    description: 'Le parent voit le diagnostic. L’enfant voit ce qu’il peut faire maintenant.',
   },
   {
     icon: Rocket,
     title: 'Activités courtes',
-    description: 'Des exercices ciblés et de courte durée, à valider dans le futur produit.',
+    description: 'De trois à sept minutes, sur une seule difficulté à la fois.',
   },
 ];
 
@@ -37,7 +37,7 @@ export default function HomePage() {
                 <span className="d-block small text-secondary">Plateforme EdTech</span>
               </span>
             </Link>
-            <span className="badge rounded-pill text-bg-warning">Prototype UX</span>
+            
           </div>
         </div>
       </header>
@@ -47,20 +47,23 @@ export default function HomePage() {
           <div className="container py-lg-4">
             <div className="row align-items-center g-5">
               <div className="col-lg-7">
-                <p className="badge rounded-pill text-bg-primary mb-3">Exemple fictif</p>
+                
                 <h1 className="display-4 fw-bold mb-3">Suivre les apprentissages, simplement.</h1>
                 <p className="lead text-secondary mb-4">
-                  StudentConnect prépare un espace clair pour les élèves de 6 à 11 ans et leurs parents.
+                  Un court test pour savoir où en est votre enfant, puis de petites activités sur ce qui coince. Pour les 6 à 11 ans, en français et en mathématiques.
                 </p>
                 <div className="d-flex flex-wrap gap-3">
-                  <Link href="/connexion" className="btn btn-primary btn-lg">
+                  <Link href="/inscription" className="btn btn-primary btn-lg">
+                    Créer un compte
+                  </Link>
+                  <Link href="/connexion" className="btn btn-outline-primary btn-lg">
                     Se connecter
                     <ArrowRight className="ms-2" size={20} aria-hidden="true" />
                   </Link>
-                  <Link href="/aide" className="btn btn-outline-primary btn-lg">Découvrir le projet</Link>
+                  <Link href="/aide" className="btn btn-outline-primary btn-lg">Comment ça marche</Link>
                 </div>
                 <p className="small text-secondary mt-3 mb-0">
-                  Les parcours présentés sont des prototypes. L’authentification et les données métier ne sont pas encore implémentées.
+                  Chaque conclusion affichée porte la règle qui l’a produite et les réponses dont elle vient.
                 </p>
               </div>
               <div className="col-lg-5">
@@ -70,11 +73,11 @@ export default function HomePage() {
                     <ul className="list-unstyled mb-0 mt-4">
                       <li className="d-flex gap-3 mb-3">
                         <span className="sc-list-marker" aria-hidden="true">1</span>
-                        <span><strong>Espace Parent</strong><br /><span className="text-secondary">Synthèse, difficultés et prochaines actions.</span></span>
+                        <span><strong>Espace Parent</strong><br /><span className="text-secondary">Ce qui est acquis, ce qui coince, et pourquoi la plateforme le dit.</span></span>
                       </li>
                       <li className="d-flex gap-3">
                         <span className="sc-list-marker" aria-hidden="true">2</span>
-                        <span><strong>Espace Élève</strong><br /><span className="text-secondary">Objectifs courts, activités et progression simple.</span></span>
+                        <span><strong>Espace Élève</strong><br /><span className="text-secondary">Une activité à la fois, sa durée, et ce qu’il a déjà réussi.</span></span>
                       </li>
                     </ul>
                   </div>
@@ -128,7 +131,7 @@ export default function HomePage() {
       <footer className="border-top bg-white py-4">
         <div className="container d-flex flex-column flex-sm-row justify-content-between gap-2 small text-secondary">
           <span>© 2026 StudentConnect.</span>
-          <span>Prototype avec Next.js 16 et Bootstrap 5.3.8.</span>
+          <span>Next.js 16 et Bootstrap 5.3.8.</span>
         </div>
       </footer>
     </div>

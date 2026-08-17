@@ -78,6 +78,130 @@ function readSessionToken(setCookies: string[]): string | null {
   return null;
 }
 
+/**
+ * Open a parent account.
+ *
+ * Registering does not sign anyone in, and that is the API's decision rather
+ * than an oversight: ADR-005 places email verification between the two. So this
+ * creates the account and hands the visitor to the sign-in form, where the
+ * password they just chose is the one that works.
+ */
+export async function registerParent(
+  _: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const password = String(formData.get('password') ?? '');
+  if (password.length < 12) {
+    return { error: 'Le mot de passe doit faire au moins 12 caractères.' };
+  }
+  if (password !== String(formData.get('password_confirm') ?? '')) {
+    return { error: 'Les deux mots de passe ne sont pas identiques.' };
+  }
+
+  const created = await call('/auth/parent/register', {
+    email: String(formData.get('email') ?? ''),
+    password,
+    display_name: String(formData.get('display_name') ?? ''),
+  });
+  if (created !== null) return { error: created };
+
+  redirect('/connexion?cree=1');
+}
+
+/**
+ * Open a child profile from the family code, without an adult present.
+ *
+ * The profile waits: a family code alone must never be enough to join a family,
+ * only to ask to. A parent activates it, and until then it cannot sign in — so
+ * this page tells the child exactly that rather than letting her discover it at
+ * her first attempt.
+ */
+export async function registerChild(
+  _: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const pin = String(formData.get('pin') ?? '');
+  if (!/^[0-9]{6}$/.test(pin)) {
+    return { error: 'Le code secret doit être six chiffres.' };
+  }
+
+  const created = await call('/auth/child/register', {
+    family_code: String(formData.get('family_code') ?? '').trim(),
+    pseudonym: String(formData.get('pseudonym') ?? '').trim(),
+    pin,
+    display_name: String(formData.get('display_name') ?? '').trim(),
+  });
+  if (created !== null) return { error: created };
+
+  redirect('/connexion?demande=1');
+}
+
+/**
+ * Add a child profile from the parent's own space, usable straight away.
+ *
+ * No waiting here, unlike the child's own registration: the adult who owns the
+ * family is the one asking, so there is nobody left to approve it.
+ */
+export async function createChild(_: FormState, formData: FormData): Promise<FormState> {
+  const pin = String(formData.get('pin') ?? '');
+  if (!/^[0-9]{6}$/.test(pin)) {
+    return { error: 'Le code secret doit être six chiffres.' };
+  }
+
+  const store = await cookies();
+  const created = await apiWithToken('/auth/children', store.get(SESSION_COOKIE)?.value, {
+    method: 'POST',
+    body: {
+      pseudonym: String(formData.get('pseudonym') ?? '').trim(),
+      pin,
+      display_name: String(formData.get('display_name') ?? '').trim(),
+    },
+  });
+  if (!created.ok) return { error: created.message };
+
+  revalidatePath('/parent/enfants');
+  revalidatePath('/parent');
+  return { error: null };
+}
+
+/** Open or close access to a profile. The assessment is given on the first open. */
+export async function setChildAccess(childId: string, open: boolean): Promise<void> {
+  const store = await cookies();
+  await apiWithToken(
+    `/auth/children/${childId}/${open ? 'activate' : 'deactivate'}`,
+    store.get(SESSION_COOKIE)?.value,
+    { method: 'POST' },
+  );
+  revalidatePath('/parent/enfants');
+  revalidatePath('/parent');
+}
+
+/** One unauthenticated call, returning the API's own sentence when it refuses. */
+async function call(path: string, payload: unknown): Promise<string | null> {
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}/api/v1${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      cache: 'no-store',
+    });
+  } catch {
+    return 'Le service est momentanément indisponible.';
+  }
+  if (response.ok) return null;
+
+  const body = await response.json().catch(() => null);
+  if (body && typeof body === 'object' && 'error' in body) {
+    const message = (body as { error: { message?: string } }).error?.message;
+    if (message) return message;
+  }
+  if (response.status === 422) {
+    return 'Certaines informations ne sont pas valides ; vérifiez le formulaire.';
+  }
+  return 'Le compte n’a pas pu être créé.';
+}
+
 export async function loginParent(_: FormState, formData: FormData): Promise<FormState> {
   const error = await signIn('/auth/parent/login', {
     email: String(formData.get('email') ?? ''),

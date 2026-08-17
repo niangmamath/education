@@ -21,9 +21,9 @@ export const metadata = {
 export default async function ConnexionPage({
   searchParams,
 }: {
-  searchParams: Promise<{ suite?: string }>;
+  searchParams: Promise<{ suite?: string; cree?: string; demande?: string }>;
 }) {
-  const { suite } = await searchParams;
+  const { suite, cree, demande } = await searchParams;
 
   return (
     <main className="container py-5">
@@ -39,7 +39,28 @@ export default async function ConnexionPage({
           e-mail ni de téléphone.
         </p>
 
+        {cree ? (
+          <div className="alert alert-success" role="status">
+            <strong>Votre compte est créé.</strong> Connectez-vous avec le mot de
+            passe que vous venez de choisir. Vous trouverez votre code de famille
+            dans « Mes enfants ».
+          </div>
+        ) : null}
+        {demande ? (
+          <div className="alert alert-info" role="status">
+            <strong>Ton profil est enregistré.</strong> Un adulte de ta famille
+            doit l’accepter avant que tu puisses entrer. Reviens ici après.
+          </div>
+        ) : null}
+
         <LoginForms defaultTab={suite === 'eleve' ? 'eleve' : 'parent'} />
+
+        <p className="mt-4">
+          Pas encore de compte ?{' '}
+          <Link href={`/inscription${suite === 'eleve' ? '?suite=eleve' : ''}`}>
+            En créer un
+          </Link>
+        </p>
       </div>
     </main>
   );

@@ -1,10 +1,9 @@
 import Link from 'next/link';
 import { InterfaceState } from '../../components/ui/interface-state';
-import { PrototypeNotice } from '../../components/ui/prototype-notice';
 
 export const metadata = {
   title: 'États et accessibilité',
-  description: 'Démonstration interne des états d’interface accessibles de StudentConnect',
+  description: 'Les états d’interface de StudentConnect et la façon dont ils se lisent',
 };
 
 const states = [
@@ -13,17 +12,16 @@ const states = [
   { kind: 'error' as const, title: 'Erreur', description: 'Le contenu n’a pas pu être chargé. Une nouvelle tentative sera possible.' },
   { kind: 'success' as const, title: 'Succès', description: 'L’action a été réalisée correctement.' },
   { kind: 'forbidden' as const, title: 'Accès refusé', description: 'Cette ressource ne peut pas être consultée avec cet accès.' },
-  { kind: 'authentication' as const, title: 'Connexion requise', description: 'Une connexion sera nécessaire pour ouvrir cet espace protégé.' },
-  { kind: 'unavailable' as const, title: 'Contenu indisponible', description: 'Ce contenu n’est pas encore disponible dans le prototype.' },
+  { kind: 'authentication' as const, title: 'Connexion requise', description: 'Cet espace demande une connexion. La page de connexion s’ouvre à sa place.' },
+  { kind: 'unavailable' as const, title: 'Contenu indisponible', description: 'Ce contenu n’est pas disponible pour le moment.' },
   { kind: 'offline' as const, title: 'Réseau dégradé', description: 'La connexion semble instable. Les actions non enregistrées seront signalées.' },
 ];
 
 export default function AccessibilityStatesPage() {
   return (
     <main className="container py-5" id="contenu-principal">
-      <PrototypeNotice />
       <header className="mb-4">
-        <p className="text-uppercase text-primary fw-semibold small mb-1">Démonstration interne</p>
+        <p className="text-uppercase text-primary fw-semibold small mb-1">Référence d’interface</p>
         <h1 className="display-6 fw-bold">États d’interface et accessibilité</h1>
         <p className="lead text-secondary mb-0">
           Chaque état associe une icône, un titre et un message. La couleur n’est jamais le seul indicateur.
