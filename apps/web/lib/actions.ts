@@ -159,6 +159,51 @@ export async function finishAttempt(assignmentId: string, attemptId: string): Pr
 }
 
 /**
+ * Sit the initiation assessment: start it, answer it, finish it.
+ *
+ * One submission for the whole thing rather than one request per question. A
+ * child answering on a household tablet should not lose her place to a flaky
+ * connection halfway through, and the platform records nothing until she says
+ * she has finished — which is the same promise the rest of the Élève space makes.
+ *
+ * The answers are positions in a list of choices. Whether each is right is
+ * decided by the server, from its own copy: the browser is never told, and could
+ * not be believed if it said.
+ */
+export async function submitAssessment(
+  assignmentId: string,
+  formData: FormData,
+): Promise<void> {
+  const store = await cookies();
+  const token = store.get(SESSION_COOKIE)?.value;
+
+  await apiWithToken(`/me/activities/${assignmentId}/start`, token, { method: 'POST' });
+  const attempt = await apiWithToken<Attempt>(
+    `/me/activities/${assignmentId}/attempts`,
+    token,
+    { method: 'POST' },
+  );
+  if (!attempt.ok) return;
+
+  for (const [name, value] of formData.entries()) {
+    if (!name.startsWith('q:')) continue;
+    const chosen = Number(value);
+    if (!Number.isInteger(chosen)) continue;
+    await apiWithToken(`/me/assessment/attempts/${attempt.data.id}/answers`, token, {
+      method: 'POST',
+      body: { question_ref: name.slice(2), chosen_index: chosen },
+    });
+  }
+
+  await apiWithToken(`/me/attempts/${attempt.data.id}/complete`, token, {
+    method: 'POST',
+  });
+  revalidatePath('/eleve');
+  revalidatePath('/eleve/progression');
+  redirect(`/eleve/activites/${assignmentId}/resultat`);
+}
+
+/**
  * Give the activities the platform proposes for one child.
  *
  * The parent's act: the button removes the retyping, not the decision.

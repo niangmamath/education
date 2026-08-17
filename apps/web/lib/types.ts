@@ -31,7 +31,7 @@ export type ParentProfile = {
 export type AssignedActivity = {
   code: string;
   title: string;
-  kind: 'h5p' | 'phet' | 'video';
+  kind: 'h5p' | 'phet' | 'video' | 'assessment';
   duration_minutes: number;
 };
 
@@ -157,6 +157,19 @@ export type NextStep = {
   title: string;
   kind: string;
   duration_minutes: number;
+};
+
+export type AssessmentQuestion = {
+  question_ref: string;
+  prompt: string;
+  choices: string[];
+};
+
+export type Assessment = {
+  done: boolean;
+  assignment_id: string | null;
+  title: string | null;
+  questions: AssessmentQuestion[];
 };
 
 export type NextSteps = { steps: NextStep[]; computed_at: string };

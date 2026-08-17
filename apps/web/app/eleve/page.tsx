@@ -4,7 +4,12 @@ import { api } from '../../lib/api';
 import { requireChild } from '../../lib/session';
 import { InterfaceState } from '../../components/ui/interface-state';
 import { StartActivityButton } from '../../components/eleve/start-activity-button';
-import type { ChildAssignment, NextSteps, Progress } from '../../lib/types';
+import type {
+  Assessment,
+  ChildAssignment,
+  NextSteps,
+  Progress,
+} from '../../lib/types';
 
 export const metadata = { title: 'Espace Élève' };
 
@@ -22,10 +27,11 @@ export const metadata = { title: 'Espace Élève' };
  */
 export default async function EleveHomePage() {
   const session = await requireChild();
-  const [assignments, steps, progress] = await Promise.all([
+  const [assignments, steps, progress, assessment] = await Promise.all([
     api<ChildAssignment[]>('/me/activities'),
     api<NextSteps>('/me/next-steps'),
     api<Progress>('/me/progress'),
+    api<Assessment>('/me/assessment'),
   ]);
 
   if (!assignments.ok) {
@@ -38,8 +44,17 @@ export default async function EleveHomePage() {
     );
   }
 
+  // The assessment comes before everything, and it is the only thing that ever
+  // does: until she has taken it the platform knows nothing about her, so
+  // anything else it could offer would be a guess. It is also lifted out of the
+  // ordinary list, because it is not an activity a parent chose for her.
+  const pendingAssessment =
+    assessment.ok && assessment.data.assignment_id !== null ? assessment.data : null;
+
   const owed = assignments.data.filter(
-    (row) => row.status === 'assigned' || row.status === 'in_progress',
+    (row) =>
+      (row.status === 'assigned' || row.status === 'in_progress') &&
+      row.id !== pendingAssessment?.assignment_id,
   );
   const underWay = owed.find((row) => row.status === 'in_progress');
   const next = owed.find((row) => row.status === 'assigned');
@@ -55,13 +70,31 @@ export default async function EleveHomePage() {
         <p className="text-uppercase text-primary fw-semibold small mb-1">Accueil Élève</p>
         <h1 className="h2 mb-2">Bonjour, {session.display_name}</h1>
         <p className="text-secondary mb-0">
-          {featured
-            ? 'Voici ce que tu peux faire maintenant.'
-            : 'Tu n’as rien à faire pour le moment.'}
+          {pendingAssessment
+            ? 'On commence par faire connaissance.'
+            : featured
+              ? 'Voici ce que tu peux faire maintenant.'
+              : 'Tu n’as rien à faire pour le moment.'}
         </p>
       </header>
 
-      {featured ? (
+      {pendingAssessment ? (
+        <section className="card border-0 shadow-sm sc-student-hero mb-4">
+          <div className="card-body p-4 p-lg-5">
+            <span className="badge rounded-pill text-bg-primary mb-3">
+              Pour commencer
+            </span>
+            <h2 className="h3">{pendingAssessment.title}</h2>
+            <p className="text-secondary mb-4">
+              Quelques petites questions pour savoir par où commencer. Ce n’est pas
+              noté.
+            </p>
+            <Link href="/eleve/examen" className="btn btn-primary btn-lg">
+              C’est parti <ArrowRight size={19} aria-hidden="true" />
+            </Link>
+          </div>
+        </section>
+      ) : featured ? (
         <section className="card border-0 shadow-sm sc-student-hero mb-4">
           <div className="card-body p-4 p-lg-5">
             <span className="badge rounded-pill text-bg-primary mb-3">

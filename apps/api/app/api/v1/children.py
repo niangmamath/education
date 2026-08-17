@@ -17,6 +17,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from app.api.cookies import set_session_cookie
+from app.assessment import service as assessment
 from app.api.deps import (
     CurrentChild,
     CurrentParent,
@@ -172,13 +173,22 @@ async def _own_child(db: DbSession, parent_id: uuid.UUID, child_id: uuid.UUID) -
 async def activate_child(
     child_id: uuid.UUID, parent: CurrentParent, db: DbSession
 ) -> Child:
-    """Open access to a profile, whether it was pending or turned off."""
+    """Open access to a profile, whether it was pending or turned off.
+
+    Activation is also where the initiation assessment is given. It is the one
+    place the platform assigns anything, and the exception is argued rather than
+    assumed: a diagnostic that waits for a parent to think of it is a diagnostic
+    that does not happen, and everything downstream has nothing to work from
+    until it does. Remediation stays what it was — proposed, never given.
+    """
     child = await _own_child(db, parent.id, child_id)
 
     if child.status != CHILD_STATUS_ACTIVE:
         child.status = CHILD_STATUS_ACTIVE
-        await db.commit()
-        await db.refresh(child)
+
+    await assessment.give_to(db, parent.id, child)
+    await db.commit()
+    await db.refresh(child)
 
     return child
 
