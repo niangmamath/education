@@ -22,14 +22,14 @@ export async function currentSession(): Promise<Session | null> {
 
 export async function requireParent(): Promise<Session> {
   const session = await currentSession();
-  if (!session) redirect('/connexion?suite=parent');
+  if (!session) redirect('/connexion');
   if (session.user_type !== 'parent') redirect('/eleve');
   return session;
 }
 
 export async function requireChild(): Promise<Session> {
   const session = await currentSession();
-  if (!session) redirect('/connexion?suite=eleve');
+  if (!session) redirect('/connexion/eleve');
   if (session.user_type !== 'child') redirect('/parent');
   return session;
 }

@@ -199,6 +199,18 @@ def referential() -> dict[str, Any]:
 # The initiation assessment: one question per competency, and the correct answer
 # never leaves the server. No timer and no score shown — the point is to find a
 # starting place, not to rank a six-year-old.
+#
+# **An item must not contain its own answer.** The first draft failed this badly:
+# "quelle lettre fait le son « mmm » ?" spelled the answer three times in the
+# prompt, "dans quel mot entends-tu le son « ou » ?" listed *loup* with the
+# letters visible, and the spelling question quoted the word already spelled
+# correctly. Those measured nothing but the ability to copy — worse than no
+# question, because the reading they produce looks real.
+#
+# **What this assessment cannot do without audio**, and does not pretend to: hear
+# a sound. Phonological items are approximated by asking about the beginning of a
+# written word, which is a compromise and is written down as one. Real audio is
+# the first thing to add if the assessment is ever used outside a demonstration.
 ASSESSMENT_CODE: Final = f"{PREFIX}examen-initiation"
 ASSESSMENT_TITLE: Final = "Pour faire connaissance"
 ASSESSMENT_MINUTES: Final = 10
@@ -207,22 +219,22 @@ ASSESSMENT: Final[list[ExamQuestion]] = [
     {
         "ref": "q-fr-lettres",
         "competency": FR_LETTRES,
-        "prompt": "Quelle lettre fait le son « mmm » ?",
-        "choices": ["M", "P", "T"],
+        "prompt": "Par quelle lettre commence le mot « bateau » ?",
+        "choices": ["B", "D", "P"],
         "correct": 0,
     },
     {
         "ref": "q-fr-syllabes",
         "competency": FR_SYLLABES,
-        "prompt": "Combien de syllabes entends-tu dans « chocolat » ?",
+        "prompt": "Combien de syllabes y a-t-il dans le mot « papillon » ?",
         "choices": ["Deux", "Trois", "Quatre"],
         "correct": 1,
     },
     {
         "ref": "q-fr-phonemes",
         "competency": FR_PHONEMES,
-        "prompt": "Dans quel mot entends-tu le son « ou » ?",
-        "choices": ["Loup", "Lame", "Lit"],
+        "prompt": "Quel mot commence par le même son que « souris » ?",
+        "choices": ["Salade", "Chapeau", "Maison"],
         "correct": 0,
     },
     {
@@ -235,19 +247,19 @@ ASSESSMENT: Final[list[ExamQuestion]] = [
     {
         "ref": "q-fr-dictee",
         "competency": FR_DICTEE,
-        "prompt": "On veut écrire « une jolie fleur ». Comment s’écrit « jolie » ?",
-        "choices": ["jolie", "joli", "jolies"],
-        "correct": 0,
+        "prompt": "Quelle phrase est écrite correctement ?",
+        "choices": [
+            "Les enfant jouent dans la cour.",
+            "Les enfants jouent dans la cour.",
+            "Les enfants joue dans la cour.",
+        ],
+        "correct": 1,
     },
     {
         "ref": "q-fr-comprehension",
         "competency": FR_COMPREHENSION,
-        "prompt": "« Léa met son manteau car il neige. » Pourquoi met-elle son manteau ?",
-        "choices": [
-            "Parce qu’il neige",
-            "Parce qu’elle a faim",
-            "Parce qu’il fait chaud",
-        ],
+        "prompt": "« Tom prend son parapluie avant de sortir. » Quel temps fait-il ?",
+        "choices": ["Il pleut", "Il fait très chaud", "Il neige"],
         "correct": 0,
     },
     {
@@ -260,8 +272,8 @@ ASSESSMENT: Final[list[ExamQuestion]] = [
     {
         "ref": "q-ma-lire",
         "competency": MA_LIRE,
-        "prompt": "Comment s’écrit le nombre « neuf » en chiffres ?",
-        "choices": ["6", "9", "19"],
+        "prompt": "Quel nombre s’écrit avec le chiffre 9 ?",
+        "choices": ["Six", "Neuf", "Dix-neuf"],
         "correct": 1,
     },
     {

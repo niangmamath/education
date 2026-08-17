@@ -133,7 +133,7 @@ export async function registerChild(
   });
   if (created !== null) return { error: created };
 
-  redirect('/connexion?demande=1');
+  redirect('/connexion/eleve?demande=1');
 }
 
 /**
