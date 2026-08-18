@@ -363,7 +363,7 @@ def _deploy_runtime(prepared: Path) -> int:
     """
     root = Path(settings.CONTENT_RUNTIME_ROOT)
     try:
-        inventory = runtime.deploy_libraries(root, prepared / "libraries")
+        inventory = runtime.deploy_libraries(root, prepared / "content")
         players = runtime.deploy_player(root, prepared / "player")
     except runtime.DeploymentRefused as refusal:
         print(str(refusal), file=sys.stderr)
