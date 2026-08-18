@@ -132,6 +132,7 @@ export async function registerChild(
 
   const created = await call('/auth/child/register', {
     family_code: String(formData.get('family_code') ?? '').trim(),
+    level_code: String(formData.get('level_code') ?? '').trim(),
     pseudonym: String(formData.get('pseudonym') ?? '').trim(),
     pin,
     display_name: String(formData.get('display_name') ?? '').trim(),
@@ -158,6 +159,7 @@ export async function createChild(_: FormState, formData: FormData): Promise<For
     method: 'POST',
     body: {
       pseudonym: String(formData.get('pseudonym') ?? '').trim(),
+      level_code: String(formData.get('level_code') ?? '').trim(),
       pin,
       display_name: String(formData.get('display_name') ?? '').trim(),
     },
@@ -359,6 +361,46 @@ export async function answerFicheQuestion(
   );
 
   return said.ok ? said.data : null;
+}
+
+/**
+ * Faire passer un enfant dans la classe supérieure.
+ *
+ * Le geste appartient au parent : la plateforme ne connaît ni l'école de
+ * l'enfant, ni son année scolaire, ni ce qu'un conseil de maîtres a décidé.
+ * Elle enregistre la décision, déplace le palier de compétences, et donne
+ * l'examen d'entrée de la nouvelle classe.
+ *
+ * Rien n'est effacé : les lectures des classes antérieures restent, et le
+ * diagnostic continue d'y descendre.
+ */
+export async function promoteChild(childId: string): Promise<void> {
+  const store = await cookies();
+  await apiWithToken(`/children/${childId}/promotion`, store.get(SESSION_COOKIE)?.value, {
+    method: 'POST',
+  });
+  revalidatePath(`/parent/enfants/${childId}`);
+  revalidatePath('/parent/enfants');
+  revalidatePath('/parent');
+}
+
+/**
+ * Déclarer ou corriger la classe d'un enfant.
+ *
+ * Deux cas réels : un profil ouvert avant que la plateforme ne demande la
+ * classe n'en a pas et ne reçoit donc aucun examen ; et un parent se trompe à
+ * l'inscription. Les deux se rattrapent sans recréer le profil et sans perdre
+ * son historique.
+ */
+export async function setChildLevel(childId: string, formData: FormData): Promise<void> {
+  const store = await cookies();
+  await apiWithToken(`/children/${childId}/level`, store.get(SESSION_COOKIE)?.value, {
+    method: 'PUT',
+    body: { level_code: String(formData.get('level_code') ?? '').trim() },
+  });
+  revalidatePath(`/parent/enfants/${childId}`);
+  revalidatePath('/parent/enfants');
+  revalidatePath('/parent');
 }
 
 /**

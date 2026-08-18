@@ -135,6 +135,9 @@ def child_payload(
         "pseudonym": child_pseudonym if child_pseudonym is not None else pseudonym(),
         "pin": pin,
         "display_name": display_name,
+        # La classe est déclarée à l'inscription : c'est elle qui décide de
+        # l'examen d'entrée que l'élève reçoit.
+        "level_code": "cp",
     }
     if date_of_birth is not None:
         payload["date_of_birth"] = date_of_birth

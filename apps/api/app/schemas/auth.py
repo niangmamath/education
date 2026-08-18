@@ -150,6 +150,10 @@ class ChildCreateRequest(BaseModel):
     pin: SecretStr
     display_name: str = Field(min_length=1, max_length=100)
     date_of_birth: date | None = None
+    # La classe où l'élève se trouve. Elle décide de l'examen d'entrée qui lui
+    # sera donné : il y en a un par classe, et il n'y a pas de classe par défaut
+    # qu'on pourrait supposer sans se tromper sur un enfant réel.
+    level_code: str = Field(min_length=1, max_length=50)
 
     @field_validator("pseudonym")
     @classmethod
@@ -182,6 +186,21 @@ class ChildCreateRequest(BaseModel):
         if value is not None and value > datetime.now(UTC).date():
             raise ValueError("date_of_birth must not be in the future")
         return value
+
+
+class LevelChoice(BaseModel):
+    """Une classe proposée à l'inscription : son code et son nom lisible."""
+
+    code: str
+    label: str
+
+
+class ChildLevelRequest(BaseModel):
+    """La classe qu'un parent déclare ou corrige pour son enfant."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    level_code: str = Field(min_length=1, max_length=50)
 
 
 class ChildSelfRegisterRequest(ChildCreateRequest):
@@ -266,4 +285,5 @@ class ChildPublic(BaseModel):
     display_name: str
     date_of_birth: date | None
     status: str
+    level_code: str | None
     created_at: datetime

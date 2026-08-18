@@ -1,6 +1,6 @@
 # Registre des Décisions d'Architecture (ADR Register)
 
-> **Dernière mise à jour : 17 août 2026**
+> **Dernière mise à jour : 18 août 2026**
 > **Statut : à jour, reconstruit depuis les fichiers d'ADR**
 
 Ce document est le **registre central** de toutes les Architecture Decision Records (ADR) du projet StudentConnect. Chaque ADR documente une décision architecturale structurante prise par l'équipe.
@@ -18,7 +18,7 @@ Ce document est le **registre central** de toutes les Architecture Decision Reco
 
 ## Structure des dossiers
 
-Les dix-huit ADR existent toutes en fichier ; ce registre les résume et ne les
+Les dix-neuf ADR existent toutes en fichier ; ce registre les résume et ne les
 remplace pas.
 
 ```
@@ -41,7 +41,8 @@ docs/
 │   ├── ADR-014-ingestion-xapi.md              # Ingestion xAPI, acteur pseudonyme, prééminence
 │   ├── ADR-015-diagnostic-explicable.md       # Diagnostic explicable et non stocké
 │   ├── ADR-016-web-parle-a-l-api-par-le-serveur.md  # Le web appelle l’API par son serveur
-│   └── ADR-017-fiches-de-remediation-ecrites-ici.md # Fiches de remédiation écrites ici
+│   ├── ADR-017-fiches-de-remediation-ecrites-ici.md # Fiches de remédiation écrites ici
+│   └── ADR-018-six-classes-cumulatives.md      # Six classes cumulatives, un examen par classe
 └── architecture/
     └── decision-register.md                   # Ce fichier
 ```
@@ -365,6 +366,23 @@ docs/
 | **Impact** | Contenu, Backend, Frontend |
 
 **Résumé** : Aucune banque ne peut livrer une question rattachée à `cp-ma-denombrer` — ce code est le nôtre — et une preuve qu'on ne peut pas rattacher ne prouve rien. ADR-012 n'autorise qu'une bibliothèque H5P, et l'origine de contenu n'est pas déployable sur Render, où un disque appartient à un seul service. Surtout, une réparation doit enseigner avant d'interroger, ce qu'une question importée ne fait pas. L'examen et les fiches partagent la correction (`authored_questions`) mais pas ce qu'ils répondent : une fiche explique, l'examen se tait, sans quoi il cesserait de mesurer. La route des fiches refuse donc une tentative d'examen, faute de quoi l'examen serait franchissable question par question.
+
+---
+
+### ADR-018 : Six classes cumulatives
+
+| Champ | Valeur |
+|-------|--------|
+| **Titre** | Six classes cumulatives, un examen par classe, un passage décidé par le parent |
+| **Statut** | ✅ **Accepted** |
+| **Date** | 18 août 2026 |
+| **Auteur** | Équipe StudentConnect |
+| **Décision** | L'élémentaire compte six classes du CI au CM2 ; les compétences sont cumulatives, chaque classe a son examen d'entrée, et le passage est un fait décidé par le parent |
+| **Fichier** | [docs/adr/ADR-018-six-classes-cumulatives.md](../adr/ADR-018-six-classes-cumulatives.md) |
+| **Dépendances** | ADR-004, ADR-013, ADR-015 |
+| **Impact** | Référentiel, Backend, Frontend, Contenu |
+
+**Résumé** : Les niveaux appartiennent à l'édition du référentiel et ne sont pas écrits en dur — une plateforme qui les figerait refuserait de servir un pays qui découpe autrement. Un examen par classe, six questions, parce qu'un examen balayant les six classes ferait trente-six questions à un CM2 et qu'aucun enfant ne le finirait. La classe est déclarée à l'inscription et jamais devinée ; le passage est une ligne d'historique, décidé par le parent, qui monte le palier **sans rien effacer**. Une règle nouvelle, `unobserved-prerequisite`, fait descendre le diagnostic vers les classes antérieures : sans elle, un CM1 qui échoue en division n'aurait aucune lecture sur la multiplication du CE2 et la plateforme proposerait de refaire des divisions — ce que le produit refuse depuis le premier jour.
 
 ---
 

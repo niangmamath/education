@@ -28,6 +28,14 @@ four questions. Each question carries the sentence a child is told once she has
 answered — the same sentence whether she was right or wrong, because a sheet
 explains what is true, it does not comment on her.
 
+**Douze fiches sur trente-six compétences.** Le référentiel couvre six classes,
+du CI au CM2 ; ces fiches-là couvrent celles que la première version du produit
+avait écrites, qui vont du CI au CE1. Les vingt-quatre autres n'ont pas encore de
+réparation, et c'est un manque connu et mesuré plutôt qu'un oubli : une lacune
+que la plateforme sait nommer et ne sait pas réparer est pire qu'une lacune dont
+elle ne parle pas, parce que le parent agit et il ne se passe rien. Un test
+épingle la couverture actuelle et échoue si elle régresse en silence.
+
 **What these sheets still cannot do.** Hear. The phonology sheet approximates
 sounds by talking about written words, exactly as the assessment does, and it is
 a compromise rather than a design. Audio is the first thing to add if any of this
@@ -39,20 +47,42 @@ from __future__ import annotations
 
 from typing import Final, TypedDict
 
-from app.demo.dataset import (
-    FR_COMPREHENSION,
-    FR_DICTEE,
-    FR_LETTRES,
-    FR_MOTS,
-    FR_PHONEMES,
-    FR_SYLLABES,
-    MA_ADDITION,
-    MA_COMPARER,
-    MA_DENOMBRER,
-    MA_LIRE,
-    MA_PROBLEME,
-    MA_SOUSTRACTION,
-    PREFIX,
+from app.demo.dataset import PREFIX
+from app.demo.referentiel import (
+    CE1_FR_DICTEE as FR_DICTEE,
+)
+from app.demo.referentiel import (
+    CE1_FR_PHRASE as FR_COMPREHENSION,
+)
+from app.demo.referentiel import (
+    CE1_MA_PROBLEME as MA_PROBLEME,
+)
+from app.demo.referentiel import (
+    CE1_MA_SOUSTRACTION as MA_SOUSTRACTION,
+)
+from app.demo.referentiel import (
+    CI_FR_LETTRES as FR_LETTRES,
+)
+from app.demo.referentiel import (
+    CI_MA_CHIFFRES as MA_LIRE,
+)
+from app.demo.referentiel import (
+    CI_MA_DENOMBRER as MA_DENOMBRER,
+)
+from app.demo.referentiel import (
+    CP_FR_MOTS as FR_MOTS,
+)
+from app.demo.referentiel import (
+    CP_FR_PHONEMES as FR_PHONEMES,
+)
+from app.demo.referentiel import (
+    CP_FR_SYLLABES as FR_SYLLABES,
+)
+from app.demo.referentiel import (
+    CP_MA_ADDITION as MA_ADDITION,
+)
+from app.demo.referentiel import (
+    CP_MA_RANGER as MA_COMPARER,
 )
 
 

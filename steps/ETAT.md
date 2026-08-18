@@ -3,7 +3,7 @@
 ## Référence
 
 - Projet : StudentConnect
-- Date : 17 août 2026
+- Date : 18 août 2026
 - Dépôt : `Tidianesarrndiaye/StudentConnect`
 - Branche : `main`
 - Version cible : `V0.1`
@@ -1421,6 +1421,51 @@ autorisation permanente du propriétaire.
       serveur. `PUBLIC_HOST` déclare l'hôte du tunnel ; sans la variable, rien
       n'est ouvert.
 - [x] Recette écrite : `docs/deploiement/demonstration-par-tunnel.md`.
+
+### Six classes cumulatives, ADR-018
+
+- [x] **L'élémentaire compte six classes**, du CI au CM2, et non deux. Trente-six
+      compétences, six par classe, trois par matière. Les niveaux ne sont pas
+      écrits en dur : ils appartiennent à l'édition du référentiel, seule
+      autorisée à dire de quoi l'élémentaire est fait.
+- [x] **Les compétences sont cumulatives** : un CE2 doit celles du CI, du CP, du
+      CE1 et du CE2. Ce n'est pas une convention d'affichage — c'est ce qui rend
+      le diagnostic capable de descendre.
+- [x] **Un examen d'entrée par classe**, six questions, une par compétence du
+      niveau. Il ne porte que sur la classe déclarée : un examen qui balaierait
+      les six ferait trente-six questions à un CM2, et aucun enfant ne le
+      finirait.
+- [x] **La classe est demandée à l'inscription**, sur les deux chemins, et jamais
+      devinée. Colonne nullable : un profil ouvert avant que la plateforme ne la
+      demande existe, et lui en attribuer une d'office affirmerait sur un enfant
+      réel ce que personne n'a dit. Une route la déclare ou la corrige après coup.
+- [x] **Le passage en classe supérieure est décidé par le parent.** La plateforme
+      ne connaît ni l'école, ni l'année scolaire, ni ce qu'un conseil de maîtres a
+      tranché. Chaque passage est une ligne datée dans `auth_child_promotions` ;
+      rien ne s'y met à jour.
+- [x] **Le palier monte, rien n'est effacé.** Toutes les lectures des classes
+      antérieures restent, et c'est ce qui permet de remonter une lacune ancienne.
+- [x] **Règle nouvelle, `unobserved-prerequisite`.** Un examen ne portant que sur
+      la classe déclarée, les compétences antérieures n'ont aucune lecture ; sans
+      cette règle la plateforme constaterait l'échec sans rien pouvoir remonter,
+      et proposerait de refaire ce qui vient d'échouer. Vérifié sur la pile
+      vivante : Léa, en CE1, voit ses quatre lacunes reportées et la plateforme
+      propose deux fiches de **CP**.
+- [x] Migration `0016_classe_et_passage`, réversible.
+- [x] Dix-huit tests pour les classes et le passage, dans un module qui **publie
+      sa propre édition** : une première version lisait celle en vigueur et se
+      sautait quand elle n'en trouvait pas assez, ce qui n'aurait jamais rien
+      éprouvé sur une base neuve.
+
+### Dette assumée et mesurée
+
+- **Vingt-quatre compétences sur trente-six n'ont pas de fiche de remédiation.**
+  Les douze existantes couvrent du CI au CE1. Un test épingle la couverture dans
+  les deux sens : il échoue si une fiche disparaît, et il échoue quand de
+  nouvelles arrivent, pour que la dette ne baisse pas sans qu'on la voie baisser.
+- **Les examens du CI sont les plus fragiles du référentiel** : un enfant de cours
+  d'initiation ne lit pas encore, et un examen écrit lui demande de déchiffrer la
+  question.
 
 ## Résultats techniques du 17 août 2026
 

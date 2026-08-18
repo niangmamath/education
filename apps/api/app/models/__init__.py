@@ -9,7 +9,7 @@ from app.models.catalog import (
     ActivityQuestion,
     H5PPackage,
 )
-from app.models.identity import Child, Parent
+from app.models.identity import Child, ChildPromotion, Parent
 from app.models.referential import (
     Competency,
     CompetencyPrerequisite,
@@ -30,6 +30,7 @@ __all__ = [
     "AttemptResponse",
     "AttemptResult",
     "Child",
+    "ChildPromotion",
     "Competency",
     "CompetencyPrerequisite",
     "Domain",

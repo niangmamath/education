@@ -35,6 +35,13 @@ RULE_GAP_NOT_MASTERED: Final = "gap-not-mastered"
 RULE_GAP_PARTIAL_PERSISTS: Final = "gap-partial-persists"
 RULE_GENERAL_GAP_SAME_DOMAIN: Final = "general-gap-same-domain"
 RULE_ROOT_CAUSE_PREREQUISITE: Final = "root-cause-prerequisite"
+# Le prérequis jamais observé. Cette règle est née avec les six classes : un
+# examen d'entrée ne porte que sur la classe déclarée, donc les compétences des
+# classes antérieures n'ont aucune lecture tant que rien ne les a travaillées.
+# Sans elle, la plateforme dirait « échec en division » et n'aurait rien à
+# remonter, alors que la cause est probablement une multiplication de CE2 que
+# personne n'a jamais demandée.
+RULE_UNOBSERVED_PREREQUISITE: Final = "unobserved-prerequisite"
 RULE_DEFER_BEHIND_PREREQUISITE: Final = "defer-behind-prerequisite"
 RULE_HEALTH_WEIGHTED: Final = "health-weighted-outcomes"
 
@@ -171,6 +178,25 @@ def explain_root_cause(cause_code: str, dependent_codes: list[str]) -> str:
     )
 
 
+def explain_unobserved_prerequisite(
+    cause_label: str, dependent_labels: list[str]
+) -> str:
+    """Dire qu'on ne sait pas encore, et que c'est là qu'il faut regarder.
+
+    Ce n'est pas un constat de lacune : rien n'a été observé, donc rien ne peut
+    être affirmé. C'est une hypothèse sur l'endroit où chercher, et la phrase le
+    dit — sans quoi un parent lirait « son enfant ne sait pas compter » là où la
+    plateforme veut dire « nous ne le lui avons jamais demandé ».
+    """
+    dependents = ", ".join(dependent_labels)
+    return (
+        f"« {cause_label} » n’a encore jamais été observée, et "
+        f"{dependents} en dépend. Tant qu’on ne l’a pas regardée, on ne peut pas "
+        "savoir si la difficulté vient de là — c’est donc par là qu’il vaut mieux "
+        "commencer."
+    )
+
+
 def health(readings: Sequence[tuple[str, int]]) -> HealthReading | None:
     """State academic health from the competencies actually observed.
 
@@ -277,6 +303,22 @@ def published_rules() -> list[dict[str, str]]:
             "description": (
                 "Le regroupement ajoute une lecture et n’en retire aucune : les "
                 "lacunes localisées restent listées une par une."
+            ),
+        },
+        {
+            "code": RULE_UNOBSERVED_PREREQUISITE,
+            "condition": (
+                "une compétence non acquise a un prérequis dont la plateforme "
+                "n’a aucune lecture, dans l’édition en vigueur"
+            ),
+            "produces": "hypothèse de prérequis non observé",
+            "description": (
+                "Une compétence non acquise dépend d’une compétence dont la "
+                "plateforme n’a aucune lecture. Elle propose de l’observer avant "
+                "de conclure, plutôt que d’affirmer une cause qu’elle ne peut pas "
+                "voir. Les examens d’entrée ne portant que sur la classe "
+                "déclarée, c’est ainsi que le diagnostic descend vers les classes "
+                "antérieures."
             ),
         },
         {

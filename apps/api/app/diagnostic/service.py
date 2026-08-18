@@ -101,7 +101,8 @@ async def child_diagnostic(db: AsyncSession, child_id: uuid.UUID) -> ChildDiagno
         )
 
     general = _general_gaps(gaps)
-    root_causes = _root_causes(gaps, tree)
+    observed = {row.competency_code for row in progress.competencies}
+    root_causes = _root_causes(gaps, tree) + _unobserved_causes(gaps, tree, observed)
     _defer_behind_prerequisites(gaps, root_causes)
 
     return ChildDiagnostic(
@@ -110,7 +111,9 @@ async def child_diagnostic(db: AsyncSession, child_id: uuid.UUID) -> ChildDiagno
         localized_gaps=gaps,
         general_gaps=general,
         root_causes=root_causes,
-        recommendations=await remediation.quick_repairs(db, child_id, _targets(gaps)),
+        recommendations=await remediation.quick_repairs(
+            db, child_id, _targets(gaps, root_causes, observed)
+        ),
         tree_available=tree.available,
         computed_at=datetime.now(timezone.utc),
     )
@@ -258,14 +261,30 @@ def _defer_behind_prerequisites(
         )
 
 
-def _targets(gaps: list[LocalizedGap]) -> list[str]:
-    """Which competencies to propose work on, and in which order.
+def _targets(
+    gaps: list[LocalizedGap],
+    causes: list[RootCauseHypothesis],
+    observed: set[str],
+) -> list[str]:
+    """Quelles compétences proposer de travailler, et dans quel ordre.
 
-    Only the gaps nothing is waiting on. A deferred gap contributes nothing here
-    — that is what deferring it means — and the order is the order they were read
-    in, which is competency code order.
+    Deux sources, et la seconde est ce qui fait descendre la plateforme.
+
+    Les lacunes que rien n'attend, d'abord : une lacune reportée n'apporte rien
+    ici, c'est le sens même du report.
+
+    Puis les **prérequis jamais observés**, qui ne sont pas des lacunes puisqu'ils
+    n'ont aucune lecture, mais qui sont précisément là qu'il faut regarder. Ils
+    passent devant : un prérequis de classe antérieure explique plus souvent la
+    difficulté que la compétence où elle s'est manifestée.
     """
-    return [row.competency_code for row in gaps if row.blocked_by is None]
+    unobserved = [
+        cause.competency_code
+        for cause in causes
+        if cause.rule_code == rules.RULE_UNOBSERVED_PREREQUISITE
+        and cause.competency_code not in observed
+    ]
+    return unobserved + [row.competency_code for row in gaps if row.blocked_by is None]
 
 
 def _health(competencies: Sequence[CompetencyProgress]) -> Health | None:
@@ -346,6 +365,46 @@ def _root_causes(gaps: list[LocalizedGap], tree: _Tree) -> list[RootCauseHypothe
             rule_code=rules.RULE_ROOT_CAUSE_PREREQUISITE,
             explanation=rules.explain_root_cause(
                 named.get(cause, cause),
+                [named.get(code, code) for code in sorted(dependents)],
+            ),
+        )
+        for cause, dependents in sorted(explains.items())
+    ]
+
+
+def _unobserved_causes(
+    gaps: list[LocalizedGap], tree: _Tree, observed: set[str]
+) -> list[RootCauseHypothesis]:
+    """Les prérequis dont la plateforme n'a aucune lecture, et qu'il faut regarder.
+
+    C'est la descente vers les classes antérieures, et elle n'existait pas tant
+    qu'il n'y avait qu'un seul examen. Un examen d'entrée ne porte que sur la
+    classe déclarée ; un CM1 qui échoue en division n'a donc **aucune lecture**
+    sur la multiplication du CE2, ni sur l'addition du CP. Sans cette règle, la
+    plateforme constaterait l'échec et n'aurait rien à remonter.
+
+    Ce n'est pas un constat de lacune, et la phrase produite le dit : rien n'a été
+    observé, donc rien ne peut être affirmé. C'est une hypothèse sur l'endroit où
+    chercher — et travailler ce prérequis produira la lecture qui manque, ce qui
+    confirmera ou infirmera l'hypothèse. Une cause racine reste une hypothèse
+    jusqu'à la réévaluation, exactement comme l'autre règle.
+    """
+    named = {
+        row.competency_code: row.competency_label or row.competency_code for row in gaps
+    }
+    explains: dict[str, list[str]] = {}
+    for row in gaps:
+        for prerequisite in tree.prerequisites.get(row.competency_code, ()):
+            if prerequisite not in observed:
+                explains.setdefault(prerequisite, []).append(row.competency_code)
+
+    return [
+        RootCauseHypothesis(
+            competency_code=cause,
+            explains_codes=sorted(dependents),
+            rule_code=rules.RULE_UNOBSERVED_PREREQUISITE,
+            explanation=rules.explain_unobserved_prerequisite(
+                tree.competencies[cause].label if cause in tree.competencies else cause,
                 [named.get(code, code) for code in sorted(dependents)],
             ),
         )
@@ -434,10 +493,37 @@ async def _tree(db: AsyncSession, codes: list[str]) -> _Tree:
         )
     ).all()
 
+    # Les prérequis qu'aucune lecture ne couvre sont résolus à part, et c'est le
+    # changement qu'ont imposé les six classes. Un examen d'entrée ne porte que
+    # sur la classe déclarée : les compétences des classes antérieures n'ont donc
+    # aucune lecture tant que rien ne les a travaillées. L'ancienne version les
+    # écartait — « rien à en dire » — ce qui empêchait le diagnostic de descendre
+    # là où se trouve précisément la cause la plus fréquente.
+    unread_ids = {
+        prerequisite_id
+        for _, prerequisite_id in edges
+        if prerequisite_id not in identifiers
+    }
+    if unread_ids:
+        extra = (
+            await db.execute(
+                select(
+                    Competency.id,
+                    Competency.code,
+                    Competency.label,
+                    Domain.code,
+                    Domain.label,
+                )
+                .join(Domain, Domain.id == Competency.domain_id)
+                .where(Competency.id.in_(list(unread_ids)))
+            )
+        ).all()
+        for identifier, code, label, domain_code, domain_label in extra:
+            identifiers[identifier] = code
+            placed.setdefault(code, _Placed(label, domain_code, domain_label))
+
     prerequisites: dict[str, list[str]] = {}
     for competency_id, prerequisite_id in edges:
-        # Only prerequisites that are themselves among the read competencies can
-        # be named: the others carry no reading, so nothing could be said of them.
         code = identifiers.get(competency_id)
         required = identifiers.get(prerequisite_id)
         if code is not None and required is not None:

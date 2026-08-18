@@ -26,13 +26,19 @@ behaviours without anybody setting them up:
 
 from __future__ import annotations
 
-from typing import Any, Final, TypedDict
+from typing import Final, TypedDict
+
+from app.demo.examens import EXAMS_BY_LEVEL
+from app.demo.referentiel import CE1, CI_MA_DENOMBRER, CM1
+from app.demo.referentiel import referential as _referential
 
 
 class ChildProfile(TypedDict):
     pseudonym: str
     display_name: str
     pin: str
+    # La classe déclarée à l'inscription : c'est elle qui décide de l'examen.
+    level: str
 
 
 class FamilyProfile(TypedDict):
@@ -41,271 +47,12 @@ class FamilyProfile(TypedDict):
     children: list[ChildProfile]
 
 
-class ExamQuestion(TypedDict):
-    """One question of the initiation assessment."""
-
-    ref: str
-    competency: str
-    prompt: str
-    choices: list[str]
-    correct: int
-
-
 # Everything the demonstration creates carries this prefix, so `--reset` can
 # take back exactly what it put in and nothing else. Competency codes do not
 # need it: they live inside the edition, and go when it goes.
 PREFIX: Final = "demo-"
 
 EDITION_CODE: Final = f"{PREFIX}2026"
-
-FR_LETTRES: Final = "cp-fr-lettres"
-FR_SYLLABES: Final = "cp-fr-syllabes"
-FR_PHONEMES: Final = "cp-fr-phonemes"
-FR_MOTS: Final = "ce1-fr-mots"
-FR_DICTEE: Final = "ce1-fr-dictee"
-FR_COMPREHENSION: Final = "ce1-fr-comprehension"
-
-MA_DENOMBRER: Final = "cp-ma-denombrer"
-MA_LIRE: Final = "cp-ma-lire-nombres"
-MA_COMPARER: Final = "cp-ma-comparer"
-MA_ADDITION: Final = "ce1-ma-addition"
-MA_SOUSTRACTION: Final = "ce1-ma-soustraction"
-MA_PROBLEME: Final = "ce1-ma-probleme"
-
-
-def _c(
-    code: str,
-    label: str,
-    domain: str,
-    level: str,
-    position: int,
-    prerequisites: list[str] | None = None,
-) -> dict[str, Any]:
-    return {
-        "code": code,
-        "label": label,
-        "description": None,
-        "position": position,
-        "level": level,
-        "domain": domain,
-        "prerequisites": prerequisites or [],
-    }
-
-
-def referential() -> dict[str, Any]:
-    """Twelve competencies, two subjects, two levels, and a real tree.
-
-    The prerequisites are the pedagogical claim of the whole dataset: adding
-    requires comparing, which requires reading numbers, which requires counting.
-    A child who fails at additions is sent back along that chain rather than made
-    to drill additions.
-    """
-    return {
-        "version": {"code": EDITION_CODE, "label": "Repères CP et CE1, démonstration"},
-        "levels": [
-            {"code": "cp", "label": "Cours préparatoire", "position": 1},
-            {"code": "ce1", "label": "Cours élémentaire première année", "position": 2},
-        ],
-        "subjects": [
-            {
-                "code": "fr",
-                "label": "Français",
-                "position": 1,
-                "domains": [
-                    {"code": "fr-code", "label": "Étude de la langue", "position": 1},
-                    {"code": "fr-lire", "label": "Lire et écrire", "position": 2},
-                ],
-            },
-            {
-                "code": "ma",
-                "label": "Mathématiques",
-                "position": 2,
-                "domains": [
-                    {"code": "ma-nombres", "label": "Nombres", "position": 1},
-                    {
-                        "code": "ma-calcul",
-                        "label": "Calcul et problèmes",
-                        "position": 2,
-                    },
-                ],
-            },
-        ],
-        "competencies": [
-            _c(FR_LETTRES, "Reconnaître les lettres et leur son", "fr-code", "cp", 1),
-            _c(FR_SYLLABES, "Manipuler les syllabes", "fr-code", "cp", 2, [FR_LETTRES]),
-            _c(
-                FR_PHONEMES,
-                "Manipuler les phonèmes",
-                "fr-code",
-                "cp",
-                3,
-                [FR_SYLLABES],
-            ),
-            _c(FR_MOTS, "Lire des mots simples", "fr-lire", "ce1", 1, [FR_PHONEMES]),
-            _c(FR_DICTEE, "Écrire des mots dictés", "fr-lire", "ce1", 2, [FR_MOTS]),
-            _c(
-                FR_COMPREHENSION,
-                "Comprendre un texte lu seul",
-                "fr-lire",
-                "ce1",
-                3,
-                [FR_MOTS],
-            ),
-            _c(MA_DENOMBRER, "Dénombrer une collection", "ma-nombres", "cp", 1),
-            _c(
-                MA_LIRE,
-                "Lire et écrire les nombres jusqu’à 10",
-                "ma-nombres",
-                "cp",
-                2,
-                [MA_DENOMBRER],
-            ),
-            _c(
-                MA_COMPARER,
-                "Comparer et ranger des nombres",
-                "ma-nombres",
-                "cp",
-                3,
-                [MA_LIRE],
-            ),
-            _c(
-                MA_ADDITION,
-                "Additionner jusqu’à 20",
-                "ma-calcul",
-                "ce1",
-                1,
-                [MA_COMPARER],
-            ),
-            _c(
-                MA_SOUSTRACTION,
-                "Soustraire jusqu’à 20",
-                "ma-calcul",
-                "ce1",
-                2,
-                [MA_ADDITION],
-            ),
-            _c(
-                MA_PROBLEME,
-                "Résoudre un problème à une étape",
-                "ma-calcul",
-                "ce1",
-                3,
-                [MA_ADDITION],
-            ),
-        ],
-    }
-
-
-# The initiation assessment: one question per competency, and the correct answer
-# never leaves the server. No timer and no score shown — the point is to find a
-# starting place, not to rank a six-year-old.
-#
-# **An item must not contain its own answer.** The first draft failed this badly:
-# "quelle lettre fait le son « mmm » ?" spelled the answer three times in the
-# prompt, "dans quel mot entends-tu le son « ou » ?" listed *loup* with the
-# letters visible, and the spelling question quoted the word already spelled
-# correctly. Those measured nothing but the ability to copy — worse than no
-# question, because the reading they produce looks real.
-#
-# **What this assessment cannot do without audio**, and does not pretend to: hear
-# a sound. Phonological items are approximated by asking about the beginning of a
-# written word, which is a compromise and is written down as one. Real audio is
-# the first thing to add if the assessment is ever used outside a demonstration.
-ASSESSMENT_CODE: Final = f"{PREFIX}examen-initiation"
-ASSESSMENT_TITLE: Final = "Pour faire connaissance"
-ASSESSMENT_MINUTES: Final = 10
-
-ASSESSMENT: Final[list[ExamQuestion]] = [
-    {
-        "ref": "q-fr-lettres",
-        "competency": FR_LETTRES,
-        "prompt": "Par quelle lettre commence le mot « bateau » ?",
-        "choices": ["B", "D", "P"],
-        "correct": 0,
-    },
-    {
-        "ref": "q-fr-syllabes",
-        "competency": FR_SYLLABES,
-        "prompt": "Combien de syllabes y a-t-il dans le mot « papillon » ?",
-        "choices": ["Deux", "Trois", "Quatre"],
-        "correct": 1,
-    },
-    {
-        "ref": "q-fr-phonemes",
-        "competency": FR_PHONEMES,
-        "prompt": "Quel mot commence par le même son que « souris » ?",
-        "choices": ["Salade", "Chapeau", "Maison"],
-        "correct": 0,
-    },
-    {
-        "ref": "q-fr-mots",
-        "competency": FR_MOTS,
-        "prompt": "Quel mot est écrit correctement ?",
-        "choices": ["chapo", "chapeau", "chapiau"],
-        "correct": 1,
-    },
-    {
-        "ref": "q-fr-dictee",
-        "competency": FR_DICTEE,
-        "prompt": "Quelle phrase est écrite correctement ?",
-        "choices": [
-            "Les enfant jouent dans la cour.",
-            "Les enfants jouent dans la cour.",
-            "Les enfants joue dans la cour.",
-        ],
-        "correct": 1,
-    },
-    {
-        "ref": "q-fr-comprehension",
-        "competency": FR_COMPREHENSION,
-        "prompt": "« Tom prend son parapluie avant de sortir. » Quel temps fait-il ?",
-        "choices": ["Il pleut", "Il fait très chaud", "Il neige"],
-        "correct": 0,
-    },
-    {
-        "ref": "q-ma-denombrer",
-        "competency": MA_DENOMBRER,
-        "prompt": "Combien y a-t-il d’étoiles ?  ★ ★ ★ ★ ★ ★ ★",
-        "choices": ["Six", "Sept", "Huit"],
-        "correct": 1,
-    },
-    {
-        "ref": "q-ma-lire",
-        "competency": MA_LIRE,
-        "prompt": "Quel nombre s’écrit avec le chiffre 9 ?",
-        "choices": ["Six", "Neuf", "Dix-neuf"],
-        "correct": 1,
-    },
-    {
-        "ref": "q-ma-comparer",
-        "competency": MA_COMPARER,
-        "prompt": "Quel nombre est le plus grand ?",
-        "choices": ["8", "12", "10"],
-        "correct": 1,
-    },
-    {
-        "ref": "q-ma-addition",
-        "competency": MA_ADDITION,
-        "prompt": "Combien font 7 + 6 ?",
-        "choices": ["12", "13", "14"],
-        "correct": 1,
-    },
-    {
-        "ref": "q-ma-soustraction",
-        "competency": MA_SOUSTRACTION,
-        "prompt": "Combien font 15 − 8 ?",
-        "choices": ["6", "7", "8"],
-        "correct": 1,
-    },
-    {
-        "ref": "q-ma-probleme",
-        "competency": MA_PROBLEME,
-        "prompt": "Tom a 12 billes. Il en donne 4 à Léa. Combien lui en reste-t-il ?",
-        "choices": ["6", "8", "16"],
-        "correct": 1,
-    },
-]
-
 
 # The twelve repairs live in `app.demo.fiches`: they are sheets written here,
 # with a lesson and four questions each, and they were long enough to deserve
@@ -318,10 +65,18 @@ ASSESSMENT: Final[list[ExamQuestion]] = [
 # repairs, and nothing in the parcours depends on it playing.
 H5P_DEMO_CODE: Final = f"{PREFIX}h5p-vrai-faux"
 H5P_DEMO_TITLE: Final = "Vrai ou faux : compter jusqu’à 20"
-H5P_DEMO_COMPETENCY: Final = MA_DENOMBRER
+H5P_DEMO_COMPETENCY: Final = CI_MA_DENOMBRER
 H5P_DEMO_MINUTES: Final = 4
 
 PLAYABLE: Final = (H5P_DEMO_CODE,)
+
+EDITION_LABEL: Final = "Élémentaire, six classes, démonstration"
+
+
+def referential() -> dict[str, object]:
+    """L'édition à importer : six classes, deux matières, trente-six compétences."""
+    return _referential(EDITION_CODE, EDITION_LABEL)
+
 
 PASSWORD: Final = "demonstration-2026"
 
@@ -333,41 +88,37 @@ FAMILIES: Final[list[FamilyProfile]] = [
         "email": f"{PREFIX}parent.martin@example.com",
         "display_name": "Camille Martin",
         "children": [
-            {"pseudonym": "lea", "display_name": "Léa", "pin": "240613"},
-            {"pseudonym": "tom", "display_name": "Tom", "pin": "731502"},
+            {"pseudonym": "lea", "display_name": "Léa", "pin": "240613", "level": CE1},
+            {"pseudonym": "tom", "display_name": "Tom", "pin": "731502", "level": CE1},
         ],
     },
     {
         "email": f"{PREFIX}parent.diallo@example.com",
         "display_name": "Awa Diallo",
         "children": [
-            {"pseudonym": "noa", "display_name": "Noa", "pin": "518274"},
+            # En CM1, pour que la démonstration montre deux classes et non une.
+            {"pseudonym": "noa", "display_name": "Noa", "pin": "518274", "level": CM1},
         ],
     },
 ]
 
-# How each child answered her initiation assessment. Nothing here states an
-# outcome: the platform's rules turn these answers into a reading, so the
-# demonstration cannot disagree with the product.
+# Comment chaque enfant a répondu à l'examen de sa classe. Rien ici n'énonce un
+# résultat : ce sont les règles de la plateforme qui transforment ces réponses en
+# lecture, de sorte que la démonstration ne peut pas contredire le produit.
 #
-# Léa stumbles on counting and on everything built above it — the chain the tree
-# describes. Tom is solid throughout, because a demonstration where every child
-# is in difficulty teaches the wrong thing about the product. Noa is absent from
-# this map on purpose: her assessment is waiting, untaken.
+# Léa bute sur ce qui dépend de l'écrit et sur la soustraction — la chaîne que
+# l'arbre décrit, et qui redescend jusqu'au CP puis au CI. Tom réussit partout,
+# parce qu'une démonstration où tous les enfants sont en difficulté enseigne le
+# contraire de ce que fait le produit. Noa est absente de cette table exprès :
+# son examen de CM1 l'attend, non passé.
 ASSESSMENT_ANSWERS: Final[dict[str, dict[str, bool]]] = {
     "lea": {
-        "q-fr-lettres": True,
-        "q-fr-syllabes": True,
-        "q-fr-phonemes": False,
-        "q-fr-mots": False,
-        "q-fr-dictee": False,
-        "q-fr-comprehension": True,
-        "q-ma-denombrer": False,
-        "q-ma-lire": True,
-        "q-ma-comparer": False,
-        "q-ma-addition": False,
-        "q-ma-soustraction": False,
-        "q-ma-probleme": True,
+        "ce1-q1": True,
+        "ce1-q2": False,
+        "ce1-q3": False,
+        "ce1-q4": True,
+        "ce1-q5": False,
+        "ce1-q6": False,
     },
-    "tom": {question["ref"]: True for question in ASSESSMENT},
+    "tom": {question["ref"]: True for question in EXAMS_BY_LEVEL[CE1]["questions"]},
 }

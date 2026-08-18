@@ -18,6 +18,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.api.cookies import set_session_cookie
 from app.assessment import service as assessment
+from app.levels import service as levels
 from app.api.deps import (
     CurrentChild,
     CurrentParent,
@@ -47,9 +48,12 @@ from app.models.identity import (
     CHILD_STATUS_DISABLED,
     CHILD_STATUS_PENDING,
     Child,
+    ChildPromotion,
 )
 from app.schemas.auth import (
     ChildCreateRequest,
+    ChildLevelRequest,
+    LevelChoice,
     ChildLoginRequest,
     ChildPinChangeRequest,
     ChildPinResetRequest,
@@ -96,10 +100,19 @@ async def _add_child(
 
     Giving it wherever a profile becomes usable is what makes the rule true:
     "a child who can sign in has an assessment waiting".
+
+    **The class is declared here and checked here.** It decides which assessment
+    she gets — there is one per class — so an unknown class is refused rather
+    than stored: a profile carrying `ce7` would receive nothing and nobody would
+    know why. The declaration is also written into her class history, with no
+    class before it, because that is what entering the platform is.
     """
     existing = await _find_child(db, parent_id, payload.pseudonym)
     if existing is not None:
         raise ConflictException(message=PSEUDONYM_TAKEN_MESSAGE)
+
+    if not await levels.is_acceptable(db, payload.level_code):
+        raise ConflictException(message=levels.UNKNOWN_LEVEL_MESSAGE)
 
     child = Child(
         parent_id=parent_id,
@@ -107,6 +120,7 @@ async def _add_child(
         pin_hash=hash_pin(payload.pin.get_secret_value()),
         display_name=payload.display_name,
         date_of_birth=payload.date_of_birth,
+        level_code=payload.level_code,
         status=child_status,
     )
     db.add(child)
@@ -118,6 +132,16 @@ async def _add_child(
         # both pass the check above; the unique constraint settles the race.
         await db.rollback()
         raise ConflictException(message=PSEUDONYM_TAKEN_MESSAGE) from exc
+
+    db.add(
+        ChildPromotion(
+            child_id=child.id,
+            decided_by_parent_id=parent_id,
+            from_level_code=None,
+            to_level_code=payload.level_code,
+        )
+    )
+    await db.commit()
 
     if child_status == CHILD_STATUS_ACTIVE:
         await assessment.give_to(db, parent_id, child)
@@ -209,6 +233,128 @@ async def activate_child(
     await db.commit()
     await db.refresh(child)
 
+    return child
+
+
+@router.get("/classes", response_model=list[LevelChoice])
+async def list_classes(db: DbSession) -> list[LevelChoice]:
+    """Les classes de l'élémentaire, dans l'ordre, sans session.
+
+    C'est la seule route de cette famille qui n'en demande pas, et il y a une
+    raison : le formulaire d'inscription a besoin de cette liste **avant** qu'un
+    compte existe. On ne peut pas demander sa classe à quelqu'un sans lui montrer
+    les classes possibles.
+
+    Ce qu'elle divulgue est le découpage scolaire d'un pays, qui est public.
+    Elle ne dit rien d'aucune famille, d'aucun élève et d'aucune lecture.
+
+    Coder la liste dans l'interface aurait évité cette route et introduit un
+    mensonge : les niveaux appartiennent à l'édition du référentiel, et une
+    interface qui les invente contredit la première édition qui ne lui ressemble
+    pas.
+    """
+    return [
+        LevelChoice(code=code, label=label)
+        for code, label in await levels.levels_in_force(db)
+    ]
+
+
+@router.put("/children/{child_id}/level", response_model=ChildPublic)
+async def set_child_level(
+    child_id: uuid.UUID,
+    payload: ChildLevelRequest,
+    parent: CurrentParent,
+    db: DbSession,
+) -> Child:
+    """Déclarer ou corriger la classe d'un élève.
+
+    Deux situations réelles l'exigent. Un profil ouvert avant que la plateforme
+    ne demande la classe n'en a pas, et sans classe il ne reçoit aucun examen :
+    il faut pouvoir la lui donner sans le recréer et sans perdre son historique.
+    Et un parent se trompe de classe à l'inscription, ce qui doit se rattraper.
+
+    Ce n'est **pas** un passage, même quand la nouvelle classe est plus haute :
+    passer en classe supérieure est un fait de la scolarité, corriger une saisie
+    n'en est pas un. Les deux s'écrivent pourtant dans le même historique, parce
+    que la question à laquelle il répond — « dans quelle classe cet élève
+    était-il, et depuis quand ? » — est la même dans les deux cas.
+
+    L'élève reçoit l'examen de la classe déclarée, comme à l'inscription.
+    """
+    child = await _own_child(db, parent.id, child_id)
+
+    if not await levels.is_acceptable(db, payload.level_code):
+        raise ConflictException(message=levels.UNKNOWN_LEVEL_MESSAGE)
+    if child.level_code == payload.level_code:
+        return child
+
+    db.add(
+        ChildPromotion(
+            child_id=child.id,
+            decided_by_parent_id=parent.id,
+            from_level_code=child.level_code,
+            to_level_code=payload.level_code,
+        )
+    )
+    child.level_code = payload.level_code
+    await db.commit()
+
+    await assessment.give_to(db, parent.id, child)
+    await db.commit()
+    await db.refresh(child)
+    return child
+
+
+@router.post("/children/{child_id}/promotion", response_model=ChildPublic)
+async def promote_child(
+    child_id: uuid.UUID, parent: CurrentParent, db: DbSession
+) -> Child:
+    """Faire passer un élève dans la classe supérieure.
+
+    **C'est le parent qui décide, jamais la plateforme.** Elle ne connaît ni
+    l'école de l'enfant, ni son année scolaire, ni ce qu'un conseil de maîtres a
+    décidé ; s'arroger ce passage reviendrait à prétendre le savoir.
+
+    Le passage déplace le palier de compétences vers le haut : la plateforme
+    proposera désormais celles de la nouvelle classe. **Rien n'est effacé pour
+    autant.** Toutes les lectures des classes antérieures restent en base, et le
+    diagnostic continue d'y descendre — c'est exactement ce qui lui permet de
+    remonter une lacune ancienne quand une compétence nouvelle bute dessus.
+
+    L'élève reçoit l'examen d'entrée de sa nouvelle classe, pour la raison qui
+    vaut à l'inscription : sans lui, la plateforme ne sait rien de l'année qui
+    commence.
+
+    Refusé quand il n'y a pas de classe supérieure — le CM2 termine
+    l'élémentaire, et la suite est le collège, que cette plateforme ne couvre
+    pas.
+    """
+    child = await _own_child(db, parent.id, child_id)
+    following = await levels.next_level(db, child.level_code)
+
+    if following is None:
+        raise ConflictException(
+            message=(
+                "Cet élève n’a pas de classe supérieure sur cette plateforme"
+                if child.level_code
+                else "La classe de cet élève n’est pas encore déclarée"
+            )
+        )
+
+    db.add(
+        ChildPromotion(
+            child_id=child.id,
+            decided_by_parent_id=parent.id,
+            from_level_code=child.level_code,
+            to_level_code=following,
+        )
+    )
+    child.level_code = following
+    await db.commit()
+
+    await assessment.give_to(db, parent.id, child)
+    await db.commit()
+    await db.refresh(child)
     return child
 
 

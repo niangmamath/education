@@ -43,7 +43,7 @@ from app.core.config import settings
 from app.core.db import AsyncSessionFactory, sync_database_url
 from app.core.exceptions import ConflictException, NotFoundException
 from app.core.security import generate_family_code, hash_password, hash_pin
-from app.demo import dataset, fiches
+from app.demo import dataset, examens, fiches, referentiel
 from app.models.catalog import (
     ACTIVITY_KIND_ASSESSMENT,
     ACTIVITY_KIND_H5P,
@@ -54,7 +54,12 @@ from app.models.catalog import (
     ActivityQuestion,
     AuthoredQuestion,
 )
-from app.models.identity import CHILD_STATUS_ACTIVE, Child, Parent
+from app.models.identity import (
+    CHILD_STATUS_ACTIVE,
+    Child,
+    ChildPromotion,
+    Parent,
+)
 from app.referential.document import ReferentialDocument
 from app.referential.importer import reconcile
 from app.models.referential import ReferentialVersion
@@ -181,7 +186,7 @@ async def build(spike: Path, families: bool = True) -> None:
     """
     _referential()
     _fiches()
-    _assessment()
+    _examens()
     packaged = _packages(spike)
 
     if not families:
@@ -356,31 +361,36 @@ def _fiches() -> None:
         engine.dispose()
 
 
-def _assessment() -> None:
-    """Install the initiation assessment.
+def _examens() -> None:
+    """Installer un examen d'entrée par classe, du CI au CM2.
 
-    Its questions carry no explanation, and that is policy rather than an
-    omission: telling a child the answer to a question that is measuring her
-    corrupts the reading being taken.
+    Six activités et non une : ce qu'on demande à un CI et ce qu'on demande à un
+    CM2 n'ont rien de commun, et c'est la classe déclarée par l'élève qui décide
+    de celui qu'il reçoit. `level_code` est ce qui les distingue — sans lui, la
+    plateforme ne saurait pas lequel donner.
+
+    Leurs questions ne portent aucune explication, et c'est une décision : dire
+    la réponse à un enfant pendant qu'on le mesure abîme la mesure.
     """
     engine = create_engine(sync_database_url())
     try:
         with Session(engine) as session:
-            activity = session.scalar(
-                select(Activity).where(Activity.code == dataset.ASSESSMENT_CODE)
-            )
-            if activity is None:
-                activity = Activity(
-                    code=dataset.ASSESSMENT_CODE,
-                    title=dataset.ASSESSMENT_TITLE,
-                    kind=ACTIVITY_KIND_ASSESSMENT,
-                    status=ACTIVITY_STATUS_PUBLISHED,
-                    duration_minutes=dataset.ASSESSMENT_MINUTES,
-                )
-                session.add(activity)
-                session.flush()
+            for exam in examens.EXAMS:
+                code = f"{dataset.PREFIX}examen-{exam['level']}"
+                activity = session.scalar(select(Activity).where(Activity.code == code))
+                if activity is None:
+                    activity = Activity(
+                        code=code,
+                        title=exam["title"],
+                        kind=ACTIVITY_KIND_ASSESSMENT,
+                        status=ACTIVITY_STATUS_PUBLISHED,
+                        duration_minutes=exam["minutes"],
+                        level_code=exam["level"],
+                    )
+                    session.add(activity)
+                    session.flush()
 
-            _install_authored(session, activity, list(dataset.ASSESSMENT))
+                _install_authored(session, activity, list(exam["questions"]))
             session.commit()
     finally:
         engine.dispose()
@@ -475,9 +485,19 @@ async def _families(db: AsyncSession) -> list[SeededFamily]:
                     pseudonym=pseudonym,
                     pin_hash=hash_pin(str(profile["pin"])),
                     display_name=str(profile["display_name"]),
+                    level_code=str(profile["level"]),
                     status=CHILD_STATUS_ACTIVE,
                 )
                 db.add(child)
+                await db.flush()
+                db.add(
+                    ChildPromotion(
+                        child_id=child.id,
+                        decided_by_parent_id=parent.id,
+                        from_level_code=None,
+                        to_level_code=str(profile["level"]),
+                    )
+                )
                 await db.flush()
             # Activation is what gives the assessment, and these profiles are
             # created already active. Giving it here is what the activation route
@@ -532,7 +552,13 @@ async def _take_assessment(
     if attempt_id is None:
         return
 
-    for question in dataset.ASSESSMENT:
+    questions = [
+        question
+        for exam in examens.EXAMS
+        for question in exam["questions"]
+        if question["ref"] in answers
+    ]
+    for question in questions:
         wanted = answers.get(question["ref"])
         if wanted is None:
             continue
@@ -545,7 +571,7 @@ async def _take_assessment(
     await _act(parent_id, child_id, finish)
 
 
-def _first_wrong(question: dataset.ExamQuestion) -> int:
+def _first_wrong(question: examens.ExamQuestion) -> int:
     return next(
         index
         for index in range(len(question["choices"]))
@@ -610,10 +636,8 @@ def _content_report(packaged: list[str]) -> None:
     print("Contenus installés. Aucun compte créé.")
     print()
     print(f"  Référentiel   : {dataset.EDITION_CODE}, en vigueur")
-    print(f"  Compétences   : {len(dataset.referential()['competencies'])}")
-    print(
-        f"  Examen        : {dataset.ASSESSMENT_CODE}, {len(dataset.ASSESSMENT)} questions"
-    )
+    print(f"  Compétences   : {len(referentiel.COMPETENCIES)}")
+    print(f"  Examens       : {len(examens.EXAMS)}, un par classe")
     print(f"  Remédiations  : {len(fiches.FICHES)} fiches")
     if packaged:
         print(f"  Jouable       : {', '.join(packaged)}")

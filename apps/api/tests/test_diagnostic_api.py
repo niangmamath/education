@@ -190,7 +190,15 @@ class Family:
         self.pseudonym = f"lea{uuid.uuid4().hex[:6]}"
         child = client.post(
             "/api/v1/auth/children",
-            json={"pseudonym": self.pseudonym, "pin": PIN, "display_name": "Léa"},
+            json={
+                "pseudonym": self.pseudonym,
+                "pin": PIN,
+                "display_name": "Léa",
+                # Le CP, parce que c'est la seule classe que l'édition publiée
+                # par ce module déclare : une classe absente du programme en
+                # vigueur est refusée, et elle doit l'être.
+                "level_code": "cp",
+            },
         )
         assert child.status_code == 201
         self.child_id = child.json()["id"]
@@ -683,7 +691,7 @@ class TestTheRulesArePublished:
         published = family.as_parent().get(RULES_URL)
 
         assert published.status_code == 200
-        assert len(published.json()) == 6
+        assert len(published.json()) == 7
 
     def test_a_child_may_read_them_too(self, family: Family) -> None:
         """Published behind a door only one side opens would publish to nobody."""

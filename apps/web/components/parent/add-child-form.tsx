@@ -3,6 +3,7 @@
 import { useActionState } from 'react';
 import { UserPlus } from 'lucide-react';
 import { createChild, type FormState } from '../../lib/actions';
+import type { LevelChoice } from '../../lib/types';
 
 const EMPTY: FormState = { error: null };
 
@@ -16,7 +17,7 @@ const EMPTY: FormState = { error: null };
  * the platform stores only its hash, so a forgotten one is reset, never
  * recovered. The form says so while there is still time to write it down.
  */
-export function AddChildForm() {
+export function AddChildForm({ levels }: { levels: LevelChoice[] }) {
   const [state, action, pending] = useActionState(createChild, EMPTY);
 
   return (
@@ -79,6 +80,32 @@ export function AddChildForm() {
             </div>
           </div>
           <div className="col-12">
+      <div className="mb-3">
+        <label htmlFor="classe-enfant" className="form-label">
+          Sa classe
+        </label>
+        <select
+          id="classe-enfant"
+          name="level_code"
+          className="form-select"
+          defaultValue=""
+          required
+          aria-describedby="classe-enfant-aide"
+        >
+          <option value="" disabled>
+            Choisir une classe
+          </option>
+          {levels.map((level) => (
+            <option key={level.code} value={level.code}>
+              {level.label}
+            </option>
+          ))}
+        </select>
+        <div id="classe-enfant-aide" className="form-text">
+          Elle décide de l’examen d’entrée qu’il reçoit : il y en a un par classe.
+        </div>
+      </div>
+
             <button type="submit" className="btn btn-primary" disabled={pending}>
               {pending ? 'Création…' : 'Créer le profil'}
             </button>
