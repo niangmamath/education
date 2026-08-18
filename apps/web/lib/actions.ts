@@ -373,15 +373,35 @@ export async function answerFicheQuestion(
  *
  * Rien n'est effacé : les lectures des classes antérieures restent, et le
  * diagnostic continue d'y descendre.
+ *
+ * **Le refus est rendu, pas avalé.** La première version jetait la réponse de
+ * l'API : quand elle refusait, le bouton semblait ne rien faire du tout, et un
+ * parent n'avait aucun moyen de savoir si le geste avait échoué ou si la page
+ * n'avait pas fini de se recharger. Un bouton muet est pire qu'un bouton absent.
  */
-export async function promoteChild(childId: string): Promise<void> {
+export async function promoteChild(
+  childId: string,
+  // Les deux arguments que `useActionState` impose : l'état précédent et le
+  // formulaire. Le passage n'a rien à y lire — il n'a qu'un enfant et une
+  // direction — mais la signature doit être celle que React appelle.
+  _previous: FormState,
+  _formData: FormData,
+): Promise<FormState> {
   const store = await cookies();
-  await apiWithToken(`/children/${childId}/promotion`, store.get(SESSION_COOKIE)?.value, {
-    method: 'POST',
-  });
+  const done = await apiWithToken(
+    `/auth/children/${childId}/promotion`,
+    store.get(SESSION_COOKIE)?.value,
+    { method: 'POST' },
+  );
+
+  if (!done.ok) {
+    return { error: done.message };
+  }
+
   revalidatePath(`/parent/enfants/${childId}`);
   revalidatePath('/parent/enfants');
   revalidatePath('/parent');
+  return { error: null };
 }
 
 /**
@@ -392,15 +412,32 @@ export async function promoteChild(childId: string): Promise<void> {
  * l'inscription. Les deux se rattrapent sans recréer le profil et sans perdre
  * son historique.
  */
-export async function setChildLevel(childId: string, formData: FormData): Promise<void> {
+export async function setChildLevel(
+  childId: string,
+  _: FormState,
+  formData: FormData,
+): Promise<FormState> {
   const store = await cookies();
-  await apiWithToken(`/children/${childId}/level`, store.get(SESSION_COOKIE)?.value, {
-    method: 'PUT',
-    body: { level_code: String(formData.get('level_code') ?? '').trim() },
-  });
+  const chosen = String(formData.get('level_code') ?? '').trim();
+
+  if (!chosen) {
+    return { error: 'Choisissez une classe avant d’enregistrer.' };
+  }
+
+  const done = await apiWithToken(
+    `/auth/children/${childId}/level`,
+    store.get(SESSION_COOKIE)?.value,
+    { method: 'PUT', body: { level_code: chosen } },
+  );
+
+  if (!done.ok) {
+    return { error: done.message };
+  }
+
   revalidatePath(`/parent/enfants/${childId}`);
   revalidatePath('/parent/enfants');
   revalidatePath('/parent');
+  return { error: null };
 }
 
 /**
