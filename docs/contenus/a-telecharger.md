@@ -127,7 +127,7 @@ experiments/h5p-spike/packages/          ← vos fichiers .h5p ici
 experiments/h5p-spike/player/runtime/content/   ← les bibliothèques (la commande s'en charge)
 ```
 
-## Les trois commandes, dans l'ordre
+## Les quatre commandes, dans l'ordre
 
 Depuis `apps/api`, la pile Docker démarrée :
 
@@ -138,16 +138,36 @@ python -m app.catalog libraries ../../experiments/h5p-spike/packages/*.h5p
 # 2. Les publier vers l'origine de contenu
 python -m app.catalog deploy-runtime ../../experiments/h5p-spike/player/runtime
 
-# 3. Pour chaque paquet : le vérifier, l'enregistrer, le déployer
-python -m app.catalog register demo-fix-fr-phonemes \
-    ../../experiments/h5p-spike/packages/dictee-sons.h5p \
+# 3. Ouvrir une place pour chaque nouvel exercice — une par exercice, jamais sur
+#    le code d'une fiche native existante, qui n'est pas de nature H5P et
+#    refuserait le paquet
+python -m app.catalog creer demo-son-ci-fr-lettres \
+    --titre "Écouter et écrire une lettre" \
+    --competence ci-fr-lettres --minutes 5
+
+# 4. Vérifier, enregistrer et déployer le paquet sur cette activité
+python -m app.catalog register demo-son-ci-fr-lettres \
+    ../../experiments/h5p-spike/packages/son-lettres.h5p \
     --licence "CC BY 4.0" --source "https://lumi.education, fabriqué par nos soins"
-python -m app.catalog deploy demo-fix-fr-phonemes
+python -m app.catalog deploy demo-son-ci-fr-lettres
 ```
+
+**`creer` est ce qui manquait la première fois que cette page a été écrite** :
+`register` refuse d'attacher un paquet à un code qui n'existe pas, et à raison —
+rien n'entre dans le catalogue sans une décision explicite. Mais rien n'ouvrait
+cette place non plus, tant qu'il ne s'agissait que du paquet unique du pilote.
+`creer` ouvre une activité vide, de nature H5P, prête à recevoir un paquet ;
+`register` refuse ensuite si son type ou son contenu ne convient pas.
 
 `register` refuse le fichier s'il n'est pas une archive, s'il pèse trop lourd,
 s'il contient un chemin qui sort de l'archive, ou si son type n'est pas dans les
 huit. C'est voulu : le refus est le comportement par défaut.
+
+Le code de l'activité est libre, mais gardez une convention lisible :
+`demo-son-<compétence>` pour ce qu'un son ajoute à côté d'une fiche existante,
+`demo-h5p-<compétence>` pour un exercice complet sur une compétence qui n'a
+encore rien — les deux se retrouvent dans
+[`exercices-par-competence.md`](exercices-par-competence.md).
 
 ## Ce qu'il reste à faire après le dépôt
 
