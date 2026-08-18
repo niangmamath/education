@@ -1494,6 +1494,21 @@ Base        : 12 compétences, examen à 12 questions, 12 fiches à 4 questions
 - **Aucun écran d'administration des profils** : étape 15.
 - **ADR-012** : antivirus et vérification de licence encore partiels.
 
+## Contenus H5P, la liste par compétence
+
+- [x] `docs/contenus/exercices-par-competence.md` : un exercice concret par
+      compétence sur les trente-six, avec le type H5P recommandé et ce qu'il
+      faut construire. Les douze déjà couvertes par une fiche native ne
+      reçoivent qu'un seul exercice, réservé à ce qu'une fiche ne sait pas
+      faire — le son, le geste. Les vingt-quatre sans rien reçoivent un jeu
+      complet.
+- [x] `docs/contenus/a-telecharger.md` corrigé : il citait des codes de
+      compétence disparus depuis la restructuration à six classes
+      (`cp-ma-denombrer`, `ce1-fr-comprehension`).
+- [x] Quatre simulations PhET retenues, chacune adossée aux compétences
+      qu'elle sert réellement plutôt qu'à la matière en général.
+
 ## Prochaine action
 
-Ouvrir l'étape 14, notifications.
+Le propriétaire fabrique et télécharge les fichiers H5P selon cette liste.
+Ensuite : ouvrir l'étape 14, notifications.
