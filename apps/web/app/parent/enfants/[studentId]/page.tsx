@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { AlertTriangle, Info } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Info } from 'lucide-react';
 import { api } from '../../../../lib/api';
 import { requireParent } from '../../../../lib/session';
 import { InterfaceState } from '../../../../components/ui/interface-state';
@@ -99,6 +99,11 @@ export default async function EnfantPage({
 
   return (
     <>
+      <Link href="/parent/enfants" className="d-inline-flex align-items-center gap-2 mb-3">
+        <ArrowLeft size={18} aria-hidden="true" />
+        Tous les enfants
+      </Link>
+
       <header className="mb-4">
         <h1 className="h2 mb-1">{child.display_name}</h1>
         <p className="text-secondary mb-0">
