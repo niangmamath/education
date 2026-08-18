@@ -1,5 +1,12 @@
 # The isolated content origin, ADR-012 condition 5.
 #
+# A **template**, and not a plain configuration: `frame-ancestors` names the one
+# origin allowed to frame a content, and that origin changes with where the site
+# is served from. It was hardcoded to `http://localhost:3000`, which is right on
+# a laptop and silently wrong everywhere else — behind a tunnel the browser would
+# refuse to display the frame, and nothing in the logs would say why. The nginx
+# image expands `${WEB_ORIGIN}` at startup, so the value follows the site.
+#
 # It is a different origin from the application on purpose: a content that
 # misbehaves must not be able to read the application's cookies, and the browser
 # is what enforces that — provided the two are genuinely not the same site.
@@ -15,7 +22,7 @@ server {
 
     # No cookie of this origin is ever set, and none of the application's can
     # arrive here: that is the whole point of the separation.
-    add_header Content-Security-Policy "default-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-ancestors http://localhost:3000; base-uri 'none'; form-action 'none'" always;
+    add_header Content-Security-Policy "default-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-ancestors ${WEB_ORIGIN}; base-uri 'none'; form-action 'none'" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header Referrer-Policy "no-referrer" always;
     add_header Cross-Origin-Resource-Policy "cross-origin" always;
@@ -24,6 +31,10 @@ server {
     # all; they are tolerable here precisely because this origin holds nothing
     # worth stealing — no cookie, no storage, no credential — and cannot reach
     # anything that does.
+    #
+    # `frame-ancestors` is the other half of that bargain: this origin is only
+    # ever displayed inside our own site. Without it, anybody could frame a
+    # content and pass it off as theirs.
 
     root /srv/content;
     autoindex off;
