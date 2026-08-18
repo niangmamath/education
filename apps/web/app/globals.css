@@ -300,6 +300,41 @@ p {
   opacity: 1;
 }
 
+/* Un lien de retour n'est pas de la prose : c'est une action de navigation, et
+   elle doit se voir comme telle. Du texte souligné se confond avec le contenu
+   de la page ; ce bouton discret garde la même affordance qu'un bouton
+   secondaire ordinaire, en plus quiet parce que « revenir » n'est jamais
+   l'action principale d'un écran. */
+.sc-lien-retour {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.85rem 0.4rem 0.6rem;
+  border: 1px solid var(--sc-seyes-pale);
+  border-radius: var(--sc-rayon);
+  color: var(--sc-encre-claire);
+  font-weight: 600;
+  font-size: 0.92rem;
+  text-decoration: none;
+  background: var(--sc-feuille);
+  transition:
+    background-color 0.14s ease,
+    border-color 0.14s ease,
+    color 0.14s ease;
+}
+
+.sc-lien-retour:hover {
+  background: var(--sc-feuille-creuse);
+  border-color: var(--sc-seyes);
+  color: var(--sc-encre);
+}
+
+.sc-student-page .sc-lien-retour:hover {
+  border-color: var(--sc-acquis);
+  color: var(--sc-acquis);
+}
+
+
 /* Le relief d'une feuille posée : un bord, pas une ombre portée. Bootstrap
    applique `.shadow-sm` un peu partout, on le redéfinit une fois pour toutes. */
 .shadow-sm,

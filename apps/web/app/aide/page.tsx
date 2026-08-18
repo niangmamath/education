@@ -58,7 +58,7 @@ export default function AidePage() {
   return (
     <main className="container py-5">
       <div className="mx-auto" style={{ maxWidth: '52rem' }}>
-        <Link href="/" className="d-inline-flex align-items-center gap-2 mb-4">
+        <Link href="/" className="sc-lien-retour mb-4">
           <ArrowLeft size={18} aria-hidden="true" />
           Retour à l’accueil
         </Link>
