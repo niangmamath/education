@@ -1,13 +1,17 @@
 # Ce qu'il faut télécharger, et où le poser
 
-Cette page est une liste de courses. Elle dit **quoi** prendre, **où** le
-trouver, **où** le déposer et **quelle commande** lancer ensuite.
+Cette page est une liste de courses. Elle dit **où** trouver les huit types
+autorisés, **où** déposer les fichiers et **quelle commande** lancer ensuite.
+Elle ne dit pas quel exercice construire pour quelle compétence : c'est le rôle
+de [`exercices-par-competence.md`](exercices-par-competence.md), qui couvre les
+trente-six compétences du référentiel à six classes.
 
 ## D'abord, la vérité sur ce qui manque vraiment
 
-Le contenu pédagogique existe déjà. Douze fiches de remédiation, quarante-huit
-questions, douze leçons, un examen de douze questions — tout est écrit, rattaché
-aux compétences et corrigé côté serveur.
+Le contenu pédagogique existe déjà pour un tiers du référentiel. Douze fiches
+de remédiation sur trente-six compétences, quarante-huit questions, douze
+leçons, six examens d'entrée — tout est écrit, rattaché aux compétences et
+corrigé côté serveur.
 
 **Ce que ce contenu-là ne sait pas faire, c'est se faire entendre et se faire
 manipuler.** C'est exactement ce que H5P et PhET apportent, et c'est à cela qu'il
@@ -29,16 +33,20 @@ ADR-012 amendée le 17 août 2026, sur votre validation. La liste est tenue par 
 contrainte en base : un type absent de cette liste est refusé avant que le
 fichier n'atteigne le stockage.
 
-| Type H5P | Ce qu'il permet | Pour quelles compétences |
-|---|---|---|
-| `H5P.Dictation` | **Un son à écouter**, un texte à écrire | `cp-fr-phonemes`, `ce1-fr-dictee`, `cp-fr-syllabes` |
-| `H5P.DragText` | Remettre des mots ou des syllabes dans l'ordre | `cp-fr-syllabes`, `ce1-fr-mots`, `ce1-fr-dictee` |
-| `H5P.DragQuestion` | Glisser sur une image, apparier, dénombrer | `cp-ma-denombrer`, `cp-ma-comparer`, `cp-fr-lettres` |
-| `H5P.MarkTheWords` | Repérer dans un texte les mots qui portent un son | `cp-fr-phonemes`, `ce1-fr-comprehension` |
-| `H5P.Blanks` | Texte à trous | `ce1-fr-dictee`, `ce1-ma-probleme` |
-| `H5P.MultiChoice` | QCM avec image | `ce1-fr-comprehension` |
-| `H5P.SingleChoiceSet` | Suite de questions à un seul choix, gros boutons | tous, si besoin |
-| `H5P.TrueFalse` | Vrai ou faux | déjà en place |
+| Type H5P | Ce qu'il permet |
+|---|---|
+| `H5P.Dictation` | **Un son à écouter**, un texte à écrire — la dette la plus large du référentiel |
+| `H5P.DragText` | Remettre des mots ou des syllabes dans l'ordre |
+| `H5P.DragQuestion` | Glisser sur une image, apparier, dénombrer, placer sur une droite graduée |
+| `H5P.MarkTheWords` | Repérer dans un texte les mots qui portent un sens ou une forme |
+| `H5P.Blanks` | Texte à trous |
+| `H5P.MultiChoice` | QCM avec image |
+| `H5P.SingleChoiceSet` | Suite de questions à un seul choix, gros boutons |
+| `H5P.TrueFalse` | Vrai ou faux, déjà en place |
+
+**Quel type pour quelle compétence** : voir
+[`exercices-par-competence.md`](exercices-par-competence.md), qui donne un
+exercice concret pour chacune des trente-six.
 
 **Refusés volontairement, et pourquoi** — pour que vous ne perdiez pas de temps
 dessus :
