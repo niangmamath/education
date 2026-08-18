@@ -36,13 +36,17 @@ CE2: Final = "ce2"
 CM1: Final = "cm1"
 CM2: Final = "cm2"
 
+# Le sigle précède le nom : « CE1 — Cours élémentaire première année ». Un
+# parent connaît la classe de son enfant par son sigle bien avant d'en connaître
+# le nom complet, et un menu qui n'affiche que le nom long l'oblige à le
+# déchiffrer à chaque fois plutôt que de le reconnaître d'un coup d'œil.
 LEVELS: Final[list[tuple[str, str]]] = [
-    (CI, "Cours d’initiation"),
-    (CP, "Cours préparatoire"),
-    (CE1, "Cours élémentaire première année"),
-    (CE2, "Cours élémentaire deuxième année"),
-    (CM1, "Cours moyen première année"),
-    (CM2, "Cours moyen deuxième année"),
+    (CI, "CI — Cours d’initiation"),
+    (CP, "CP — Cours préparatoire"),
+    (CE1, "CE1 — Cours élémentaire première année"),
+    (CE2, "CE2 — Cours élémentaire deuxième année"),
+    (CM1, "CM1 — Cours moyen première année"),
+    (CM2, "CM2 — Cours moyen deuxième année"),
 ]
 
 LEVEL_CODES: Final[tuple[str, ...]] = tuple(code for code, _ in LEVELS)
