@@ -28,11 +28,19 @@ from app.catalog.checks import check_catalogue
 from app.catalog.h5p import PackageRefused
 from app.catalog.registration import RegistrationRefused, register_package
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from app.catalog.storage import S3ObjectStore
 from app.content import deploy as runtime
 from app.core.config import settings
 from app.core.db import DATABASE_URL, sync_database_url
-from app.models.catalog import Activity
+from app.models.catalog import (
+    ACTIVITY_KIND_H5P,
+    ACTIVITY_STATUS_PUBLISHED,
+    MAX_DURATION_MINUTES,
+    MIN_DURATION_MINUTES,
+    Activity,
+    ActivityCompetency,
+)
 
 # Où le projet garde son arbre de bibliothèques : `deploy-runtime` le pose tel
 # quel dans l'origine de contenu, et `libraries` y ajoute ce que de nouveaux
@@ -64,6 +72,25 @@ def main(argv: list[str] | None = None) -> int:
     register.add_argument(
         "--database-url", default=DATABASE_URL, help=argparse.SUPPRESS
     )
+
+    creer = verbs.add_parser(
+        "creer",
+        help="ouvrir une nouvelle activité H5P, prête à recevoir un paquet",
+    )
+    creer.add_argument("activite", help="code de la nouvelle activité")
+    creer.add_argument("--titre", required=True, help="titre affiché à l’élève")
+    creer.add_argument(
+        "--competence",
+        required=True,
+        help="code de la compétence que cette activité travaille",
+    )
+    creer.add_argument(
+        "--minutes",
+        type=int,
+        default=5,
+        help="durée approximative en minutes (3 à 7 pour une Quick Repair, défaut 5)",
+    )
+    creer.add_argument("--database-url", default=DATABASE_URL, help=argparse.SUPPRESS)
 
     check = verbs.add_parser(
         "check", help="vérifier les liens du catalogue vers le référentiel"
@@ -99,6 +126,14 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     arguments = parser.parse_args(argv)
+    if arguments.verbe == "creer":
+        return _creer(
+            arguments.activite,
+            arguments.titre,
+            arguments.competence,
+            arguments.minutes,
+            arguments.database_url,
+        )
     if arguments.verbe == "check":
         return _check(arguments.database_url)
     if arguments.verbe == "deploy":
@@ -168,6 +203,77 @@ def _libraries(packages: list[Path], prepared: Path) -> int:
             "  python -m app.catalog deploy-runtime "
             "experiments/h5p-spike/player/runtime"
         )
+    return EXIT_OK
+
+
+def _creer(
+    activity_code: str, title: str, competency_code: str, minutes: int, url: str
+) -> int:
+    """Ouvrir la place qu'un paquet H5P viendra occuper.
+
+    `register` refuse d'attacher un fichier à un code qui n'existe pas — c'est
+    voulu, ADR-006 : rien n'entre dans le catalogue sans une décision explicite
+    de quelqu'un qui a accès au serveur. Cette commande **est** cette décision,
+    et rien d'autre : elle ouvre une ligne, elle ne vérifie ni la compétence
+    (`check` le fait, après coup, contre l'édition en vigueur) ni le contenu du
+    paquet (`register` le fait, avant que rien n'atteigne le stockage).
+
+    L'activité **s'ajoute** à côté de ce qui existe déjà pour cette compétence ;
+    elle ne remplace jamais une fiche native. Deux activités peuvent parfaitement
+    viser le même code de compétence — le diagnostic proposera l'une ou l'autre.
+    """
+    if not (MIN_DURATION_MINUTES <= minutes <= MAX_DURATION_MINUTES):
+        print(
+            f"La durée doit être entre {MIN_DURATION_MINUTES} et "
+            f"{MAX_DURATION_MINUTES} minutes.",
+            file=sys.stderr,
+        )
+        return EXIT_REFUSED
+    if not (3 <= minutes <= 7):
+        print(
+            f"Note : {minutes} minutes sort de la fourchette Quick Repair "
+            "(3 à 7). Ce n’est pas refusé, seulement signalé.",
+            file=sys.stderr,
+        )
+
+    engine = create_engine(sync_database_url(url))
+    try:
+        with Session(engine) as session:
+            activity = Activity(
+                code=activity_code,
+                title=title,
+                kind=ACTIVITY_KIND_H5P,
+                status=ACTIVITY_STATUS_PUBLISHED,
+                duration_minutes=minutes,
+            )
+            session.add(activity)
+            try:
+                session.flush()
+            except IntegrityError:
+                session.rollback()
+                print(
+                    f"Une activité porte déjà le code « {activity_code} ».",
+                    file=sys.stderr,
+                )
+                return EXIT_REFUSED
+
+            session.add(
+                ActivityCompetency(
+                    activity_id=activity.id, competency_code=competency_code
+                )
+            )
+            session.commit()
+    finally:
+        engine.dispose()
+
+    print(f"Activité   : {activity_code}")
+    print(f"Compétence : {competency_code}")
+    print(f"Durée      : {minutes} minutes")
+    print("Ouverte, sans paquet. Enregistrez-y maintenant votre fichier .h5p :")
+    print(
+        f"  python -m app.catalog register {activity_code} <fichier.h5p> "
+        '--licence "…" --source "…"'
+    )
     return EXIT_OK
 
 
