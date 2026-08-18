@@ -22,7 +22,11 @@ from sqlalchemy.orm import Session
 
 from app.catalog.checks import check_catalogue
 from app.catalog.h5p import PackageRefused
-from app.catalog.registration import RegistrationRefused, register_package
+from app.catalog.registration import (
+    RegistrationRefused,
+    register_package,
+    unregister_package,
+)
 from app.core.db import sync_database_url
 from app.models.catalog import (
     ACTIVITY_KIND_H5P,
@@ -250,6 +254,53 @@ class TestRegistration:
                 path=package_file(tmp_path / "deux.h5p", minor="8"),
                 licence="CC BY 4.0",
                 source="https://example.com/essai",
+            )
+
+
+class TestUnregistration:
+    def test_removing_the_package_frees_the_slot_for_another(
+        self, session: Session, store: RecordingStore, tmp_path: Path
+    ) -> None:
+        activity = build_activity(session)
+        session.commit()
+        register_package(
+            session,
+            store,
+            activity_code=activity.code,
+            path=package_file(tmp_path / "un.h5p"),
+            licence="CC BY 4.0",
+            source="https://example.com/essai",
+        )
+        session.commit()
+
+        report = unregister_package(session, store, activity_code=activity.code)
+        session.commit()
+
+        assert report.object_key in store.removed
+        register_package(
+            session,
+            store,
+            activity_code=activity.code,
+            path=package_file(tmp_path / "deux.h5p", minor="8"),
+            licence="CC BY 4.0",
+            source="https://example.com/essai",
+        )
+
+    def test_an_activity_with_no_package_is_refused(
+        self, session: Session, store: RecordingStore
+    ) -> None:
+        activity = build_activity(session)
+        session.commit()
+
+        with pytest.raises(RegistrationRefused):
+            unregister_package(session, store, activity_code=activity.code)
+
+    def test_an_unknown_activity_is_refused(
+        self, session: Session, store: RecordingStore
+    ) -> None:
+        with pytest.raises(RegistrationRefused):
+            unregister_package(
+                session, store, activity_code=f"{TEST_CODE_PREFIX}jamais-vue"
             )
 
 

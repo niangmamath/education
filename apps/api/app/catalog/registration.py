@@ -36,6 +36,13 @@ class RegistrationReport:
     object_key: str
 
 
+@dataclass
+class UnregistrationReport:
+    activity_code: str
+    sha256: str
+    object_key: str
+
+
 def register_package(
     session: Session,
     store: ObjectStore,
@@ -101,6 +108,36 @@ def register_package(
         size_bytes=facts.size_bytes,
         object_key=object_key,
     )
+
+
+def unregister_package(
+    session: Session,
+    store: ObjectStore,
+    activity_code: str,
+) -> UnregistrationReport:
+    """Free an activity's slot so a replacement package can be registered."""
+    activity = session.scalars(
+        select(Activity).where(Activity.code == activity_code)
+    ).one_or_none()
+    if activity is None:
+        raise RegistrationRefused(
+            f"Aucune activité ne porte le code « {activity_code} »."
+        )
+    package = activity.h5p_package
+    if package is None:
+        raise RegistrationRefused(
+            f"L’activité « {activity_code} » n’a pas de paquet à retirer."
+        )
+
+    report = UnregistrationReport(
+        activity_code=activity.code,
+        sha256=package.sha256,
+        object_key=package.object_key,
+    )
+    session.delete(package)
+    session.flush()
+    store.remove(report.object_key)
+    return report
 
 
 def _object_key(facts: PackageFacts) -> str:

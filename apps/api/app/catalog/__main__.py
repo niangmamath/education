@@ -26,7 +26,11 @@ import tempfile
 
 from app.catalog.checks import check_catalogue
 from app.catalog.h5p import PackageRefused
-from app.catalog.registration import RegistrationRefused, register_package
+from app.catalog.registration import (
+    RegistrationRefused,
+    register_package,
+    unregister_package,
+)
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from app.catalog.storage import S3ObjectStore
@@ -70,6 +74,15 @@ def main(argv: list[str] | None = None) -> int:
         "--source", required=True, help="provenance vérifiée du contenu, ADR-012"
     )
     register.add_argument(
+        "--database-url", default=DATABASE_URL, help=argparse.SUPPRESS
+    )
+
+    retirer = verbs.add_parser(
+        "retirer",
+        help="retirer le paquet H5P d’une activité, pour en enregistrer un autre",
+    )
+    retirer.add_argument("activite", help="code de l’activité dont on retire le paquet")
+    retirer.add_argument(
         "--database-url", default=DATABASE_URL, help=argparse.SUPPRESS
     )
 
@@ -134,6 +147,8 @@ def main(argv: list[str] | None = None) -> int:
             arguments.minutes,
             arguments.database_url,
         )
+    if arguments.verbe == "retirer":
+        return _retirer(arguments.activite, arguments.database_url)
     if arguments.verbe == "check":
         return _check(arguments.database_url)
     if arguments.verbe == "deploy":
@@ -310,6 +325,32 @@ def _register(
     print(f"Taille     : {report.size_bytes} octets")
     print(f"Objet      : {report.object_key}")
     print("Paquet enregistré.")
+    return EXIT_OK
+
+
+def _retirer(activity_code: str, url: str) -> int:
+    engine = create_engine(sync_database_url(url))
+    try:
+        with Session(engine) as session:
+            try:
+                report = unregister_package(
+                    session, S3ObjectStore(), activity_code=activity_code
+                )
+                session.commit()
+            except RegistrationRefused as refusal:
+                session.rollback()
+                print(str(refusal), file=sys.stderr)
+                return EXIT_REFUSED
+            except SQLAlchemyError as error:
+                session.rollback()
+                print(f"Refus de la base de données : {error}", file=sys.stderr)
+                return EXIT_DATABASE
+    finally:
+        engine.dispose()
+
+    print(f"Activité   : {report.activity_code}")
+    print(f"Empreinte  : {report.sha256}")
+    print("Paquet retiré. Vous pouvez en enregistrer un autre.")
     return EXIT_OK
 
 
