@@ -145,6 +145,7 @@ class TestThePublishedRules:
             rules.RULE_GAP_PARTIAL_PERSISTS,
             rules.RULE_GENERAL_GAP_SAME_DOMAIN,
             rules.RULE_ROOT_CAUSE_PREREQUISITE,
+            rules.RULE_UNOBSERVED_PREREQUISITE,
             rules.RULE_DEFER_BEHIND_PREREQUISITE,
             rules.RULE_HEALTH_WEIGHTED,
         }

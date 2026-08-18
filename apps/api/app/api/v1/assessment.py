@@ -33,17 +33,18 @@ router = APIRouter()
 async def read_my_assessment(child: CurrentChild, db: DbSession) -> Any:
     """The assessment waiting for this child, with its questions.
 
-    `done` says she has already been through one, which is what a client needs
-    to know whether to invite her in or leave her alone. There is no way here to
-    ask for a second one: an assessment is a starting point, not a habit.
+    `done` says she has already been through the one for her class, which is what
+    a client needs to know whether to invite her in or leave her alone. There is
+    no way here to ask for a second one: an assessment opens a class, it is not a
+    habit — the next one comes when she is promoted, and it is a different paper.
     """
-    done = await service.is_done(db, child.id)
+    done = await service.is_done(db, child)
     pending = await service.pending_for(db, child.id)
 
     if pending is None:
         return AssessmentPublic(done=done, assignment_id=None, title=None, questions=[])
 
-    assessment = await service.published_assessment(db)
+    assessment = await service.assessment_for(db, child.level_code)
     if assessment is None:
         raise NotFoundException(message=service.NO_ASSESSMENT_MESSAGE)
 

@@ -129,6 +129,16 @@ class Activity(Base):
     # is the sheet's own lesson, and it is the difference between a repair and a
     # second test. Empty for anything the platform did not write.
     guidance: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # La classe qu'une activité vise, par le code du niveau.
+    #
+    # Pour un examen d'entrée, c'est ce qui le désigne : il y en a un par classe
+    # et la plateforme doit savoir lequel donner. Pour le reste du catalogue,
+    # c'est une indication et rien de plus — une fiche de remédiation vise une
+    # compétence, et une compétence porte déjà son niveau.
+    #
+    # Une chaîne et pas une clé étrangère, pour la raison d'ADR-013 : un niveau
+    # appartient à une édition du référentiel, le catalogue lui survit.
+    level_code: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()

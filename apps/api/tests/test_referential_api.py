@@ -149,7 +149,12 @@ def child_client(client: TestClient, parent: dict[str, str]) -> TestClient:
     pseudonym = f"lea{uuid.uuid4().hex[:6]}"
     created = client.post(
         "/api/v1/auth/children",
-        json={"pseudonym": pseudonym, "pin": PIN, "display_name": "Léa"},
+        json={
+            "pseudonym": pseudonym,
+            "pin": PIN,
+            "display_name": "Léa",
+            "level_code": "cp",
+        },
     )
     assert created.status_code == 201
     activated = client.post(f"/api/v1/auth/children/{created.json()['id']}/activate")

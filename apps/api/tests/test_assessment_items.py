@@ -19,7 +19,11 @@ from __future__ import annotations
 
 import pytest
 
-from app.demo.dataset import ASSESSMENT, ExamQuestion, referential
+from app.demo.examens import EXAMS, ExamQuestion
+from app.demo.referentiel import COMPETENCIES_BY_LEVEL, LEVEL_CODES
+
+# Toutes les questions des six examens, chacune sachant de quel examen elle vient.
+ASSESSMENT: list[ExamQuestion] = [q for exam in EXAMS for q in exam["questions"]]
 
 
 def answer_of(question: ExamQuestion) -> str:
@@ -51,14 +55,28 @@ class TestEveryItem:
         assert "?" in question["prompt"]
 
 
-class TestTheAssessmentAsAWhole:
-    def test_every_competency_of_the_referential_is_asked_about(self) -> None:
-        """A competency nobody asks about gets no reading, which is honest but
-        useless in an assessment whose whole job is to start the journey."""
-        asked = {question["competency"] for question in ASSESSMENT}
-        declared = {row["code"] for row in referential()["competencies"]}
+class TestTheAssessmentsAsAWhole:
+    @pytest.mark.parametrize("exam", EXAMS, ids=lambda e: e["level"])
+    def test_an_exam_asks_about_every_competency_of_its_class_and_no_other(
+        self, exam: dict[str, object]
+    ) -> None:
+        """Un examen d'entrée porte sur la classe déclarée, exactement.
 
-        assert declared == asked
+        Une compétence de la classe que personne n'interroge ne reçoit aucune
+        lecture — inutile pour un examen dont tout le rôle est de commencer le
+        parcours. Une question qui porterait sur une autre classe, à l'inverse,
+        produirait une lecture que l'élève n'avait aucune raison de subir.
+        """
+        questions = exam["questions"]
+        assert isinstance(questions, list)
+        asked = {question["competency"] for question in questions}
+        declared = {row["code"] for row in COMPETENCIES_BY_LEVEL[str(exam["level"])]}
+
+        assert asked == declared
+
+    def test_there_is_exactly_one_exam_per_class(self) -> None:
+        """Sans examen pour sa classe, un élève inscrit ne reçoit rien du tout."""
+        assert [exam["level"] for exam in EXAMS] == list(LEVEL_CODES)
 
     def test_no_question_reference_is_used_twice(self) -> None:
         """Two questions under one reference would be one answer overwriting

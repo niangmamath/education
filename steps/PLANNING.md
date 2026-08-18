@@ -185,6 +185,7 @@ propriétaire, parce qu’ils bloquaient l’usage réel de la plateforme plutô
 | HORS-04 | Fiches de remédiation | HORS-03 | Terminé | Douze fiches écrites ici, ADR-017 |
 | HORS-05 | Ouvrir le catalogue H5P | HORS-04 | Terminé | ADR-012 amendée à huit types, migration 0015, commande `libraries`, 1135 tests |
 | HORS-06 | Rendre la démonstration montrable | HORS-05 | Terminé | Recette par tunnel ; `PUBLIC_HOST` sans quoi toute connexion échouerait derrière un tunnel |
+| HORS-07 | Six classes cumulatives | HORS-06 | Terminé | CI→CM2, 36 compétences, un examen par classe, passage décidé par le parent, ADR-018 |
 
 `HORS-01` referme la première flèche du MVP, qui n’avait jamais été construite :
 un enfant inscrit n’avait aucune compétence observée, donc aucun diagnostic.

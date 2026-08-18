@@ -14,11 +14,19 @@ export type Session = {
   display_name: string;
 };
 
+/** Une classe proposée à l'inscription : son code et son nom lisible. */
+export type LevelChoice = {
+  code: string;
+  label: string;
+};
+
 export type ChildProfile = {
   id: string;
   pseudonym: string;
   display_name: string;
   status: 'pending' | 'active' | 'disabled';
+  /** La classe où l'élève se trouve. Nulle tant qu'elle n'a pas été déclarée. */
+  level_code: string | null;
 };
 
 export type ParentProfile = {

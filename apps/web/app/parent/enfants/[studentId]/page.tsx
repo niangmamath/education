@@ -4,9 +4,15 @@ import { api } from '../../../../lib/api';
 import { requireParent } from '../../../../lib/session';
 import { InterfaceState } from '../../../../components/ui/interface-state';
 import { ApplyRemediationButton } from '../../../../components/parent/apply-remediation-button';
+import { LevelControls } from '../../../../components/parent/level-controls';
 import { PrerequisiteThread } from '../../../../components/ui/prerequisite-thread';
 import { OUTCOME_CLASSES, OUTCOME_LABELS } from '../../../../lib/types';
-import type { ChildProfile, Diagnostic, Progress } from '../../../../lib/types';
+import type {
+  ChildProfile,
+  Diagnostic,
+  LevelChoice,
+  Progress,
+} from '../../../../lib/types';
 
 export const metadata = { title: 'Progression de l’enfant' };
 
@@ -32,10 +38,11 @@ export default async function EnfantPage({
   await requireParent();
   const { studentId } = await params;
 
-  const [children, progress, diagnostic] = await Promise.all([
+  const [children, progress, diagnostic, classes] = await Promise.all([
     api<ChildProfile[]>('/auth/children'),
     api<Progress>(`/children/${studentId}/progress`),
     api<Diagnostic>(`/children/${studentId}/diagnostic`),
+    api<LevelChoice[]>('/auth/classes'),
   ]);
 
   const child = children.ok
@@ -104,6 +111,17 @@ export default async function EnfantPage({
           qui l'explique passe donc devant, et le chiffre reste une donnée
           discrète à côté d'elle : un grand nombre isolé se lirait comme une
           note, ce que ce produit refuse d'afficher. */}
+      <LevelControls
+        childId={studentId}
+        levelCode={child.level_code}
+        levelLabel={
+          classes.ok
+            ? (classes.data.find((row) => row.code === child.level_code)?.label ?? null)
+            : null
+        }
+        levels={classes.ok ? classes.data : []}
+      />
+
       <section className="card mb-4">
         <div className="card-body p-4">
           <p className="sc-oeilleton">Santé académique</p>

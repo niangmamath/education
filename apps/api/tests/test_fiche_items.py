@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import pytest
 
-from app.demo.dataset import referential
+from app.demo.referentiel import COMPETENCIES
 from app.demo.fiches import FICHES, Sheet, SheetQuestion
 from app.models.catalog import MAX_DURATION_MINUTES, MIN_DURATION_MINUTES
 
@@ -135,13 +135,34 @@ class TestEverySheet:
 
 
 class TestTheSheetsAsAWhole:
-    def test_every_competency_has_a_sheet(self) -> None:
-        """A difficulty the platform can name and cannot repair is worse than one
-        it never mentions: the parent is told, and offered nothing."""
-        repaired = {sheet["competency"] for sheet in FICHES}
-        declared = {row["code"] for row in referential()["competencies"]}
+    def test_every_sheet_repairs_a_competency_the_referential_declares(self) -> None:
+        """Une fiche qui vise un code inexistant ne réparerait rien du tout, et
+        le diagnostic ne la proposerait jamais — une activité morte que personne
+        ne verrait mourir."""
+        declared = {row["code"] for row in COMPETENCIES}
 
-        assert declared == repaired
+        assert {sheet["competency"] for sheet in FICHES} <= declared
+
+    def test_the_sheets_cover_the_competencies_they_are_written_for(self) -> None:
+        """La couverture actuelle, épinglée pour qu'elle ne régresse pas en silence.
+
+        Le référentiel couvre six classes ; ces fiches-là couvrent les douze
+        compétences que la première version du produit avait écrites, du CI au
+        CE1. **Les vingt-quatre autres n'ont pas encore de réparation**, et c'est
+        la dette la mieux mesurée du projet : une lacune que la plateforme sait
+        nommer et ne sait pas réparer est pire qu'une lacune dont elle ne parle
+        pas, parce que le parent agit et il ne se passe rien.
+
+        Ce test échoue dans les deux sens. Il échoue si une fiche disparaît, et
+        il échoue quand de nouvelles fiches arrivent — auquel cas on relève le
+        compte ici, délibérément, plutôt que de laisser la dette s'effacer sans
+        que personne ne la voie diminuer.
+        """
+        repaired = {sheet["competency"] for sheet in FICHES}
+        declared = {row["code"] for row in COMPETENCIES}
+
+        assert len(repaired) == 12
+        assert len(declared - repaired) == 24
 
     def test_no_competency_has_two_sheets(self) -> None:
         """The recommender proposes one repair per competency; a second sheet

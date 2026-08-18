@@ -4,7 +4,7 @@ import { requireParent } from '../../../lib/session';
 import { InterfaceState } from '../../../components/ui/interface-state';
 import { AddChildForm } from '../../../components/parent/add-child-form';
 import { ChildAccessButton } from '../../../components/parent/child-access-button';
-import type { ChildProfile, ParentProfile } from '../../../lib/types';
+import type { ChildProfile, LevelChoice, ParentProfile } from '../../../lib/types';
 
 export const metadata = { title: 'Mes enfants' };
 
@@ -23,9 +23,10 @@ const STATUS: Record<ChildProfile['status'], { label: string; className: string 
  */
 export default async function EnfantsPage() {
   await requireParent();
-  const [children, parent] = await Promise.all([
+  const [children, parent, classes] = await Promise.all([
     api<ChildProfile[]>('/auth/children'),
     api<ParentProfile>('/auth/me'),
+    api<LevelChoice[]>('/auth/classes'),
   ]);
 
   if (!children.ok) {
@@ -51,7 +52,7 @@ export default async function EnfantsPage() {
       </header>
 
       <div className="mb-4">
-        <AddChildForm />
+        <AddChildForm levels={classes.ok ? classes.data : []} />
       </div>
 
       {children.data.length === 0 ? (

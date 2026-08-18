@@ -12,6 +12,7 @@ from sqlalchemy import (
     Date,
     DateTime,
     ForeignKey,
+    Index,
     String,
     UniqueConstraint,
     func,
@@ -103,6 +104,17 @@ class Child(Base):
     display_name: Mapped[str] = mapped_column(String(100), nullable=False)
     pin_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     date_of_birth: Mapped[date | None] = mapped_column(Date, nullable=True)
+    # La classe où l'élève se trouve aujourd'hui, par son code de niveau.
+    #
+    # Nullable, et pas par commodité : un profil ouvert avant que la plateforme
+    # ne demande la classe existe, et lui en attribuer une d'office serait
+    # affirmer sur un enfant réel quelque chose que personne n'a dit. Une classe
+    # absente veut dire « pas encore déclarée », et l'interface la réclame.
+    #
+    # Aucune clé étrangère vers `ref_levels` : un niveau appartient à une édition
+    # du référentiel, alors que la classe d'un enfant lui survit. C'est le même
+    # raisonnement qu'ADR-013 pour le catalogue.
+    level_code: Mapped[str | None] = mapped_column(String(50), nullable=True)
     status: Mapped[str] = mapped_column(
         String(16),
         nullable=False,
@@ -120,3 +132,51 @@ class Child(Base):
     )
 
     parent: Mapped[Parent] = relationship(back_populates="children")
+
+
+class ChildPromotion(Base):
+    """Le passage d'un élève dans la classe supérieure, gardé comme un fait.
+
+    Le dossier d'un élève le suit toute sa scolarité, et une plateforme qui se
+    contenterait d'écraser sa classe perdrait ce qui donne son sens à
+    l'historique : savoir qu'une lacune a été observée **en CE1** n'a pas le même
+    poids selon qu'elle l'a été alors qu'il était en CE1 ou trois ans plus tard.
+
+    Chaque passage est donc une ligne, et rien ici ne se met à jour. Le parent
+    qui s'est trompé de bouton fait un passage de plus ; il ne réécrit pas le
+    précédent, exactement comme une observation n'écrase jamais l'historique.
+
+    Le passage est **décidé par le parent**. La plateforme ne fait pas passer un
+    enfant de classe toute seule : elle ne connaît ni son école, ni son année
+    scolaire, ni ce qu'un conseil de maîtres a décidé.
+    """
+
+    __tablename__ = "auth_child_promotions"
+    __table_args__ = (
+        CheckConstraint(
+            "from_level_code IS NULL OR from_level_code <> to_level_code",
+            name="ck_auth_child_promotions_moves",
+        ),
+        Index("ix_auth_child_promotions_child", "child_id", "decided_at"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    child_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("auth_children.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    decided_by_parent_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("auth_parents.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    # Nul au tout premier enregistrement : un enfant qui déclare sa classe à
+    # l'inscription ne vient d'aucune classe précédente sur cette plateforme.
+    from_level_code: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    to_level_code: Mapped[str] = mapped_column(String(50), nullable=False)
+    decided_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )

@@ -34,6 +34,8 @@ TEST_CODE_PREFIX = "test-exam-"
 COMPETENCY = f"test-comp-{uuid.uuid4().hex[:8]}"
 PASSWORD = "correct-horse-battery"
 PIN = "428173"
+# La classe des élèves de ce module, et celle de l'examen qu'il installe.
+LEVEL = "cp"
 
 ASSESSMENT_URL = "/api/v1/me/assessment"
 MY_ACTIVITIES_URL = "/api/v1/me/activities"
@@ -58,6 +60,9 @@ def assessment(engine: Engine) -> Iterator[str]:
             kind=ACTIVITY_KIND_ASSESSMENT,
             status=ACTIVITY_STATUS_PUBLISHED,
             duration_minutes=5,
+            # La classe que cet examen interroge : il y en a un par classe, et
+            # c'est ce champ qui décide lequel un élève reçoit.
+            level_code=LEVEL,
         )
         session.add(row)
         session.flush()
@@ -138,7 +143,12 @@ class Family:
         """A profile the parent opens herself: usable straight away."""
         created = self.as_parent().post(
             "/api/v1/auth/children",
-            json={"pseudonym": pseudonym, "pin": PIN, "display_name": "Léa"},
+            json={
+                "pseudonym": pseudonym,
+                "pin": PIN,
+                "display_name": "Léa",
+                "level_code": "cp",
+            },
         )
         assert created.status_code == 201, created.text
         return dict(created.json())
@@ -152,6 +162,7 @@ class Family:
                 "pseudonym": pseudonym,
                 "pin": PIN,
                 "display_name": "Tom",
+                "level_code": "cp",
             },
         )
         assert created.status_code == 201, created.text
@@ -173,7 +184,15 @@ class Family:
 
 
 @pytest.fixture
-def family(client: TestClient) -> Family:
+def family(client: TestClient, assessment: str) -> Family:
+    """La famille est construite **après** l'examen, et cette dépendance compte.
+
+    Créer un profil utilisable est ce qui lui donne son examen. Tant qu'il n'en
+    existait qu'un seul dans toute la base, l'ordre des fixtures n'avait aucune
+    importance : l'enfant recevait celui-là quoi qu'il arrive. Avec un examen par
+    classe, un enfant créé avant celui de ce module reçoit celui d'à côté, et le
+    test mesure autre chose que ce qu'il croit.
+    """
     return Family(client)
 
 

@@ -159,7 +159,12 @@ class Family:
         self.pseudonym = f"lea{uuid.uuid4().hex[:6]}"
         child = client.post(
             "/api/v1/auth/children",
-            json={"pseudonym": self.pseudonym, "pin": PIN, "display_name": "Léa"},
+            json={
+                "pseudonym": self.pseudonym,
+                "pin": PIN,
+                "display_name": "Léa",
+                "level_code": "cp",
+            },
         )
         assert child.status_code == 201
         self.child_id = child.json()["id"]

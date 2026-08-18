@@ -1,13 +1,20 @@
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { ChildSignUpForm } from '../../../components/auth/child-sign-up-form';
+import { api } from '../../../lib/api';
+import type { LevelChoice } from '../../../lib/types';
 
 export const metadata = {
   title: 'Rejoindre sa famille',
   description: 'Créer un profil Élève avec le code de sa famille',
 };
 
-export default function InscriptionElevePage() {
+export default async function InscriptionElevePage() {
+  // La liste des classes vient de l'édition en vigueur, pas d'une constante
+  // dans l'interface : les niveaux appartiennent au référentiel, et une page qui
+  // les invente contredit la première édition qui ne lui ressemble pas.
+  const classes = await api<LevelChoice[]>('/auth/classes');
+
   return (
     <main className="sc-student-page container py-5">
       <Link href="/" className="d-inline-flex align-items-center gap-2 mb-5">
@@ -31,7 +38,7 @@ export default function InscriptionElevePage() {
 
         <div className="col-lg-6 col-xl-5">
           <div className="sc-feuille-auth">
-            <ChildSignUpForm />
+            <ChildSignUpForm levels={classes.ok ? classes.data : []} />
           </div>
 
           <p className="mt-4 mb-0 text-secondary">
