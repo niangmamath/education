@@ -27,7 +27,7 @@ export default async function ConnexionParentPage({
 
   return (
     <main className="container py-5">
-      <Link href="/" className="d-inline-flex align-items-center gap-2 mb-5">
+      <Link href="/" className="sc-lien-retour mb-5">
         <ArrowLeft size={18} aria-hidden="true" />
         Retour à l’accueil
       </Link>

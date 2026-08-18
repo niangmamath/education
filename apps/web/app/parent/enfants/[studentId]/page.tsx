@@ -99,7 +99,7 @@ export default async function EnfantPage({
 
   return (
     <>
-      <Link href="/parent/enfants" className="d-inline-flex align-items-center gap-2 mb-3">
+      <Link href="/parent/enfants" className="sc-lien-retour mb-3">
         <ArrowLeft size={18} aria-hidden="true" />
         Tous les enfants
       </Link>
