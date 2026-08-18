@@ -86,17 +86,25 @@ Notez les deux adresses affichées.
 
 ### 3. Dire à la plateforme quelles sont ses adresses publiques
 
-Dans `.env`, à la racine :
+Dans `.env`, à la racine, **deux** variables et pas une :
 
 ```dotenv
 CONTENT_ORIGIN_URL=https://VOTRE-CONTENU.ngrok-free.app
+WEB_ORIGIN=https://VOTRE-WEB.ngrok-free.app
 ```
 
-Cette adresse part dans l'iframe, donc dans le navigateur : elle doit être celle
-que le navigateur peut joindre, pas `localhost`.
+`CONTENT_ORIGIN_URL` part dans l'iframe, donc dans le navigateur : elle doit être
+celle que le navigateur peut joindre, pas `localhost`.
+
+`WEB_ORIGIN` est **la seule origine autorisée à afficher un contenu dans un
+cadre**, par l'en-tête `frame-ancestors` de l'origine de contenu. Sans elle, la
+valeur reste `http://localhost:3000` et **le navigateur refuse d'afficher le
+cadre H5P** — sans rien écrire dans les journaux du serveur, puisque c'est le
+navigateur qui refuse, pas nginx. C'est le pendant exact de `PUBLIC_HOST` : deux
+protections utiles qui, mal renseignées, ressemblent à une panne.
 
 ```bash
-docker compose restart api
+docker compose up -d api content
 ```
 
 ### 4. Démarrer le web en lui donnant son hôte public
@@ -122,8 +130,9 @@ c'est ce qui prouve que le tunnel sert vraiment :
 2. la connexion parent aboutit — si elle échoue, `PUBLIC_HOST` est en cause ;
 3. l'espace enfant montre l'examen ;
 4. une fiche de remédiation s'ouvre et répond ;
-5. une activité H5P se joue — si le cadre reste vide, `CONTENT_ORIGIN_URL` est
-   resté sur `localhost`.
+5. une activité H5P se joue. Si le cadre reste vide, ouvrez la console du
+   navigateur : « Refused to frame » désigne `WEB_ORIGIN`, une erreur de
+   chargement désigne `CONTENT_ORIGIN_URL`.
 
 ## Ce qu'il faudra faire un jour
 
