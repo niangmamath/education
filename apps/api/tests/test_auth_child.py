@@ -770,6 +770,61 @@ class TestProfileLifecycle:
         )
 
 
+class TestChildRenaming:
+    """`PUT /children/{child_id}` renames the profile, never the pseudonym."""
+
+    def test_a_parent_renames_a_child(self, client: TestClient) -> None:
+        parent = sign_in_parent(client)
+        chosen = pseudonym()
+        child_id = create_child(client, chosen, display_name="Ancien nom").json()["id"]
+
+        use_session(client, parent.token)
+        response = client.put(
+            f"{CHILDREN_URL}/{child_id}", json={"display_name": "Nouveau nom"}
+        )
+
+        assert response.status_code == 200
+        assert response.json()["display_name"] == "Nouveau nom"
+        assert response.json()["pseudonym"] == chosen
+        # The pseudonym is untouched, so the family still logs in the same way.
+        assert child_login(client, parent.family_code, chosen).status_code == 200
+
+    def test_renaming_is_reserved_to_the_parent(self, client: TestClient) -> None:
+        parent = sign_in_parent(client)
+        chosen = pseudonym()
+        child_id = create_child(client, chosen).json()["id"]
+
+        client.cookies.clear()
+        assert (
+            client.put(
+                f"{CHILDREN_URL}/{child_id}", json={"display_name": "Nouveau nom"}
+            ).status_code
+            == 401
+        )
+
+        child_login(client, parent.family_code, chosen)
+        assert (
+            client.put(
+                f"{CHILDREN_URL}/{child_id}", json={"display_name": "Nouveau nom"}
+            ).status_code
+            == 403
+        )
+
+    def test_another_family_reaches_none_of_them(self, client: TestClient) -> None:
+        sign_in_parent(client)
+        foreign_id = create_child(client).json()["id"]
+
+        other = sign_in_parent(client)
+        use_session(client, other.token)
+
+        assert (
+            client.put(
+                f"{CHILDREN_URL}/{foreign_id}", json={"display_name": "Nouveau nom"}
+            ).status_code
+            == 404
+        )
+
+
 class TestChildChangingItsOwnPin:
     def test_a_child_changes_its_pin_against_the_current_one(
         self, client: TestClient

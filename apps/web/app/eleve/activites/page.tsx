@@ -4,6 +4,7 @@ import { api } from '../../../lib/api';
 import { requireChild } from '../../../lib/session';
 import { InterfaceState } from '../../../components/ui/interface-state';
 import { StartActivityButton } from '../../../components/eleve/start-activity-button';
+import { ActivityHistory } from '../../../components/eleve/activity-history';
 import type { ChildAssignment } from '../../../lib/types';
 
 export const metadata = { title: 'Mes activités' };
@@ -57,38 +58,45 @@ export default async function MesActivitesPage() {
           description="Quand un adulte t’en donnera une, elle apparaîtra ici."
         />
       ) : (
-        <div className="row g-3">
-          {[...owed, ...done].map((row) => (
-            <div className="col-12 col-lg-6" key={row.id}>
-              <article className="card h-100 border-0 shadow-sm">
-                <div className="card-body p-4">
-                  <span
-                    className={`mb-2 sc-etat ${
-                      row.status === 'completed' ? 'sc-etat-acquis' : 'sc-etat-travail'
-                    }`}
-                  >
-                    {LABELS[row.status] ?? row.status}
-                  </span>
-                  <h2 className="h5">{row.activity.title}</h2>
-                  {row.note ? <p className="text-secondary small">{row.note}</p> : null}
-                  <p className="d-flex align-items-center gap-2 small text-secondary">
-                    <Clock3 size={16} aria-hidden="true" />
-                    Environ {row.activity.duration_minutes} minutes
-                  </p>
+        <>
+          {owed.length > 0 ? (
+            <div className="row g-3">
+              {owed.map((row) => (
+                <div className="col-12 col-lg-6" key={row.id}>
+                  <article className="card h-100 border-0 shadow-sm">
+                    <div className="card-body p-4">
+                      <span className="mb-2 sc-etat sc-etat-travail">
+                        {LABELS[row.status] ?? row.status}
+                      </span>
+                      <h2 className="h5">{row.activity.title}</h2>
+                      {row.note ? (
+                        <p className="text-secondary small">{row.note}</p>
+                      ) : null}
+                      <p className="d-flex align-items-center gap-2 small text-secondary">
+                        <Clock3 size={16} aria-hidden="true" />
+                        Environ {row.activity.duration_minutes} minutes
+                      </p>
 
-                  {row.status === 'assigned' ? (
-                    <StartActivityButton assignmentId={row.id} label="Commencer" />
-                  ) : null}
-                  {row.status === 'in_progress' ? (
-                    <Link href={`/eleve/activites/${row.id}`} className="btn btn-primary">
-                      Reprendre
-                    </Link>
-                  ) : null}
+                      {row.status === 'assigned' ? (
+                        <StartActivityButton assignmentId={row.id} label="Commencer" />
+                      ) : null}
+                      {row.status === 'in_progress' ? (
+                        <Link
+                          href={`/eleve/activites/${row.id}`}
+                          className="btn btn-primary"
+                        >
+                          Reprendre
+                        </Link>
+                      ) : null}
+                    </div>
+                  </article>
                 </div>
-              </article>
+              ))}
             </div>
-          ))}
-        </div>
+          ) : null}
+
+          <ActivityHistory items={done} />
+        </>
       )}
     </>
   );

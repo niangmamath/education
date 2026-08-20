@@ -1,6 +1,7 @@
 import { api } from '../../../lib/api';
 import { requireParent } from '../../../lib/session';
 import { InterfaceState } from '../../../components/ui/interface-state';
+import { ProfileControls } from '../../../components/parent/profile-controls';
 import type { ParentProfile } from '../../../lib/types';
 
 export const metadata = { title: 'Paramètres et règles' };
@@ -57,6 +58,8 @@ export default async function ParametresPage() {
           )}
         </div>
       </section>
+
+      {parent.ok ? <ProfileControls displayName={parent.data.display_name} /> : null}
 
       <div className="alert alert-secondary" role="note">
         <strong>Ces règles ne se règlent pas.</strong> Décider du seuil à partir

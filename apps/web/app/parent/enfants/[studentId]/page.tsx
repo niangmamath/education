@@ -5,6 +5,7 @@ import { requireParent } from '../../../../lib/session';
 import { InterfaceState } from '../../../../components/ui/interface-state';
 import { ApplyRemediationButton } from '../../../../components/parent/apply-remediation-button';
 import { LevelControls } from '../../../../components/parent/level-controls';
+import { ChildProfileControls } from '../../../../components/parent/child-profile-controls';
 import { PrerequisiteThread } from '../../../../components/ui/prerequisite-thread';
 import { OUTCOME_CLASSES, OUTCOME_LABELS } from '../../../../lib/types';
 import type {
@@ -126,6 +127,8 @@ export default async function EnfantPage({
         }
         levels={classes.ok ? classes.data : []}
       />
+
+      <ChildProfileControls childId={studentId} displayName={child.display_name} />
 
       <section className="card mb-4">
         <div className="card-body p-4">

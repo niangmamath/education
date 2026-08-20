@@ -344,6 +344,26 @@ class TestImportingLibrariesFromAPackage:
         assert report.added == ["H5P.Blanks-1.14", "H5P.Question-1.5"]
         assert (prepared / "H5P.Blanks-1.14" / "library.json").is_file()
 
+    def test_every_file_of_a_multi_file_library_survives(self, tmp_path: Path) -> None:
+        """The bug this pins: `.exists()` checked live inside the loop found the
+        folder the first file of the same library had just created, and skipped
+        every entry after it — a real H5P library ships `library.json`,
+        `semantics.json` and a `dist/` bundle, not just one file."""
+        prepared = tmp_path / "libraries"
+        prepared.mkdir()
+        with zipfile.ZipFile(tmp_path / "essai.h5p", "w") as archive:
+            archive.writestr("h5p.json", json.dumps({"title": "Essai"}))
+            archive.writestr("content/content.json", "{}")
+            archive.writestr("H5P.Dictation-1.3/library.json", "{}")
+            archive.writestr("H5P.Dictation-1.3/semantics.json", "[]")
+            archive.writestr("H5P.Dictation-1.3/dist/h5p-dictation.js", "//")
+
+        deploy.merge_libraries(prepared, tmp_path / "essai.h5p")
+
+        assert (prepared / "H5P.Dictation-1.3" / "library.json").is_file()
+        assert (prepared / "H5P.Dictation-1.3" / "semantics.json").is_file()
+        assert (prepared / "H5P.Dictation-1.3" / "dist" / "h5p-dictation.js").is_file()
+
     def test_a_second_package_does_not_take_the_first_one_s_libraries_away(
         self, tmp_path: Path
     ) -> None:

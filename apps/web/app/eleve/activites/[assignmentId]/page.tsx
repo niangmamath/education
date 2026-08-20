@@ -71,6 +71,14 @@ export default async function JouerPage({
     ? attempts.data.find((row) => row.status === 'in_progress')
     : undefined;
 
+  // Once finished, an activity has nothing left to play — only something to
+  // read back, and that page already exists: it's where finishing an attempt
+  // sends her. This applies before the per-kind branches below, so an H5P
+  // exercise and a remediation fiche end up at the same address once done.
+  if (assignment.status === 'completed') {
+    redirect(`/eleve/activites/${assignmentId}/resultat`);
+  }
+
   // Une fiche de remédiation est écrite ici, comme l'examen : elle se lit et se
   // répond sur cette page, sans cadre et sans origine de contenu. C'est aussi
   // pourquoi elle fonctionne là où le runtime H5P n'est pas déployé.
@@ -91,20 +99,8 @@ export default async function JouerPage({
         <InterfaceState
           kind="empty"
           title="Cette activité n’est pas ouverte"
-          description={
-            assignment.status === 'completed'
-              ? 'Tu l’as déjà terminée. Bravo !'
-              : 'Appuie sur le bouton pour la commencer.'
-          }
-          action={
-            assignment.status === 'completed' ? (
-              <Link href="/eleve/activites" className="btn btn-outline-primary">
-                Voir mes activités
-              </Link>
-            ) : (
-              <StartActivityButton assignmentId={assignmentId} label="Commencer" />
-            )
-          }
+          description="Appuie sur le bouton pour la commencer."
+          action={<StartActivityButton assignmentId={assignmentId} label="Commencer" />}
         />
       </>
     );
@@ -167,17 +163,9 @@ async function FichePage({
       <>
         <h1 className="h3 mb-3">{assignment.activity.title}</h1>
         <InterfaceState
-          kind={assignment.status === 'completed' ? 'success' : 'unavailable'}
-          title={
-            assignment.status === 'completed'
-              ? 'Tu l’as déjà terminée'
-              : 'Cette fiche n’a pas pu être ouverte'
-          }
-          description={
-            assignment.status === 'completed'
-              ? 'Bravo. Tu peux en reprendre une autre quand tu veux.'
-              : fiche.message
-          }
+          kind="unavailable"
+          title="Cette fiche n’a pas pu être ouverte"
+          description={fiche.message}
           action={
             <Link href="/eleve/activites" className="btn btn-outline-primary">
               Voir mes activités

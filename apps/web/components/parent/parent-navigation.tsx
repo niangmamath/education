@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Bell, BookOpen, Users, House, Settings } from 'lucide-react';
+import { Bell, BookOpen, LineChart, Users, House, Settings } from 'lucide-react';
 
 const items = [
   { href: '/parent', label: 'Accueil', icon: House, exact: true },
   { href: '/parent/enfants', label: 'Enfants', icon: Users },
   { href: '/parent/activites', label: 'Activités', icon: BookOpen },
+  { href: '/parent/progression', label: 'Progression', icon: LineChart },
   { href: '/parent/notifications', label: 'Ce qui a changé', icon: Bell },
   { href: '/parent/parametres', label: 'Paramètres', icon: Settings },
 ];

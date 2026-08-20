@@ -1508,7 +1508,25 @@ Base        : 12 compétences, examen à 12 questions, 12 fiches à 4 questions
 - [x] Quatre simulations PhET retenues, chacune adossée aux compétences
       qu'elle sert réellement plutôt qu'à la matière en général.
 
+## Détour du 2026-08-20
+
+Pendant que le propriétaire fabriquait ses premiers paquets H5P, la session a
+dévié en support direct : dépose et correction de quatre paquets
+(`ci-fr-sons`, `cp-fr-syllabes`, `cp-fr-phonemes`), un rattachement de
+compétence erroné corrigé (`ci-fr-lettres` → `ci-fr-sons`), un bug sérieux de
+troncature des bibliothèques H5P corrigé (`merge_libraries`), les listes
+d'activités et la progression retravaillées (recherche, tri par date, graphes,
+détail cliquable), et les Paramètres enfin dotés de formulaires (renommer,
+changer de mot de passe, renommer un enfant, réinitialiser un PIN).
+
+Rapport complet :
+[`steps/detour_2026-08-20_contenu_h5p_et_ux/rapport_2026-08-20_1900_contenu_h5p_et_ux.md`](detour_2026-08-20_contenu_h5p_et_ux/rapport_2026-08-20_1900_contenu_h5p_et_ux.md).
+
+Rien de ce détour n'est fusionné sur `main` : le propriétaire a demandé
+d'attendre la fin de sa fabrication de paquets avant d'ouvrir une Pull Request.
+
 ## Prochaine action
 
-Le propriétaire fabrique et télécharge les fichiers H5P selon cette liste.
+Clore le détour ci-dessus (contrôles complets, une seule Pull Request), puis
+le propriétaire reprend la fabrication des fichiers H5P selon la liste.
 Ensuite : ouvrir l'étape 14, notifications.

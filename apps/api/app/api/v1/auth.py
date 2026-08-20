@@ -38,13 +38,16 @@ from app.core.sessions import (
     PARENT_USER_TYPE,
     create_session,
     delete_session,
+    revoke_user_sessions,
 )
 from app.models import Child, Parent
 from app.models.identity import CHILD_STATUS_ACTIVE
 from app.schemas.auth import (
     ParentLoginRequest,
+    ParentPasswordChangeRequest,
     ParentPublic,
     ParentRegisterRequest,
+    ParentUpdateRequest,
     SessionPublic,
 )
 
@@ -195,6 +198,44 @@ async def logout(
 @router.get("/me", response_model=ParentPublic)
 async def read_current_parent(parent: CurrentParent) -> Parent:
     """Return the parent behind the current session."""
+    return parent
+
+
+@router.put("/me", response_model=ParentPublic)
+async def update_parent(
+    payload: ParentUpdateRequest, parent: CurrentParent, db: DbSession
+) -> Parent:
+    """Rename a parent's own profile. See `ParentUpdateRequest` for why this
+    route touches nothing else."""
+    parent.display_name = payload.display_name
+    await db.commit()
+    await db.refresh(parent)
+    return parent
+
+
+@router.put("/me/password", response_model=ParentPublic)
+async def change_parent_password(
+    payload: ParentPasswordChangeRequest,
+    parent: CurrentParent,
+    db: DbSession,
+    client: RedisClient,
+    token: SessionToken,
+) -> Parent:
+    """Change a password, never without the one it replaces.
+
+    Every other session this parent holds is revoked once the new password is
+    set — a laptop left signed in elsewhere should not outlive the password
+    that opened it — except the one making this request, which just proved
+    itself with the current password and needs no second proof.
+    """
+    if not verify_password(payload.current_password.get_secret_value(), parent.password_hash):
+        raise AuthenticationException(message=INVALID_CREDENTIALS_MESSAGE)
+
+    parent.password_hash = hash_password(payload.new_password.get_secret_value())
+    await db.commit()
+    await db.refresh(parent)
+
+    await revoke_user_sessions(client, parent.id, except_token=token)
     return parent
 
 

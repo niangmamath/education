@@ -1,7 +1,7 @@
 import { api } from '../../../lib/api';
 import { requireChild } from '../../../lib/session';
 import { InterfaceState } from '../../../components/ui/interface-state';
-import { OUTCOME_CLASSES, OUTCOME_LABELS } from '../../../lib/types';
+import { ProgressCharts } from '../../../components/eleve/progress-charts';
 import type { Progress } from '../../../lib/types';
 
 export const metadata = { title: 'Ma progression' };
@@ -16,7 +16,9 @@ export const metadata = { title: 'Ma progression' };
  *
  * Nothing has an order of merit. The competencies are listed as the API returns
  * them, by code, and not sorted worst-first: a page that opened on failures
- * would be a page about failing.
+ * would be a page about failing. `ProgressCharts` can filter by outcome on a
+ * click, but filtering is not sorting — it only changes which rows show, never
+ * the order they show in.
  */
 export default async function ProgressionPage() {
   await requireChild();
@@ -52,19 +54,7 @@ export default async function ProgressionPage() {
           description="Termine une activité et tu verras apparaître ce qu’elle a montré."
         />
       ) : (
-        <ul className="list-group">
-          {competencies.map((row) => (
-            <li className="list-group-item py-3" key={row.competency_code}>
-              <div className="d-flex flex-wrap align-items-center gap-2 mb-1">
-                <span className={`${OUTCOME_CLASSES[row.latest_outcome]}`}>
-                  {OUTCOME_LABELS[row.latest_outcome]}
-                </span>
-                <span className="fw-semibold">{row.competency_code}</span>
-              </div>
-              <p className="text-secondary small mb-0">{row.explanation}</p>
-            </li>
-          ))}
-        </ul>
+        <ProgressCharts competencies={competencies} />
       )}
     </>
   );

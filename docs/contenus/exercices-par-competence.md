@@ -33,7 +33,7 @@ leur manque, et c'est toujours la même : entendre.
 
 | Compétence | Ce qui manque | Type H5P | À construire |
 |---|---|---|---|
-| `ci-fr-lettres` | le son de la lettre | **Dictation** | Un son de lettre isolé (« mmm », « sss »…) ; l'enfant écrit ou choisit la lettre entendue. |
+| `ci-fr-sons`\* | le son isolé | **Dictation** | Un son de lettre isolé (« mmm », « sss »…) ; l'enfant écrit ou choisit la lettre entendue. |
 | `cp-fr-syllabes` | compter à l'oreille | **Dictation** | Un mot prononcé entier ; l'enfant tape le nombre de syllabes entendues. |
 | `cp-fr-phonemes` | isoler un son dans un mot | **Dictation** | Un mot prononcé ; l'enfant écrit le premier son entendu, ou choisit parmi trois sons proposés à l'oral. |
 | `cp-fr-mots` | lire à voix réelle | **DragText** | Remettre les syllabes d'un mot illustré dans l'ordre (glisser-déposer), pour la manipulation que le clavier ne donne pas. |
@@ -42,9 +42,23 @@ leur manque, et c'est toujours la même : entendre.
 | `cp-ma-addition` | manipuler pour additionner | **DragQuestion** | Deux groupes d'objets à réunir par glisser-déposer, puis saisir le total — la manipulation physique que taper un nombre ne donne pas. |
 | `ce1-ma-soustraction` | manipuler pour soustraire | **DragQuestion** | Un groupe d'objets dont on retire ceux qui sont barrés/glissés hors du cadre, puis saisir ce qui reste. |
 
-*(`ci-fr-sens`, `cp-ma-ranger`, `ci-ma-chiffres`, `ce1-fr-phrase`, `ce1-ma-probleme`
-n'ont pas de manque sonore ou gestuel qui justifie un second exercice : la fiche
-suffit.)*
+\* `ci-fr-sons` (« Distinguer les sons du langage ») n'a **pas** de fiche native —
+elle n'appartient donc pas vraiment aux douze. Elle est mise ici, en tête, parce
+qu'elle est le prérequis qui bloque toute remédiation sur `cp-fr-syllabes` puis
+`cp-fr-phonemes` : tant qu'elle n'est jamais observée, le moteur de diagnostic
+ne propose rien pour ses deux dépendantes, quel que soit le contenu déposé sur
+elles. Vérifié en le constatant : un enfant CP en échec sur les deux ne recevait
+aucune remédiation tant que `ci-fr-sons` restait sans activité ; `demo-son-ci-fr-sons`
+le corrige.
+
+Attention à ne pas confondre `ci-fr-sons` avec `ci-fr-lettres` (« Reconnaître les
+lettres de l'alphabet ») : celle-ci a bien sa fiche, est purement visuelle, et
+n'a **pas** de manque sonore — c'est un exercice de dictée de sons de lettres qui
+avait été déposé par erreur sous son code avant d'être corrigé.
+
+*(`ci-fr-lettres`, `ci-fr-sens`, `cp-ma-ranger`, `ci-ma-chiffres`, `ce1-fr-phrase`,
+`ce1-ma-probleme` n'ont pas de manque sonore ou gestuel qui justifie un second
+exercice : la fiche suffit.)*
 
 ---
 

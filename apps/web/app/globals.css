@@ -617,6 +617,95 @@ p {
   background: var(--sc-feuille-creuse);
 }
 
+/* Recherche discrète : un champ, une loupe posée dedans, jamais plus large
+   qu'il ne faut pour taper un titre d'activité ou un pseudo. */
+.sc-recherche {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.sc-recherche svg {
+  position: absolute;
+  left: 0.65rem;
+  color: var(--sc-encre-claire);
+  pointer-events: none;
+}
+
+.sc-recherche input {
+  padding-left: 2rem;
+  min-width: 220px;
+}
+
+/* Une activité terminée n'a plus rien à décider : une ligne lui suffit, pas
+   le quart d'un écran. Le motif de carte reste réservé à ce qui attend encore
+   une action. Chaque ligne mène à ses résultats, donc le lien occupe toute la
+   ligne plutôt que le titre seul. */
+.sc-liste-dense .list-group-item {
+  padding: 0;
+}
+
+.sc-liste-dense .list-group-item a {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.5rem 0.9rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.sc-liste-dense .list-group-item a:hover,
+.sc-liste-dense .list-group-item a:focus-visible {
+  background: var(--sc-feuille-creuse);
+}
+
+/* Deux graphes, jamais un classement : la barre empilée est un décompte, les
+   barres par compétence gardent l'ordre de la liste plutôt qu'un tri par
+   score. Bords carrés à la base, arrondis à la pointe, un interstice de 2px
+   entre les segments — jamais un contour pour les séparer. */
+.sc-graphe-empile {
+  display: flex;
+  height: 16px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--sc-papier);
+}
+
+.sc-graphe-empile > span {
+  height: 100%;
+}
+
+.sc-graphe-empile > span:not(:last-child) {
+  margin-right: 2px;
+}
+
+.sc-graphe-barre {
+  display: block;
+  height: 10px;
+  border-radius: 4px;
+  background: var(--sc-feuille-creuse);
+  overflow: hidden;
+}
+
+.sc-graphe-barre > span {
+  display: block;
+  height: 100%;
+  border-radius: 0 4px 4px 0;
+}
+
+.sc-graphe-etiquette {
+  width: 11em;
+  flex-shrink: 0;
+}
+
+.sc-legende-puce {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
 .list-group-item {
   background: var(--sc-feuille);
   border-color: var(--sc-seyes-pale);

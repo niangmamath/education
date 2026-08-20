@@ -214,13 +214,22 @@ export type AnswerFeedback = {
 
 export type NextSteps = { steps: NextStep[]; computed_at: string };
 
+export type AttemptResponse = {
+  id: string;
+  question_ref: string;
+  response: string | null;
+  is_correct: boolean | null;
+  source: string;
+  recorded_at: string;
+};
+
 export type Attempt = {
   id: string;
   assignment_id: string;
   status: 'in_progress' | 'completed' | 'abandoned';
   started_at: string;
   completed_at: string | null;
-  responses: unknown[];
+  responses: AttemptResponse[];
   results: {
     competency_code: string;
     outcome: Outcome;

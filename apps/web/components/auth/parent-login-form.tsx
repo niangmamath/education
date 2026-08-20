@@ -17,6 +17,14 @@ const EMPTY: FormState = { error: null };
  * signing in as a child are different acts with different credentials; giving
  * them one address each lets the browser save and offer the right one, which is
  * what autofill is for.
+ *
+ * That fix is per-page, and a browser's saved-password store is per-site: with
+ * only the child's pseudonym ever saved, Chrome offered it here anyway, into
+ * whichever field looked like a login field — `type="email"` was enough of a
+ * match. `name="email"` is what the standard `autocomplete="email"` token
+ * needs to work for a returning parent, so it stays; the field's `id` is the
+ * one Chrome also weighs when it has no stronger signal, so that one moves to
+ * something a login-field heuristic won't recognise.
  */
 export function ParentLoginForm() {
   const [state, action, pending] = useActionState(loginParent, EMPTY);
@@ -32,11 +40,11 @@ export function ParentLoginForm() {
       ) : null}
 
       <div className="mb-3">
-        <label htmlFor="email" className="form-label">
+        <label htmlFor="parent-email-field" className="form-label">
           Adresse e-mail
         </label>
         <input
-          id="email"
+          id="parent-email-field"
           name="email"
           type="email"
           className="form-control"

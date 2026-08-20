@@ -56,6 +56,41 @@ class ParentRegisterRequest(BaseModel):
         return stripped
 
 
+class ParentUpdateRequest(BaseModel):
+    """What a parent may change about their own profile, on this route.
+
+    Only the name. Email and password each carry a risk this field does not —
+    a changed email breaks the address the account is found by, a changed
+    password should never go through without proving the old one — so both
+    keep routes of their own rather than share a form where a display-name
+    typo would cost as much to fix as a credential.
+    """
+
+    display_name: str = Field(min_length=1, max_length=100)
+
+    @field_validator("display_name")
+    @classmethod
+    def strip_display_name(cls, value: str) -> str:
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError("display_name must not be blank")
+        return stripped
+
+
+class ParentPasswordChangeRequest(BaseModel):
+    """A new password, never accepted without the one it replaces.
+
+    A session cookie proves who is asking, not what they know. Asking for the
+    current password here is what confirms the person at the keyboard is the
+    one who set it — a session left open on a shared computer stops there.
+    """
+
+    current_password: SecretStr
+    new_password: SecretStr = Field(
+        min_length=PASSWORD_MIN_LENGTH, max_length=PASSWORD_MAX_LENGTH
+    )
+
+
 class ParentLoginRequest(BaseModel):
     """Credentials submitted by a parent."""
 
@@ -186,6 +221,27 @@ class ChildCreateRequest(BaseModel):
         if value is not None and value > datetime.now(UTC).date():
             raise ValueError("date_of_birth must not be in the future")
         return value
+
+
+class ChildUpdateRequest(BaseModel):
+    """What a parent may rename about a child's profile: the name, not the key.
+
+    The pseudonym stays out of reach here on purpose. It is what the login
+    route matches against, alongside the family code and PIN; a family used to
+    typing one pseudonym would be locked out by a rename nobody expected.
+    `display_name` is only ever shown, never matched against, so changing it
+    costs nothing anyone is logged in with.
+    """
+
+    display_name: str = Field(min_length=1, max_length=100)
+
+    @field_validator("display_name")
+    @classmethod
+    def strip_display_name(cls, value: str) -> str:
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError("display_name must not be blank")
+        return stripped
 
 
 class LevelChoice(BaseModel):

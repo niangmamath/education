@@ -59,6 +59,7 @@ from app.schemas.auth import (
     ChildPinResetRequest,
     ChildPublic,
     ChildSelfRegisterRequest,
+    ChildUpdateRequest,
 )
 
 router = APIRouter()
@@ -196,6 +197,22 @@ async def list_children(parent: CurrentParent, db: DbSession) -> Sequence[Child]
         .order_by(Child.created_at, Child.id)
     )
     return result.all()
+
+
+@router.put("/children/{child_id}", response_model=ChildPublic)
+async def update_child(
+    child_id: uuid.UUID,
+    payload: ChildUpdateRequest,
+    parent: CurrentParent,
+    db: DbSession,
+) -> Child:
+    """Rename a child's profile. See `ChildUpdateRequest` for why the
+    pseudonym is out of reach here."""
+    child = await _own_child(db, parent.id, child_id)
+    child.display_name = payload.display_name
+    await db.commit()
+    await db.refresh(child)
+    return child
 
 
 async def _own_child(db: DbSession, parent_id: uuid.UUID, child_id: uuid.UUID) -> Child:

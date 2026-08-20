@@ -81,6 +81,8 @@ export default async function ParentHomePage() {
             const diagnostic = result.ok ? result.data : null;
             const actionable =
               diagnostic?.localized_gaps.filter((gap) => gap.blocked_by === null) ?? [];
+            const deferred =
+              diagnostic?.localized_gaps.filter((gap) => gap.blocked_by !== null) ?? [];
 
             return (
               <div className="col-12 col-lg-6" key={child.id}>
@@ -101,12 +103,20 @@ export default async function ParentHomePage() {
                       </p>
                     )}
 
-                    {actionable.length > 0 ? (
-                      <p className="mb-3">
-                        <span className="sc-etat sc-etat-travail">
-                          <AlertTriangle size={15} aria-hidden="true" />
-                          {actionable.length} point{actionable.length > 1 ? 's' : ''} à travailler
-                        </span>
+                    {actionable.length > 0 || deferred.length > 0 ? (
+                      <p className="mb-3 d-flex flex-wrap align-items-center gap-2">
+                        {actionable.length > 0 ? (
+                          <span className="sc-etat sc-etat-travail">
+                            <AlertTriangle size={15} aria-hidden="true" />
+                            {actionable.length} point{actionable.length > 1 ? 's' : ''} à
+                            travailler
+                          </span>
+                        ) : null}
+                        {deferred.length > 0 ? (
+                          <span className="text-secondary small">
+                            + {deferred.length} en attente d’un prérequis
+                          </span>
+                        ) : null}
                       </p>
                     ) : null}
 

@@ -167,6 +167,13 @@ def merge_libraries(prepared: Path, package: Path) -> LibraryImport:
 
     found: set[str] = set()
     added: set[str] = set()
+    # Fixed before the loop touches the filesystem: a library usually spans many
+    # entries (`library.json`, `semantics.json`, `dist/*.js`...), and the first
+    # one written creates the folder this same check reads. Asking `.exists()`
+    # live inside the loop found that folder it had just created and skipped
+    # every other entry of the very library it was adding — leaving one file
+    # behind and nothing to play.
+    already_present = {path.name for path in prepared.iterdir() if path.is_dir()}
     with zipfile.ZipFile(package) as archive:
         entries = archive.infolist()
         if len(entries) > MAX_ENTRIES:
@@ -185,7 +192,7 @@ def merge_libraries(prepared: Path, package: Path) -> LibraryImport:
             if library is None:
                 continue
             found.add(library)
-            if (prepared / library).exists():
+            if library in already_present:
                 continue
 
             added.add(library)

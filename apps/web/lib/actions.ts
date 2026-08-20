@@ -440,6 +440,104 @@ export async function setChildLevel(
   return { error: null };
 }
 
+export async function updateParentProfile(
+  _: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const store = await cookies();
+  const displayName = String(formData.get('display_name') ?? '').trim();
+
+  if (!displayName) {
+    return { error: 'Le nom ne peut pas être vide.' };
+  }
+
+  const done = await apiWithToken('/auth/me', store.get(SESSION_COOKIE)?.value, {
+    method: 'PUT',
+    body: { display_name: displayName },
+  });
+
+  if (!done.ok) {
+    return { error: done.message };
+  }
+
+  revalidatePath('/parent', 'layout');
+  return { error: null };
+}
+
+export async function changeParentPassword(
+  _: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const store = await cookies();
+  const currentPassword = String(formData.get('current_password') ?? '');
+  const newPassword = String(formData.get('new_password') ?? '');
+  const confirmPassword = String(formData.get('confirm_password') ?? '');
+
+  if (newPassword !== confirmPassword) {
+    return { error: 'Les deux mots de passe ne correspondent pas.' };
+  }
+
+  const done = await apiWithToken('/auth/me/password', store.get(SESSION_COOKIE)?.value, {
+    method: 'PUT',
+    body: { current_password: currentPassword, new_password: newPassword },
+  });
+
+  if (!done.ok) {
+    return { error: done.message };
+  }
+
+  return { error: null };
+}
+
+export async function updateChildName(
+  childId: string,
+  _: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const store = await cookies();
+  const displayName = String(formData.get('display_name') ?? '').trim();
+
+  if (!displayName) {
+    return { error: 'Le nom ne peut pas être vide.' };
+  }
+
+  const done = await apiWithToken(
+    `/auth/children/${childId}`,
+    store.get(SESSION_COOKIE)?.value,
+    { method: 'PUT', body: { display_name: displayName } },
+  );
+
+  if (!done.ok) {
+    return { error: done.message };
+  }
+
+  revalidatePath(`/parent/enfants/${childId}`);
+  revalidatePath('/parent/enfants');
+  revalidatePath('/parent');
+  return { error: null };
+}
+
+export async function resetChildPin(
+  childId: string,
+  _: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const store = await cookies();
+  const pin = String(formData.get('pin') ?? '');
+
+  const done = await apiWithToken(
+    `/auth/children/${childId}/pin`,
+    store.get(SESSION_COOKIE)?.value,
+    { method: 'PUT', body: { pin } },
+  );
+
+  if (!done.ok) {
+    return { error: done.message };
+  }
+
+  return { error: null };
+}
+
 /**
  * Give the activities the platform proposes for one child.
  *

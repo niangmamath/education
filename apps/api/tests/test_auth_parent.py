@@ -275,6 +275,73 @@ class TestSessionAccess:
         assert "password_hash" not in response.json()
 
 
+class TestProfileUpdate:
+    def test_a_parent_renames_their_own_profile(
+        self, client: TestClient, email: str
+    ) -> None:
+        register(client, email)
+        login(client, email)
+
+        response = client.put(ME_URL, json={"display_name": "Nouveau nom"})
+
+        assert response.status_code == 200
+        assert response.json()["display_name"] == "Nouveau nom"
+        assert client.get(ME_URL).json()["display_name"] == "Nouveau nom"
+
+    def test_renaming_refuses_a_caller_without_a_cookie(self, client: TestClient) -> None:
+        response = client.put(ME_URL, json={"display_name": "Nouveau nom"})
+        assert response.status_code == 401
+
+    def test_a_parent_changes_their_password(
+        self, client: TestClient, email: str
+    ) -> None:
+        register(client, email)
+        login(client, email)
+
+        response = client.put(
+            f"{ME_URL}/password",
+            json={"current_password": VALID_PASSWORD, "new_password": "un-autre-mot-de-passe"},
+        )
+
+        assert response.status_code == 200
+        assert login(client, email, "un-autre-mot-de-passe").status_code == 200
+        assert login(client, email, VALID_PASSWORD).status_code == 401
+
+    def test_changing_password_refuses_the_wrong_current_one(
+        self, client: TestClient, email: str
+    ) -> None:
+        register(client, email)
+        login(client, email)
+
+        response = client.put(
+            f"{ME_URL}/password",
+            json={"current_password": WRONG_PASSWORD, "new_password": "un-autre-mot-de-passe"},
+        )
+
+        assert response.status_code == 401
+        assert login(client, email, VALID_PASSWORD).status_code == 200
+
+    def test_changing_password_revokes_every_other_session(
+        self, client: TestClient, email: str, redis_client: sync_redis.Redis
+    ) -> None:
+        register(client, email)
+        elsewhere_token = login(client, email).cookies[settings.SESSION_COOKIE_NAME]
+        here_token = login(client, email).cookies[settings.SESSION_COOKIE_NAME]
+        client.cookies.set(settings.SESSION_COOKIE_NAME, here_token)
+
+        response = client.put(
+            f"{ME_URL}/password",
+            json={
+                "current_password": VALID_PASSWORD,
+                "new_password": "un-autre-mot-de-passe",
+            },
+        )
+
+        assert response.status_code == 200
+        assert client.get(ME_URL).status_code == 200
+        assert redis_client.exists(f"session:{hash_session_token(elsewhere_token)}") == 0
+
+
 class TestLogout:
     def test_logout_revokes_the_session_everywhere(
         self, client: TestClient, email: str, redis_client: sync_redis.Redis
