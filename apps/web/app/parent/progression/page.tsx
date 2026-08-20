@@ -77,7 +77,10 @@ export default async function ParentProgressionPage() {
                 description="Rien n’a encore été terminé."
               />
             ) : (
-              <ProgressCharts competencies={progress.data.competencies} linkBase={null} />
+              <ProgressCharts
+                competencies={progress.data.competencies}
+                linkBase={`/parent/enfants/${child.id}/competences`}
+              />
             )}
           </section>
         );

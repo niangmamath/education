@@ -48,6 +48,28 @@ export function ProgressCharts({
   const shown =
     filter === 'all' ? competencies : competencies.filter((row) => row.latest_outcome === filter);
 
+  const RADIUS = 54;
+  const STROKE = 16;
+  const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+  const GAP = 3;
+  const present = ORDER.filter((outcome) => counts[outcome] > 0);
+  const segments = present.reduce<
+    { outcome: Outcome; offset: number; rawLength: number; length: number }[]
+  >((built, outcome) => {
+    const previous = built[built.length - 1];
+    const offset = previous ? previous.offset + previous.rawLength : 0;
+    const rawLength = (counts[outcome] / total) * CIRCUMFERENCE;
+    return [
+      ...built,
+      {
+        outcome,
+        offset,
+        rawLength,
+        length: present.length > 1 ? Math.max(rawLength - GAP, 1) : rawLength,
+      },
+    ];
+  }, []);
+
   return (
     <div className="mb-4">
       <ul className="d-flex flex-wrap gap-2 list-unstyled mb-3">
@@ -76,22 +98,43 @@ export function ProgressCharts({
       </ul>
 
       <div
-        className="sc-graphe-empile mb-4"
+        className="sc-anneau-conteneur mb-4"
         role="img"
-        aria-label={ORDER.map((o) => `${OUTCOME_LABELS[o]} : ${counts[o]}`).join(', ')}
+        aria-label={`${total} compétences observées : ${ORDER.map((o) => `${OUTCOME_LABELS[o]} ${counts[o]}`).join(', ')}`}
       >
-        {ORDER.map((outcome) =>
-          counts[outcome] > 0 ? (
-            <span
-              key={outcome}
-              style={{
-                width: `${(counts[outcome] / total) * 100}%`,
-                background: BAR_COLOR[outcome],
-              }}
-              title={`${OUTCOME_LABELS[outcome]} : ${counts[outcome]}`}
+        <svg viewBox="0 0 120 120" className="sc-anneau" aria-hidden="true">
+          <circle
+            cx="60"
+            cy="60"
+            r={RADIUS}
+            fill="none"
+            stroke="var(--sc-feuille-creuse)"
+            strokeWidth={STROKE}
+          />
+          {segments.map((segment) => (
+            <circle
+              key={segment.outcome}
+              cx="60"
+              cy="60"
+              r={RADIUS}
+              fill="none"
+              stroke={BAR_COLOR[segment.outcome]}
+              strokeWidth={STROKE}
+              strokeLinecap="round"
+              strokeDasharray={`${segment.length} ${CIRCUMFERENCE - segment.length}`}
+              strokeDashoffset={-segment.offset}
+              transform="rotate(-90 60 60)"
             />
-          ) : null,
-        )}
+          ))}
+        </svg>
+        <div className="sc-anneau-centre">
+          <span className="sc-chiffre-geant" style={{ fontSize: '2rem' }}>
+            {total}
+          </span>
+          <span className="text-secondary small">
+            compétence{total > 1 ? 's' : ''} observée{total > 1 ? 's' : ''}
+          </span>
+        </div>
       </div>
 
       <ul className="list-group">

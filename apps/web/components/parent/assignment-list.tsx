@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
 import { formatDateTime } from '../../lib/dates';
@@ -105,26 +106,43 @@ export function AssignmentList({ assignments }: { assignments: ParentAssignment[
         <p className="text-secondary">Aucune activité ne correspond à cette recherche.</p>
       ) : (
         <ul className="list-group">
-          {filtered.map((assignment) => (
-            <li className="list-group-item py-3" key={assignment.id}>
-              <div className="d-flex flex-wrap align-items-center gap-2 mb-1">
-                <span className={LABELS[assignment.status].className}>
-                  {LABELS[assignment.status].label}
-                </span>
-                <span className="fw-semibold">{assignment.activity.title}</span>
-                <span className="text-secondary small">
-                  — {assignment.child_pseudonym}, {assignment.activity.duration_minutes}{' '}
-                  minutes
-                </span>
-                <span className="text-secondary small ms-auto">
-                  {formatDateTime(relevantDate(assignment))}
-                </span>
-              </div>
-              {assignment.note ? (
-                <p className="text-secondary small mb-0">{assignment.note}</p>
-              ) : null}
-            </li>
-          ))}
+          {filtered.map((assignment) => {
+            const row = (
+              <>
+                <div className="d-flex flex-wrap align-items-center gap-2 mb-1">
+                  <span className={LABELS[assignment.status].className}>
+                    {LABELS[assignment.status].label}
+                  </span>
+                  <span className="fw-semibold">{assignment.activity.title}</span>
+                  <span className="text-secondary small">
+                    — {assignment.child_pseudonym}, {assignment.activity.duration_minutes}{' '}
+                    minutes
+                  </span>
+                  <span className="text-secondary small ms-auto">
+                    {formatDateTime(relevantDate(assignment))}
+                  </span>
+                </div>
+                {assignment.note ? (
+                  <p className="text-secondary small mb-0">{assignment.note}</p>
+                ) : null}
+              </>
+            );
+
+            return (
+              <li className="list-group-item p-0" key={assignment.id}>
+                {assignment.status === 'completed' ? (
+                  <Link
+                    href={`/parent/enfants/${assignment.child_id}/activites/${assignment.id}/resultat`}
+                    className="d-block text-reset text-decoration-none p-3"
+                  >
+                    {row}
+                  </Link>
+                ) : (
+                  <div className="p-3">{row}</div>
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
 

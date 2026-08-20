@@ -684,24 +684,30 @@ p {
   background: var(--sc-feuille-creuse);
 }
 
-/* Deux graphes, jamais un classement : la barre empilée est un décompte, les
-   barres par compétence gardent l'ordre de la liste plutôt qu'un tri par
-   score. Bords carrés à la base, arrondis à la pointe, un interstice de 2px
-   entre les segments — jamais un contour pour les séparer. */
-.sc-graphe-empile {
+/* Deux graphes, jamais un classement : l'anneau est un décompte, les barres
+   par compétence gardent l'ordre de la liste plutôt qu'un tri par score. */
+.sc-anneau-conteneur {
+  position: relative;
+  width: 160px;
+  max-width: 100%;
+  margin-inline: auto;
+}
+
+.sc-anneau {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.sc-anneau-centre {
+  position: absolute;
+  inset: 0;
   display: flex;
-  height: 16px;
-  border-radius: 4px;
-  overflow: hidden;
-  background: var(--sc-papier);
-}
-
-.sc-graphe-empile > span {
-  height: 100%;
-}
-
-.sc-graphe-empile > span:not(:last-child) {
-  margin-right: 2px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.15;
 }
 
 .sc-graphe-barre {
@@ -735,6 +741,11 @@ p {
   background: var(--sc-feuille);
   border-color: var(--sc-seyes-pale);
   color: var(--sc-encre);
+}
+
+.list-group-item > a:hover,
+.list-group-item > a:focus-visible {
+  background: var(--sc-feuille-creuse);
 }
 
 hr {

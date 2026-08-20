@@ -1,17 +1,20 @@
 """Doing an activity: starting, answering, finishing.
 
-Every route that touches an attempt belongs to the Élève space and takes
-`CurrentChild`. A parent has nothing to do there — not out of secrecy, but
-because an attempt is something a child does, and a route that accepted either
-would be one forgotten check away from letting a parent answer in her place.
+Every route that **acts on** an attempt — opening one, answering, finishing —
+belongs to the Élève space and takes `CurrentChild`. A parent has nothing to do
+there — not out of secrecy, but because an attempt is something a child does,
+and a route that accepted either would be one forgotten check away from letting
+a parent answer in her place.
 
-`GET /attempts/rules` is the exception, and deliberately so: it touches no
-attempt and names no child. It states how any attempt is read, and the whole
-point of publishing the rules is that a parent can be shown them. Any
-authenticated session may read it, as for the referential and the catalogue.
+`GET /attempts/rules` was always the exception: it touches no attempt and names
+no child, so any authenticated session may read it.
 
-The Parent side reads the results through the assignment listing of step 09 and,
-later, through the dashboards of step 13.
+`GET /children/{child_id}/attempts` is a second, narrower exception, added once
+the dashboards of step 13 had shipped without it: a parent could see an
+activity was `completed` on the assignment listing, but nothing said what it
+showed. This route only **reads** — the same `list_for_child` the child's own
+`GET /me/attempts` calls, given the child the parent owns instead of the one in
+session — so the rule above still holds for every route that writes.
 """
 
 from __future__ import annotations
@@ -20,10 +23,13 @@ import uuid
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Query, Response, status
+from sqlalchemy import select
 
-from app.api.deps import CurrentChild, CurrentSession, DbSession
+from app.api.deps import CurrentChild, CurrentParent, CurrentSession, DbSession
 from app.attempts import rules, service
+from app.core.exceptions import NotFoundException
 from app.models.attempt import Attempt, AttemptResult
+from app.models.identity import Child
 from app.schemas.attempt import (
     AttemptPublic,
     ResponsePublic,
@@ -33,6 +39,8 @@ from app.schemas.attempt import (
 )
 
 router = APIRouter()
+
+CHILD_NOT_FOUND_MESSAGE = "Ce profil enfant n’existe pas"
 
 AssignmentFilter = Annotated[uuid.UUID | None, Query()]
 
@@ -118,6 +126,28 @@ async def list_attempts(
 ) -> list[AttemptPublic]:
     """This child's attempts, newest first, and nobody else's."""
     rows = await service.list_for_child(db, child, assignment_id=assignment_id)
+    return [_public(row) for row in rows]
+
+
+@router.get("/children/{child_id}/attempts", response_model=list[AttemptPublic])
+async def list_attempts_for_parent(
+    child_id: uuid.UUID,
+    parent: CurrentParent,
+    db: DbSession,
+    assignment_id: AssignmentFilter = None,
+) -> list[AttemptPublic]:
+    """One child's attempts, read by the parent who owns her, nobody else's.
+
+    A child of another family is refused as one that does not exist, the same
+    posture the diagnostic route already takes.
+    """
+    owned = await db.scalar(
+        select(Child).where(Child.id == child_id, Child.parent_id == parent.id)
+    )
+    if owned is None:
+        raise NotFoundException(message=CHILD_NOT_FOUND_MESSAGE)
+
+    rows = await service.list_for_child(db, owned, assignment_id=assignment_id)
     return [_public(row) for row in rows]
 
 

@@ -506,6 +506,72 @@ class TestIsolation:
         assert client.get(MY_ATTEMPTS_URL).status_code == 401
 
 
+class TestParentReadingAttempts:
+    """`GET /children/{child_id}/attempts` — the parent's read-only door."""
+
+    def test_a_parent_reads_her_own_child_s_finished_attempt(
+        self, family: Family, activity: str
+    ) -> None:
+        assignment_id = started_activity(family, activity)
+        attempt = (
+            family.as_child()
+            .post(f"{MY_ACTIVITIES_URL}/{assignment_id}/attempts")
+            .json()
+        )
+        family.as_child().post(f"{MY_ATTEMPTS_URL}/{attempt['id']}/complete")
+
+        listed = family.as_parent().get(
+            f"/api/v1/children/{family.child_id}/attempts"
+        )
+
+        assert listed.status_code == 200
+        assert [row["id"] for row in listed.json()] == [attempt["id"]]
+
+    def test_the_assignment_filter_works_the_same_as_the_child_s_own_route(
+        self, family: Family, activity: str
+    ) -> None:
+        assignment_id = started_activity(family, activity)
+        family.as_child().post(f"{MY_ACTIVITIES_URL}/{assignment_id}/attempts")
+
+        listed = family.as_parent().get(
+            f"/api/v1/children/{family.child_id}/attempts",
+            params={"assignment_id": assignment_id},
+        )
+
+        assert listed.status_code == 200
+        assert all(row["assignment_id"] == assignment_id for row in listed.json())
+
+    def test_another_family_s_parent_reaches_nothing(
+        self, client: TestClient, activity: str
+    ) -> None:
+        theirs = Family(client)
+        assignment_id = started_activity(theirs, activity)
+        theirs.as_child().post(f"{MY_ACTIVITIES_URL}/{assignment_id}/attempts")
+        ours = Family(client)
+
+        refused = ours.as_parent().get(f"/api/v1/children/{theirs.child_id}/attempts")
+
+        assert refused.status_code == 404
+
+    def test_a_child_session_cannot_use_the_parent_route(
+        self, family: Family, activity: str
+    ) -> None:
+        started_activity(family, activity)
+
+        refused = family.as_child().get(f"/api/v1/children/{family.child_id}/attempts")
+
+        assert refused.status_code == 403
+
+    def test_the_route_refuses_a_request_without_a_session(
+        self, client: TestClient, family: Family
+    ) -> None:
+        client.cookies.clear()
+        assert (
+            client.get(f"/api/v1/children/{family.child_id}/attempts").status_code
+            == 401
+        )
+
+
 class TestPerQuestionAttribution:
     """The debt of step 10: every competency got the same reading.
 

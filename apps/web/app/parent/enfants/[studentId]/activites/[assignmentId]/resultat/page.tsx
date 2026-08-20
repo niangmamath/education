@@ -1,35 +1,34 @@
 import Link from 'next/link';
-import { Check, CheckCircle2, X } from 'lucide-react';
-import { api } from '../../../../../lib/api';
-import { requireChild } from '../../../../../lib/session';
-import { InterfaceState } from '../../../../../components/ui/interface-state';
-import { formatDateTime } from '../../../../../lib/dates';
-import { readableResponse } from '../../../../../lib/xapi';
-import { OUTCOME_CLASSES, OUTCOME_LABELS } from '../../../../../lib/types';
-import type { Attempt } from '../../../../../lib/types';
+import { ArrowLeft, Check, CheckCircle2, X } from 'lucide-react';
+import { api } from '../../../../../../../lib/api';
+import { requireParent } from '../../../../../../../lib/session';
+import { InterfaceState } from '../../../../../../../components/ui/interface-state';
+import { formatDateTime } from '../../../../../../../lib/dates';
+import { readableResponse } from '../../../../../../../lib/xapi';
+import { OUTCOME_CLASSES, OUTCOME_LABELS } from '../../../../../../../lib/types';
+import type { Attempt } from '../../../../../../../lib/types';
 
-export const metadata = { title: 'Activité terminée' };
+export const metadata = { title: 'Résultats' };
 
 /**
- * What the activity showed, said to the child it is about.
+ * The parent's read of one attempt — the door `attempts.py` opened once the
+ * assignment listing had a "Terminée" nothing led anywhere from.
  *
- * Every conclusion carries the sentence the API built from the same counts it
- * stored, so nothing here is a verdict she cannot see the working of. This is
- * her own reading and she is entitled to it — what she is not shown, on any
- * page, is the diagnosis built on top of it.
- *
- * An activity that judged nothing produces no result, and the page says exactly
- * that rather than inventing an encouragement out of an absence.
+ * Same shape as the child's own results page on purpose: a parent reading
+ * what her child read should not have to learn a second layout to do it.
  */
-export default async function ResultatPage({
+export default async function ParentResultatPage({
   params,
 }: {
-  params: Promise<{ assignmentId: string }>;
+  params: Promise<{ studentId: string; assignmentId: string }>;
 }) {
-  await requireChild();
-  const { assignmentId } = await params;
+  await requireParent();
+  const { studentId, assignmentId } = await params;
 
-  const attempts = await api<Attempt[]>(`/me/attempts?assignment_id=${assignmentId}`);
+  const attempts = await api<Attempt[]>(
+    `/children/${studentId}/attempts?assignment_id=${assignmentId}`,
+  );
+
   if (!attempts.ok || attempts.data.length === 0) {
     return (
       <InterfaceState
@@ -37,8 +36,8 @@ export default async function ResultatPage({
         title="Rien à afficher"
         description="Cette activité n’a pas encore de tentative terminée."
         action={
-          <Link href="/eleve/activites" className="btn btn-outline-primary">
-            Voir mes activités
+          <Link href="/parent/activites" className="btn btn-outline-primary">
+            Voir les activités
           </Link>
         }
       />
@@ -51,6 +50,11 @@ export default async function ResultatPage({
 
   return (
     <>
+      <Link href="/parent/activites" className="sc-lien-retour mb-3">
+        <ArrowLeft size={18} aria-hidden="true" />
+        Toutes les activités
+      </Link>
+
       <header className="mb-4">
         <span className="sc-feature-icon mb-3 text-success" aria-hidden="true">
           <CheckCircle2 size={28} />
@@ -67,14 +71,14 @@ export default async function ResultatPage({
         <InterfaceState
           kind="empty"
           title="Cette activité n’a rien évalué"
-          description="Elle ne disait pas si tes réponses étaient justes, donc rien n’a été conclu."
+          description="Elle ne disait pas si les réponses étaient justes, donc rien n’a été conclu."
         />
       ) : (
         <ul className="list-group mb-4">
           {results.map((result) => (
             <li className="list-group-item" key={result.competency_code}>
               <div className="d-flex flex-wrap align-items-center gap-2 mb-1">
-                <span className={`${OUTCOME_CLASSES[result.outcome]}`}>
+                <span className={OUTCOME_CLASSES[result.outcome]}>
                   {OUTCOME_LABELS[result.outcome]}
                 </span>
                 <span className="fw-semibold">{result.competency_code}</span>
@@ -113,11 +117,11 @@ export default async function ResultatPage({
       ) : null}
 
       <div className="d-flex flex-wrap gap-2">
-        <Link href="/eleve" className="btn btn-primary">
-          Revenir à l’accueil
+        <Link href={`/parent/enfants/${studentId}`} className="btn btn-primary">
+          Voir le diagnostic
         </Link>
-        <Link href="/eleve/progression" className="btn btn-outline-primary">
-          Voir ma progression
+        <Link href="/parent/activites" className="btn btn-outline-primary">
+          Toutes les activités
         </Link>
       </div>
     </>
