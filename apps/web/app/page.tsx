@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { PrerequisiteThread, type ThreadLink } from '../components/ui/prerequisite-thread';
+import { api } from '../lib/api';
+import type { PublicStats } from '../lib/types';
 
 /**
  * La page d'accueil ouvre sur ce que le produit sait faire et que personne
@@ -53,7 +55,9 @@ const REFUSALS = [
   },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const stats = await api<PublicStats>('/public/stats');
+
   return (
     <div className="sc-public-page d-flex min-vh-100 flex-column">
       <header className="border-bottom bg-white" aria-label="En-tête principal">
@@ -121,6 +125,54 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+
+        {stats.ok ? (
+          <section className="py-5 bg-white border-top border-bottom" aria-labelledby="chiffres-title">
+            <div className="container">
+              <p className="sc-oeilleton sc-oeilleton-indigo">En ce moment sur la plateforme</p>
+              <h2 id="chiffres-title" className="h1 mb-4">
+                Ce que ces chiffres comptent, et rien de plus
+              </h2>
+              <div className="row g-4">
+                <div className="col-6 col-lg-3">
+                  <p className="sc-chiffre-geant">{stats.data.families}</p>
+                  <p className="text-secondary mb-0">
+                    famille{stats.data.families > 1 ? 's' : ''} accompagnée
+                    {stats.data.families > 1 ? 's' : ''}
+                  </p>
+                </div>
+                <div className="col-6 col-lg-3">
+                  <p className="sc-chiffre-geant sc-chiffre-geant-acquis">{stats.data.children}</p>
+                  <p className="text-secondary mb-0">
+                    enfant{stats.data.children > 1 ? 's' : ''} suivi
+                    {stats.data.children > 1 ? 's' : ''}
+                  </p>
+                </div>
+                <div className="col-6 col-lg-3">
+                  <p className="sc-chiffre-geant sc-chiffre-geant-travail">
+                    {stats.data.activities_completed}
+                  </p>
+                  <p className="text-secondary mb-0">
+                    activité{stats.data.activities_completed > 1 ? 's' : ''} terminée
+                    {stats.data.activities_completed > 1 ? 's' : ''}
+                  </p>
+                </div>
+                <div className="col-6 col-lg-3">
+                  <p className="sc-chiffre-geant">
+                    {stats.data.competencies_covered}
+                    <span className="sc-chiffre-total">/{stats.data.competencies_total}</span>
+                  </p>
+                  <p className="text-secondary mb-0">compétences du référentiel travaillées</p>
+                </div>
+              </div>
+              <p className="text-secondary small mt-4 mb-0">
+                Des comptes, jamais des noms : aucun de ces nombres ne se rattache à un
+                enfant identifiable, et ils ne comparent rien — ni les enfants entre eux,
+                ni les familles.
+              </p>
+            </div>
+          </section>
+        ) : null}
 
         <section className="py-5" aria-labelledby="refus-title">
           <div className="container">

@@ -17,6 +17,7 @@ from app.api.v1 import (
     fiches,
     internal,
     progress,
+    public,
     referential,
     xapi,
 )
@@ -38,6 +39,7 @@ api_router.include_router(xapi.router, tags=["xapi"])
 api_router.include_router(progress.router, tags=["progress"])
 api_router.include_router(diagnostic.router, tags=["diagnostic"])
 api_router.include_router(internal.router, tags=["internal"])
+api_router.include_router(public.router, tags=["public"])
 
 
 # Sub-routers added as their step implements them:

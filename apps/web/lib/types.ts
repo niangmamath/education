@@ -167,6 +167,15 @@ export type Diagnostic = {
   computed_at: string;
 };
 
+/** Counts a visitor may see before signing in — never a name, never a score. */
+export type PublicStats = {
+  families: number;
+  children: number;
+  activities_completed: number;
+  competencies_covered: number;
+  competencies_total: number;
+};
+
 export type NextStep = {
   activity_code: string;
   title: string;
