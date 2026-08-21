@@ -1,21 +1,9 @@
 'use client';
 
 import { useActionState } from 'react';
-import type { FocusEvent } from 'react';
 import { loginParent, type FormState } from '../../lib/actions';
 
 const EMPTY: FormState = { error: null };
-
-// Chrome pré-remplit un champ de connexion dès le chargement de la page dès
-// qu'il reconnaît la paire email/mot de passe, sans attendre un clic. Le
-// champ reste en lecture seule jusqu'au focus — retiré directement dans le
-// DOM, pas via un état React, pour qu'aucun re-rendu ultérieur ne puisse le
-// remettre en place : rien ne se remplit tout seul, mais la liste des comptes
-// enregistrés s'affiche normalement une fois le curseur posé, puisque
-// `autoComplete` garde sa valeur standard.
-function unlock(event: FocusEvent<HTMLInputElement>) {
-  event.currentTarget.removeAttribute('readonly');
-}
 
 /**
  * One form, on a page of its own.
@@ -61,8 +49,6 @@ export function ParentLoginForm() {
           type="email"
           className="form-control"
           autoComplete="email"
-          readOnly
-          onFocus={unlock}
           required
         />
       </div>
@@ -76,8 +62,6 @@ export function ParentLoginForm() {
           type="password"
           className="form-control"
           autoComplete="current-password"
-          readOnly
-          onFocus={unlock}
           required
         />
       </div>
