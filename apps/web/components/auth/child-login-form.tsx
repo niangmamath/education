@@ -1,9 +1,18 @@
 'use client';
 
 import { useActionState } from 'react';
+import type { FocusEvent } from 'react';
 import { loginChild, type FormState } from '../../lib/actions';
 
 const EMPTY: FormState = { error: null };
+
+// Même verrou qu'au formulaire parent, levé directement dans le DOM : le
+// champ reste en lecture seule jusqu'au focus, pour que le navigateur propose
+// les comptes enregistrés au clic plutôt que de remplir un champ avant même
+// qu'on l'ait touché.
+function unlock(event: FocusEvent<HTMLInputElement>) {
+  event.currentTarget.removeAttribute('readonly');
+}
 
 /**
  * The child's sign-in, on its own address.
@@ -38,6 +47,8 @@ export function ChildLoginForm() {
           autoComplete="organization"
           autoCapitalize="characters"
           spellCheck={false}
+          readOnly
+          onFocus={unlock}
           required
         />
       </div>
@@ -50,6 +61,8 @@ export function ChildLoginForm() {
           name="pseudonym"
           className="form-control"
           autoComplete="username"
+          readOnly
+          onFocus={unlock}
           required
         />
       </div>
@@ -65,6 +78,8 @@ export function ChildLoginForm() {
           pattern="[0-9]{6}"
           className="form-control"
           autoComplete="current-password"
+          readOnly
+          onFocus={unlock}
           required
         />
       </div>
