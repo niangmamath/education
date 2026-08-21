@@ -1,18 +1,9 @@
 'use client';
 
 import { useActionState } from 'react';
-import type { FocusEvent } from 'react';
 import { changeParentPassword, updateParentProfile, type FormState } from '../../lib/actions';
 
 const EMPTY: FormState = { error: null };
-
-// Même verrou que sur les formulaires de connexion : `autocomplete="current-
-// password"` peut se préremplir dès le chargement, sans clic. `new-password`
-// (nouveau mot de passe, confirmation) n'a pas ce comportement et n'a donc pas
-// besoin du verrou.
-function unlock(event: FocusEvent<HTMLInputElement>) {
-  event.currentTarget.removeAttribute('readonly');
-}
 
 /**
  * Two forms, deliberately not one.
@@ -83,8 +74,6 @@ export function ProfileControls({ displayName }: { displayName: string }) {
                 type="password"
                 className="form-control"
                 autoComplete="current-password"
-                readOnly
-                onFocus={unlock}
                 required
               />
             </div>
