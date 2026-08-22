@@ -83,7 +83,7 @@ export default async function HomePage() {
           <div className="container py-lg-4">
             <div className="row g-5 align-items-start">
               <div className="col-lg-6 sc-entree">
-                <p className="sc-oeilleton sc-oeilleton-indigo">Ce que fait la plateforme</p>
+                <span className="sc-badge-eyebrow sc-badge-eyebrow-indigo">Ce que fait la plateforme</span>
                 <h1 id="these-title" className="sc-titre-geant mb-4">
                   Votre enfant rate ses soustractions.
                   <br />
@@ -129,7 +129,7 @@ export default async function HomePage() {
         {stats.ok ? (
           <section className="py-5 bg-white border-top border-bottom" aria-labelledby="chiffres-title">
             <div className="container">
-              <p className="sc-oeilleton sc-oeilleton-indigo">En ce moment sur la plateforme</p>
+              <span className="sc-badge-eyebrow sc-badge-eyebrow-acquis">En ce moment sur la plateforme</span>
               <h2 id="chiffres-title" className="h1 mb-4">
                 Ce que ces chiffres comptent, et rien de plus
               </h2>
@@ -178,7 +178,7 @@ export default async function HomePage() {
           <div className="container">
             <div className="row g-5">
               <div className="col-lg-4">
-                <p className="sc-oeilleton">Règles du produit</p>
+                <span className="sc-badge-eyebrow sc-badge-eyebrow-indigo">Règles du produit</span>
                 <h2 id="refus-title" className="h1 mb-3">
                   Cinq choses que la plateforme ne fera pas
                 </h2>
@@ -204,7 +204,7 @@ export default async function HomePage() {
 
         <section className="py-5 bg-white border-top" aria-labelledby="espaces-title">
           <div className="container">
-            <p className="sc-oeilleton">Deux publics, deux écrans</p>
+            <span className="sc-badge-eyebrow sc-badge-eyebrow-neutre">Deux publics, deux écrans</span>
             <h2 id="espaces-title" className="h1 mb-4">
               Le parent lit le raisonnement. L’enfant voit une activité.
             </h2>
@@ -212,7 +212,7 @@ export default async function HomePage() {
               <div className="col-md-6">
                 <article className="card h-100">
                   <div className="card-body p-4 p-lg-5">
-                    <p className="sc-oeilleton sc-oeilleton-indigo">Espace parent</p>
+                    <span className="sc-badge-eyebrow sc-badge-eyebrow-indigo">Espace parent</span>
                     <h3 className="h4 mb-3">Ce qui est acquis, ce qui coince, et pourquoi</h3>
                     <p className="text-secondary mb-3">
                       Chaque compétence porte son état et la lecture dont il vient.
@@ -227,9 +227,9 @@ export default async function HomePage() {
                 </article>
               </div>
               <div className="col-md-6">
-                <article className="card h-100">
+                <article className="card h-100 sc-carte-eleve-teaser">
                   <div className="card-body p-4 p-lg-5">
-                    <p className="sc-oeilleton">Espace élève</p>
+                    <span className="sc-badge-eyebrow sc-badge-eyebrow-eleve">Espace élève</span>
                     <h3 className="h4 mb-3">Une seule chose à faire, et le temps qu’elle prend</h3>
                     <p className="text-secondary mb-3">
                       Aucun diagnostic n’apparaît de ce côté-ci : ni lacune, ni
@@ -243,6 +243,26 @@ export default async function HomePage() {
                   </div>
                 </article>
               </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="py-5" aria-labelledby="cta-title">
+          <div className="container">
+            <div className="sc-bande-cta p-5 mx-auto" style={{ maxWidth: '48rem' }}>
+              <p className="mb-3" style={{ fontSize: '2.5rem' }} aria-hidden="true">
+                🚀
+              </p>
+              <h2 id="cta-title" className="h1 mb-3 text-white">
+                Prêt à commencer l’aventure ?
+              </h2>
+              <p className="mb-4" style={{ color: 'rgba(255,255,255,0.85)' }}>
+                Créez un compte parent gratuit et regardez votre enfant progresser,
+                compétence par compétence.
+              </p>
+              <Link href="/inscription" className="btn btn-primary btn-lg">
+                Créer un compte parent
+              </Link>
             </div>
           </div>
         </section>
