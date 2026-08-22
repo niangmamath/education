@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { AlertTriangle, Users } from 'lucide-react';
+import { AlertTriangle, BookOpen, Sparkles, Users } from 'lucide-react';
 import { api } from '../../lib/api';
 import { requireParent } from '../../lib/session';
 import { InterfaceState } from '../../components/ui/interface-state';
@@ -51,6 +51,23 @@ export default async function ParentHomePage() {
     })),
   );
 
+  const masteredTotal = diagnostics.reduce(
+    (sum, result) => sum + (result.ok ? (result.data.health?.mastered ?? 0) : 0),
+    0,
+  );
+  const actionableTotal = diagnostics.reduce(
+    (sum, result) =>
+      sum +
+      (result.ok
+        ? result.data.localized_gaps.filter((gap) => gap.blocked_by === null).length
+        : 0),
+    0,
+  );
+  const inProgressTotal = assignments.ok
+    ? assignments.data.filter((row) => row.status === 'assigned' || row.status === 'in_progress')
+        .length
+    : 0;
+
   return (
     <>
       <header className="mb-4">
@@ -62,6 +79,57 @@ export default async function ParentHomePage() {
             : 'Aucun profil enfant actif pour le moment.'}
         </p>
       </header>
+
+      {active.length > 0 ? (
+        <div className="row g-3 mb-4">
+          {[
+            { label: 'enfants actifs', value: active.length, icon: Users, tone: 'indigo' as const },
+            {
+              label: 'compétences acquises',
+              value: masteredTotal,
+              icon: Sparkles,
+              tone: 'acquis' as const,
+            },
+            {
+              label: 'à travailler',
+              value: actionableTotal,
+              icon: AlertTriangle,
+              tone: 'travail' as const,
+            },
+            {
+              label: 'activités en cours',
+              value: inProgressTotal,
+              icon: BookOpen,
+              tone: 'indigo' as const,
+            },
+          ].map(({ label, value, icon: Icon, tone }) => (
+            <div className="col-6 col-lg-3" key={label}>
+              <div className="card h-100 border-0 shadow-sm">
+                <div className="card-body p-3 p-lg-4">
+                  <Icon
+                    size={18}
+                    aria-hidden="true"
+                    className={
+                      tone === 'acquis'
+                        ? 'text-success-emphasis mb-2'
+                        : tone === 'travail'
+                          ? 'text-warning-emphasis mb-2'
+                          : 'text-primary mb-2'
+                    }
+                  />
+                  <p
+                    className={`sc-chiffre-geant mb-0 ${tone === 'acquis' ? 'sc-chiffre-geant-acquis' : tone === 'travail' ? 'sc-chiffre-geant-travail' : ''}`}
+                    style={{ fontSize: '1.9rem' }}
+                  >
+                    {value}
+                  </p>
+                  <p className="text-secondary small mb-0">{label}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
 
       {active.length === 0 ? (
         <InterfaceState

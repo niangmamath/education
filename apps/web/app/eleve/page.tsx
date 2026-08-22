@@ -79,8 +79,8 @@ export default async function EleveHomePage() {
 
       {pendingAssessment ? (
         <section className="card border-0 shadow-sm sc-student-hero mb-4">
+          <p className="sc-ruban">Pour commencer</p>
           <div className="card-body p-4 p-lg-5">
-            <p className="sc-oeilleton">Pour commencer</p>
             <h2 className="h3">{pendingAssessment.title}</h2>
             <p className="text-secondary mb-4">
               Quelques petites questions pour savoir par où commencer. Ce n’est pas
@@ -93,8 +93,8 @@ export default async function EleveHomePage() {
         </section>
       ) : featured ? (
         <section className="card border-0 shadow-sm sc-student-hero mb-4">
+          <p className="sc-ruban">{underWay ? 'À reprendre' : 'À commencer'}</p>
           <div className="card-body p-4 p-lg-5">
-            <p className="sc-oeilleton">{underWay ? 'À reprendre' : 'À commencer'}</p>
             <h2 className="h3">{featured.activity.title}</h2>
             {featured.note ? <p className="text-secondary mb-3">{featured.note}</p> : null}
             <div className="d-flex align-items-center gap-2 small text-secondary mb-4">
