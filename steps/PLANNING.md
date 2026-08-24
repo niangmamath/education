@@ -189,6 +189,7 @@ propriétaire, parce qu’ils bloquaient l’usage réel de la plateforme plutô
 | HORS-08 | Anglais et trois questions par compétence | HORS-07 | Terminé | 54 compétences, 3 matières, examen à 27 questions par classe, ADR-019 |
 | HORS-09 | Trois fiches de remédiation en anglais | HORS-08 | Terminé | CI complet (salutations, couleurs, nombres), 15 fiches en tout |
 | HORS-10 | Rotation des questions de fiche | HORS-09 | Terminé | Réserve de 8 par fiche, 4 tirées par tentative, examen non concerné, ADR-020 |
+| HORS-11 | Pipeline de dépôt H5P en une commande | HORS-10 | Terminé | `deployer_h5p.sh`, licence/source fixées, plus de préfixe `demo-` pour le contenu réel |
 
 `HORS-01` referme la première flèche du MVP, qui n’avait jamais été construite :
 un enfant inscrit n’avait aucune compétence observée, donc aucun diagnostic.
@@ -232,6 +233,18 @@ suivante. Aucune migration. L'examen n'est pas concerné, sur demande explicite
 du propriétaire : `questions_of` reçoit le tirage en paramètre optionnel, la
 route de l'examen ne le passe jamais. Soixante questions de plus écrites (cent
 vingt en tout pour les fiches). ADR-020.
+
+`HORS-11`, écrit d'abord sur le checkout de déploiement puis récupéré ici :
+`infrastructure/scripts/deployer_h5p.sh` enchaîne copie, `creer`, `register`,
+`deploy` et `check` pour un paquet H5P en une seule commande, licence et
+source fixées une fois pour toutes (`CC BY 4.0`,
+`https://lumi.education, fabriqué par nos soins`) plutôt qu'à réinventer à
+chaque dépôt. Le script détecte lui-même `docker-compose.dev.yml` (ce
+worktree) ou `docker-compose.yml` (le déploiement), pour marcher dans les deux
+checkouts sans modification. Convention de code changée en chemin : plus de
+préfixe `demo-` pour du contenu réel et déployé, qui serait sinon supprimé par
+`python -m app.demo --reset` sans jamais être recréé — les trois activités
+d'écoute du détour du 20 août, renommées côté déploiement en conséquence.
 
 ### Prochaine tâche
 

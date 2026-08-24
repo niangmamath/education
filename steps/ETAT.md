@@ -1605,6 +1605,26 @@ propriétaire, comme la suite directe de `HORS-01` à `HORS-07`.
       d'une tentative est généré côté serveur, rien ne permet à un test de le
       choisir pour forcer deux tirages à différer. ADR-020.
 
+- [x] **`HORS-11`, pipeline de dépôt H5P en une commande.** Écrit d'abord sur
+      le checkout de déploiement pendant que le propriétaire y fabriquait ses
+      premiers vrais paquets, puis récupéré ici sur sa demande — « adapte-les
+      aux deux, on développe ici mais on déploie là-bas ».
+      `infrastructure/scripts/deployer_h5p.sh` enchaîne copie, `creer`,
+      `register`, `deploy` et `check` pour un paquet H5P, licence et source
+      fixées une fois pour toutes dans le script (`CC BY 4.0`,
+      `https://lumi.education, fabriqué par nos soins`) plutôt qu'à
+      réinventer à chaque dépôt — c'était la source de confusion qui a produit
+      « Propriétaire, tous droits réservés » sur les trois premières activités
+      déployées. Convention changée en chemin : plus de préfixe `demo-` pour
+      du contenu réel et déployé, qui serait sinon supprimé par
+      `python -m app.demo --reset` sans jamais être recréé ; les trois
+      activités d'écoute du détour du 20 août renommées côté déploiement
+      (`demo-son-ci-fr-sons` → `son-ci-fr-sons`, etc.), et
+      `exercices-par-competence.md` mis à jour en conséquence des deux côtés.
+      Adapté pour ce worktree : le script détecte lui-même
+      `docker-compose.dev.yml` (ici, isolé) ou `docker-compose.yml` (le
+      déploiement) plutôt que de supposer lequel des deux tourne.
+
 ## Prochaine action
 
 Le propriétaire reprend la fabrication des fichiers H5P selon la liste.
