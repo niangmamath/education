@@ -146,14 +146,14 @@ class TestTheSheetsAsAWhole:
     def test_the_sheets_cover_the_competencies_they_are_written_for(self) -> None:
         """La couverture actuelle, épinglée pour qu'elle ne régresse pas en silence.
 
-        Le référentiel couvre six classes et trois matières ; ces fiches-là
-        couvrent les douze compétences que la première version du produit avait
-        écrites, du CI au CE1, en français et en mathématiques seulement.
-        **Les quarante-deux autres — dont les dix-huit d'anglais — n'ont pas
-        encore de réparation**, et c'est la dette la mieux mesurée du projet :
-        une lacune que la plateforme sait nommer et ne sait pas réparer est pire
-        qu'une lacune dont elle ne parle pas, parce que le parent agit et il ne
-        se passe rien.
+        Le référentiel couvre six classes et trois matières ; douze de ces
+        fiches couvrent les compétences que la première version du produit
+        avait écrites, du CI au CE1, en français et en mathématiques
+        seulement. Trois de plus couvrent l'anglais du CI (ADR-019).
+        **Les trente-neuf autres n'ont pas encore de réparation**, et c'est la
+        dette la mieux mesurée du projet : une lacune que la plateforme sait
+        nommer et ne sait pas réparer est pire qu'une lacune dont elle ne
+        parle pas, parce que le parent agit et il ne se passe rien.
 
         Ce test échoue dans les deux sens. Il échoue si une fiche disparaît, et
         il échoue quand de nouvelles fiches arrivent — auquel cas on relève le
@@ -163,8 +163,8 @@ class TestTheSheetsAsAWhole:
         repaired = {sheet["competency"] for sheet in FICHES}
         declared = {row["code"] for row in COMPETENCIES}
 
-        assert len(repaired) == 12
-        assert len(declared - repaired) == 42
+        assert len(repaired) == 15
+        assert len(declared - repaired) == 39
 
     def test_no_competency_has_two_sheets(self) -> None:
         """The recommender proposes one repair per competency; a second sheet

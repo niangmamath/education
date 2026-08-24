@@ -1558,13 +1558,31 @@ propriétaire, comme la suite directe de `HORS-01` à `HORS-07`.
 
 ### Dette ouverte par ce travail
 
-- **Les dix-huit compétences d'anglais n'ont pas de fiche de remédiation.**
-  Elles s'ajoutent aux vingt-quatre compétences de français et de
-  mathématiques déjà sans fiche : quarante-deux compétences sur cinquante-quatre
-  restent à réparer. `docs/contenus/exercices-par-competence.md` couvre
-  désormais les cinquante-quatre — l'anglais a sa propre priorité (2), classée
-  avant CE2 puisque ses compétences sans rien commencent dès le CI — mais rien
-  n'est encore fabriqué ni déposé pour ces dix-huit-là.
+- **Les dix-huit compétences d'anglais n'ont, à ce stade, aucune fiche de
+  remédiation.** Elles s'ajoutent aux vingt-quatre compétences de français et
+  de mathématiques déjà sans fiche : quarante-deux compétences sur
+  cinquante-quatre restent à réparer. `docs/contenus/exercices-par-competence.md`
+  couvre désormais les cinquante-quatre — l'anglais a sa propre priorité (2),
+  classée avant CE2 puisque ses compétences sans rien commencent dès le CI —
+  mais rien n'est encore fabriqué ni déposé pour ces dix-huit-là. **Trois
+  d'entre elles referment ce point le jour même, voir `HORS-09` ci-dessous.**
+
+- [x] **`HORS-09`, trois fiches d'anglais.** Le propriétaire a demandé de
+      fabriquer quelques remédiations d'anglais plutôt que de laisser les
+      dix-huit compétences entièrement sans réparation. Trois fiches natives
+      écrites pour le CI (`ci-an-salutations`, `ci-an-couleurs`,
+      `ci-an-nombres-5`), même format que les douze déjà existantes — une
+      leçon, quatre questions expliquées, trois à sept minutes. Le CI est
+      couvert en priorité parce que c'est la classe la plus fragile du
+      référentiel (aucune lecture) et celle où les fiches de français et de
+      mathématiques concentrent déjà le plus d'attention. Quinze fiches en
+      tout désormais, trente-neuf compétences sur cinquante-quatre restent
+      sans réparation (dont quinze d'anglais, du CP au CM2). Le test de
+      couverture (`test_the_sheets_cover_the_competencies_they_are_written_for`)
+      et `docs/contenus/exercices-par-competence.md` mis à jour en
+      conséquence — les trois compétences passent de la priorité 2 (rien
+      n'existe) à la priorité 1 (le son manquant), au même titre que les
+      douze fiches françaises et mathématiques.
 
 ## Prochaine action
 

@@ -187,6 +187,7 @@ propriétaire, parce qu’ils bloquaient l’usage réel de la plateforme plutô
 | HORS-06 | Rendre la démonstration montrable | HORS-05 | Terminé | Recette par tunnel ; `PUBLIC_HOST` sans quoi toute connexion échouerait derrière un tunnel |
 | HORS-07 | Six classes cumulatives | HORS-06 | Terminé | CI→CM2, 36 compétences, un examen par classe, passage décidé par le parent, ADR-018 |
 | HORS-08 | Anglais et trois questions par compétence | HORS-07 | Terminé | 54 compétences, 3 matières, examen à 27 questions par classe, ADR-019 |
+| HORS-09 | Trois fiches de remédiation en anglais | HORS-08 | Terminé | CI complet (salutations, couleurs, nombres), 15 fiches en tout |
 
 `HORS-01` referme la première flèche du MVP, qui n’avait jamais été construite :
 un enfant inscrit n’avait aucune compétence observée, donc aucun diagnostic.
@@ -209,9 +210,17 @@ mathématiques suppose de comprendre son énoncé en français, et lire ou écri
 en anglais s'appuie sur la mécanique déjà acquise en français. Neuf prérequis
 croisés ajoutés ; le vocabulaire oral de l'anglais reste sans prérequis
 français, faute d'un point d'accroche. `docs/contenus/exercices-par-competence.md`
-couvre désormais l'anglais (priorité 2, avant CE2). Dette ouverte : les
-dix-huit compétences d'anglais n'ont toujours pas de fiche de remédiation, ni
-d'exercice H5P réellement fabriqué.
+couvre désormais l'anglais (priorité 2, avant CE2). Dette ouverte à sa
+clôture : les dix-huit compétences d'anglais n'avaient toujours pas de fiche
+de remédiation, ni d'exercice H5P réellement fabriqué.
+
+`HORS-09` referme une partie de cette dette : trois fiches natives pour le CI
+d'anglais (salutations, couleurs, compter jusqu'à cinq), même format que les
+douze déjà écrites — une leçon, quatre questions expliquées, trois à sept
+minutes. Quinze fiches en tout désormais ; trente-neuf compétences sur
+cinquante-quatre restent sans réparation, dont quinze d'anglais (CP à CM2).
+`exercices-par-competence.md` déplace les trois compétences couvertes de la
+priorité 2 (rien n'existe) à la priorité 1 (le son manquant).
 
 ### Prochaine tâche
 

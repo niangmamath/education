@@ -28,13 +28,17 @@ four questions. Each question carries the sentence a child is told once she has
 answered — the same sentence whether she was right or wrong, because a sheet
 explains what is true, it does not comment on her.
 
-**Douze fiches sur trente-six compétences.** Le référentiel couvre six classes,
-du CI au CM2 ; ces fiches-là couvrent celles que la première version du produit
-avait écrites, qui vont du CI au CE1. Les vingt-quatre autres n'ont pas encore de
-réparation, et c'est un manque connu et mesuré plutôt qu'un oubli : une lacune
-que la plateforme sait nommer et ne sait pas réparer est pire qu'une lacune dont
-elle ne parle pas, parce que le parent agit et il ne se passe rien. Un test
-épingle la couverture actuelle et échoue si elle régresse en silence.
+**Quinze fiches sur cinquante-quatre compétences.** Le référentiel couvre six
+classes et trois matières ; douze de ces fiches couvrent celles que la première
+version du produit avait écrites, du CI au CE1, en français et en
+mathématiques. Trois de plus couvrent l'anglais du CI, ajouté par ADR-019 —
+saluer, nommer une couleur, compter jusqu'à cinq — parce que le CI reste la
+classe la plus fragile de tout le référentiel et qu'une nouvelle matière n'y
+change rien. Les trente-neuf autres n'ont pas encore de réparation, et c'est un
+manque connu et mesuré plutôt qu'un oubli : une lacune que la plateforme sait
+nommer et ne sait pas réparer est pire qu'une lacune dont elle ne parle pas,
+parce que le parent agit et il ne se passe rien. Un test épingle la couverture
+actuelle et échoue si elle régresse en silence.
 
 **What these sheets still cannot do.** Hear. The phonology sheet approximates
 sounds by talking about written words, exactly as the assessment does, and it is
@@ -59,6 +63,15 @@ from app.demo.referentiel import (
 )
 from app.demo.referentiel import (
     CE1_MA_SOUSTRACTION as MA_SOUSTRACTION,
+)
+from app.demo.referentiel import (
+    CI_AN_COULEURS as AN_COULEURS,
+)
+from app.demo.referentiel import (
+    CI_AN_NOMBRES5 as AN_NOMBRES5,
+)
+from app.demo.referentiel import (
+    CI_AN_SALUTATIONS as AN_SALUTATIONS,
 )
 from app.demo.referentiel import (
     CI_FR_LETTRES as FR_LETTRES,
@@ -868,6 +881,195 @@ FICHES: Final[list[Sheet]] = [
                     "On ne peut pas donner plus qu’on ne possède. Un problème peut "
                     "être impossible, et le remarquer est une vraie réponse — pas "
                     "un refus de répondre."
+                ),
+            },
+        ],
+    },
+    # ── Anglais ─────────────────────────────────────────────────────────────
+    {
+        "code": f"{PREFIX}fix-an-salutations",
+        "title": "Se saluer en anglais",
+        "competency": AN_SALUTATIONS,
+        "minutes": 4,
+        "guidance": (
+            "En anglais, on ne salue pas de la même façon en arrivant et en "
+            "partant. Pour arriver, on dit « Hello », qui veut dire « bonjour ». "
+            "Pour partir, on dit « Goodbye », ou plus court, « Bye ».\n\n"
+            "Il y a aussi deux mots de politesse qui ne se disent jamais au même "
+            "moment. « Please » sert à demander quelque chose, avant de l’avoir "
+            "reçu. « Thank you » sert à remercier, après l’avoir reçu.\n\n"
+            "Un moyen de ne pas se tromper : si tu demandes une chose, pense à "
+            "« please ». Si on vient de te donner quelque chose, pense à "
+            "« thank you »."
+        ),
+        "questions": [
+            {
+                "ref": "f-an-salutations-1",
+                "prompt": "Comment dit-on « bonjour » en anglais, quand on arrive ?",
+                "choices": ["Goodbye", "Hello", "Bye"],
+                "correct": 1,
+                "explanation": (
+                    "« Hello » sert à saluer en arrivant. « Goodbye » et « Bye » "
+                    "servent au contraire à saluer en partant, jamais en arrivant."
+                ),
+            },
+            {
+                "ref": "f-an-salutations-2",
+                "prompt": "Quel mot dit-on en partant, pas en arrivant ?",
+                "choices": ["Hello", "Goodbye", "Please"],
+                "correct": 1,
+                "explanation": (
+                    "« Goodbye » marque un départ. « Hello » sert à l’arrivée, "
+                    "dans l’autre sens, et « Please » n’a rien à voir avec les "
+                    "salutations : c’est pour demander quelque chose."
+                ),
+            },
+            {
+                "ref": "f-an-salutations-3",
+                "prompt": (
+                    "Tu veux demander un verre d’eau poliment en anglais. Quel "
+                    "mot ajoutes-tu ?"
+                ),
+                "choices": ["Thank you", "Goodbye", "Please"],
+                "correct": 2,
+                "explanation": (
+                    "« Please » accompagne une demande, avant de recevoir la "
+                    "chose. « Thank you » vient après, pour remercier, jamais "
+                    "avant."
+                ),
+            },
+            {
+                "ref": "f-an-salutations-4",
+                "prompt": "Léa vient de recevoir un cadeau. Que dit-elle ?",
+                "choices": ["Please", "Hello", "Thank you"],
+                "correct": 2,
+                "explanation": (
+                    "Recevoir quelque chose appelle un remerciement, après coup : "
+                    "« thank you ». « Please » se dit avant de recevoir, pas après."
+                ),
+            },
+        ],
+    },
+    {
+        "code": f"{PREFIX}fix-an-couleurs",
+        "title": "Les couleurs en anglais",
+        "competency": AN_COULEURS,
+        "minutes": 4,
+        "guidance": (
+            "Certaines couleurs se retiennent par une image : « red » comme une "
+            "pomme rouge, « yellow » comme le soleil, « green » comme l’herbe, "
+            "« blue » comme le ciel.\n\n"
+            "Le piège habituel, c’est de confondre deux mots qui commencent par "
+            "un son proche. « Yellow » (jaune) et « green » (vert) ne se "
+            "ressemblent pourtant pas du tout une fois qu’on les compare à voix "
+            "haute.\n\n"
+            "Si tu hésites, pense d’abord à l’objet que tu connais déjà dans "
+            "cette couleur, puis dis son nom anglais."
+        ),
+        "questions": [
+            {
+                "ref": "f-an-couleurs-1",
+                "prompt": "Comment dit-on « rouge » en anglais ?",
+                "choices": ["Blue", "Red", "Green"],
+                "correct": 1,
+                "explanation": (
+                    "« Red » désigne le rouge, par exemple celui d’une pomme. "
+                    "« Blue » est le bleu, et « Green » le vert : trois mots à "
+                    "ne pas confondre."
+                ),
+            },
+            {
+                "ref": "f-an-couleurs-2",
+                "prompt": "Quelle couleur est « green » ?",
+                "choices": ["Rouge", "Vert", "Jaune"],
+                "correct": 1,
+                "explanation": (
+                    "« Green » se dit pour le vert, la couleur de l’herbe. Le "
+                    "jaune se dit « yellow », un mot différent malgré un début "
+                    "de son proche."
+                ),
+            },
+            {
+                "ref": "f-an-couleurs-3",
+                "prompt": "Comment dit-on « bleu » en anglais ?",
+                "choices": ["Blue", "Black", "Brown"],
+                "correct": 0,
+                "explanation": (
+                    "« Blue » désigne le bleu. Les deux autres commencent par "
+                    "une lettre proche mais désignent le noir et le marron."
+                ),
+            },
+            {
+                "ref": "f-an-couleurs-4",
+                "prompt": "Le soleil est jaune. Comment dit-on « jaune » en anglais ?",
+                "choices": ["Yellow", "Green", "Red"],
+                "correct": 0,
+                "explanation": (
+                    "« Yellow » désigne le jaune. Il ne faut pas le confondre "
+                    "avec « green », qui commence par un son proche mais "
+                    "désigne le vert."
+                ),
+            },
+        ],
+    },
+    {
+        "code": f"{PREFIX}fix-an-nombres-5",
+        "title": "Compter jusqu’à cinq en anglais",
+        "competency": AN_NOMBRES5,
+        "minutes": 4,
+        "guidance": (
+            "Compter en anglais jusqu’à cinq, c’est cinq mots à connaître par "
+            "cœur, dans l’ordre : one, two, three, four, five.\n\n"
+            "Deux d’entre eux se confondent souvent à l’oreille : « three » "
+            "(trois) et « four » (quatre) commencent presque pareil. Pour ne "
+            "pas te tromper, retiens que « three » siffle au début, alors que "
+            "« four » commence par un son plus sourd.\n\n"
+            "Une astuce : compte sur tes doigts en anglais à voix haute "
+            "plusieurs fois de suite. L’ordre finit par se retenir tout seul, "
+            "comme une comptine."
+        ),
+        "questions": [
+            {
+                "ref": "f-an-nombres5-1",
+                "prompt": "Comment dit-on « un » en anglais ?",
+                "choices": ["Two", "One", "Five"],
+                "correct": 1,
+                "explanation": (
+                    "« One » désigne le premier nombre, un. « Two » est deux, "
+                    "et « Five » est cinq : des mots distincts à ne pas "
+                    "mélanger."
+                ),
+            },
+            {
+                "ref": "f-an-nombres5-2",
+                "prompt": "Quel nombre est « four » en anglais ?",
+                "choices": ["Trois", "Quatre", "Cinq"],
+                "correct": 1,
+                "explanation": (
+                    "« Four » correspond à quatre. « Three », qui lui ressemble "
+                    "à l’oral, correspond à trois : deux mots proches à ne pas "
+                    "confondre."
+                ),
+            },
+            {
+                "ref": "f-an-nombres5-3",
+                "prompt": "Comment dit-on « trois » en anglais ?",
+                "choices": ["Four", "Three", "Five"],
+                "correct": 1,
+                "explanation": (
+                    "« Three » désigne le nombre trois. Il commence par un son "
+                    "qui siffle, contrairement à « four », qu’on confond "
+                    "parfois avec lui."
+                ),
+            },
+            {
+                "ref": "f-an-nombres5-4",
+                "prompt": "« One, two, three, four, … » Quel nombre vient ensuite ?",
+                "choices": ["Three", "Four", "Five"],
+                "correct": 2,
+                "explanation": (
+                    "Après quatre vient cinq, qui se dit « five ». La suite ne "
+                    "s’arrête pas à four : il reste un nombre à réciter."
                 ),
             },
         ],

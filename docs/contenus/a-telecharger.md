@@ -8,11 +8,11 @@ cinquante-quatre compétences du référentiel à six classes et trois matières
 
 ## D'abord, la vérité sur ce qui manque vraiment
 
-Le contenu pédagogique existe déjà pour une bonne part du référentiel. Douze
-fiches de remédiation sur cinquante-quatre compétences, quarante-huit
-questions, douze leçons, six examens d'entrée à cent soixante-deux questions
-au total (trois par compétence) — tout est écrit, rattaché aux compétences et
-corrigé côté serveur.
+Le contenu pédagogique existe déjà pour une bonne part du référentiel. Quinze
+fiches de remédiation sur cinquante-quatre compétences, soixante questions,
+quinze leçons, six examens d'entrée à cent soixante-deux questions au total
+(trois par compétence) — tout est écrit, rattaché aux compétences et corrigé
+côté serveur.
 
 **Ce que ce contenu-là ne sait pas faire, c'est se faire entendre et se faire
 manipuler.** C'est exactement ce que H5P et PhET apportent, et c'est à cela qu'il

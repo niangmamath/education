@@ -6,17 +6,19 @@ des cinquante-quatre compétences du référentiel.
 
 ## Comment lire cette liste
 
-**Douze compétences ont déjà une fiche native** — une leçon et quatre questions,
-écrites dans la plateforme, sans H5P. Pour elles, cette liste ne propose **pas**
-de tout refaire : elle propose un seul exercice H5P, réservé à ce que la fiche
-ne sait pas faire — entendre un son, manipuler un objet. Construire un QCM de
-plus sur une compétence déjà couverte ne vaut rien : la fiche le fait déjà, avec
-le rattachement à la compétence en plus.
+**Quinze compétences ont déjà une fiche native** — une leçon et quatre
+questions, écrites dans la plateforme, sans H5P. Douze depuis la première
+version du produit (français et mathématiques, CI à CE1), trois de plus pour
+l'anglais du CI. Pour elles, cette liste ne propose **pas** de tout refaire :
+elle propose un seul exercice H5P, réservé à ce que la fiche ne sait pas
+faire — entendre un son, manipuler un objet. Construire un QCM de plus sur une
+compétence déjà couverte ne vaut rien : la fiche le fait déjà, avec le
+rattachement à la compétence en plus.
 
-**Quarante-deux compétences n'ont rien du tout**, dont les dix-huit d'anglais,
-ajoutées après coup (ADR-019) et jamais couvertes par une fiche native. Pour
-elles, la liste propose un jeu complet — de quoi produire une vraie
-remédiation, pas un seul exercice isolé.
+**Trente-neuf compétences n'ont rien du tout**, dont quinze d'anglais (CP à
+CM2, ajoutées après coup par ADR-019) et jamais couvertes par une fiche
+native. Pour elles, la liste propose un jeu complet — de quoi produire une
+vraie remédiation, pas un seul exercice isolé.
 
 **La priorité** suit un ordre simple : d'abord ce qui manque le plus (le son,
 partout où il manque), puis les classes dans l'ordre où un enfant les traverse
@@ -27,10 +29,12 @@ Chaque ligne nomme un type H5P de la liste des huit autorisés par ADR-012, ou
 
 ---
 
-## Priorité 1 — Le son manquant sur les douze compétences déjà couvertes
+## Priorité 1 — Le son manquant sur les quinze compétences déjà couvertes
 
-Aucune de ces douze n'a besoin d'un second exercice complet. Une seule chose
-leur manque, et c'est toujours la même : entendre.
+Aucune de ces quinze n'a besoin d'un second exercice complet. Une seule chose
+leur manque, et c'est toujours la même : entendre. Les trois d'anglais sont
+dans le même cas que les douze de français et de mathématiques : une fiche
+écrite, mais aucun son réel derrière un mot qu'on est censé entendre.
 
 | Compétence | Ce qui manque | Type H5P | À construire |
 |---|---|---|---|
@@ -42,6 +46,9 @@ leur manque, et c'est toujours la même : entendre.
 | `ci-ma-denombrer` | compter des objets, pas des symboles | **DragQuestion** | Une image (fruits, jetons) ; l'enfant glisse un jeton sur chaque objet compté, ou saisit le total après avoir touché chaque objet. |
 | `cp-ma-addition` | manipuler pour additionner | **DragQuestion** | Deux groupes d'objets à réunir par glisser-déposer, puis saisir le total — la manipulation physique que taper un nombre ne donne pas. |
 | `ce1-ma-soustraction` | manipuler pour soustraire | **DragQuestion** | Un groupe d'objets dont on retire ceux qui sont barrés/glissés hors du cadre, puis saisir ce qui reste. |
+| `ci-an-salutations` | entendre la salutation | **Dictation** | Une salutation prononcée (« Hello », « Goodbye ») ; l'enfant choisit le mot anglais entendu parmi trois, sans le lire d'abord. |
+| `ci-an-couleurs` | entendre le nom de couleur | **Dictation** | Un nom de couleur prononcé en anglais ; l'enfant touche la pastille de la couleur correspondante parmi trois. |
+| `ci-an-nombres-5` | entendre le nombre | **Dictation** | Un nombre prononcé en anglais (« three ») ; l'enfant choisit le chiffre correspondant parmi trois. |
 
 \* `ci-fr-sons` (« Distinguer les sons du langage ») n'a **pas** de fiche native —
 elle n'appartient donc pas vraiment aux douze. Elle est mise ici, en tête, parce
@@ -63,21 +70,16 @@ exercice : la fiche suffit.)*
 
 ---
 
-## Priorité 2 — Anglais, CI à CE1, rien n'existe encore
+## Priorité 2 — Anglais, CP à CE1, rien n'existe encore
 
-L'anglais est arrivé après cette liste (ADR-019) et n'a ni fiche native ni
-exercice. Ses neuf compétences du CI à la CE1 passent devant celles de CE2 :
-la logique de cette liste met les classes les plus précoces en premier, et
-rien ne justifie de faire exception pour la nouvelle matière.
-
-Le CI reste oral seulement, comme pour le français : un enfant de cet âge ne
-lit pas, donc chaque exercice part d'un mot **entendu**, jamais lu en premier.
+Le CI de l'anglais a maintenant sa fiche (ci-dessus, Priorité 1) ; ses six
+compétences de CP et de CE1 restent sans rien du tout, ni fiche ni exercice.
+Elles passent devant celles de CE2 : la logique de cette liste met les
+classes les plus précoces en premier, et rien ne justifie de faire exception
+pour la nouvelle matière.
 
 | Compétence | Type H5P principal | À construire |
 |---|---|---|
-| `ci-an-salutations` | **Dictation** | Une salutation prononcée (« Hello », « Goodbye ») ; l'enfant choisit le mot anglais entendu parmi trois, sans le lire d'abord. |
-| `ci-an-couleurs` | **Dictation** | Un nom de couleur prononcé en anglais ; l'enfant touche la pastille de la couleur correspondante parmi trois. |
-| `ci-an-nombres-5` | **Dictation** | Un nombre prononcé en anglais (« three ») ; l'enfant choisit le chiffre correspondant parmi trois. |
 | `cp-an-alphabet` | **Dictation** | Une lettre de l'alphabet anglais épelée à voix haute ; l'enfant la choisit parmi trois, comme pour les sons de lettres françaises. |
 | `cp-an-animaux` | **Dictation** | Un nom d'animal prononcé en anglais (« dog ») ; l'enfant choisit sa traduction française parmi trois. |
 | `cp-an-nombres-10` | **Dictation** | Un nombre prononcé en anglais (« eight ») ; l'enfant choisit le chiffre correspondant parmi trois. |
@@ -157,9 +159,9 @@ que l'origine de contenu isolée sait servir.
 
 Chaque exercice construit reste **à côté** de la fiche existante quand il y en a
 une, jamais à sa place : la fiche garde sa leçon et ses explications, qu'aucun
-paquet H5P ne porte. Pour les quarante-deux compétences sans rien, une seule
+paquet H5P ne porte. Pour les trente-neuf compétences sans rien, une seule
 activité H5P suffit à sortir la compétence de la dette mesurée par
 `test_the_sheets_cover_the_competencies_they_are_written_for` — ce test devra
-être mis à jour (le compte de 12 devra monter) le jour où une vraie fiche native
+être mis à jour (le compte de 15 devra monter) le jour où une vraie fiche native
 vient s'y ajouter ; un exercice H5P seul ne l'y fait pas entrer, puisque le test
 mesure les fiches natives et non le catalogue entier.

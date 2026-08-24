@@ -122,11 +122,11 @@ couvre pas et sur lequel elle ne prétend rien.
 
 ## Ce qui reste en dette
 
-- **Quarante-deux compétences sur cinquante-quatre n'ont pas de fiche de
-  remédiation**, dont les dix-huit d'anglais. Les douze existantes couvrent du
-  CI au CE1, en français et en mathématiques seulement. Un test épingle la
-  couverture dans les deux sens, pour que la dette ne baisse pas sans qu'on la
-  voie baisser.
+- **Trente-neuf compétences sur cinquante-quatre n'ont pas de fiche de
+  remédiation**, dont quinze d'anglais. Les quinze fiches existantes couvrent
+  le CI au CE1 en français et en mathématiques, plus le CI en anglais. Un test
+  épingle la couverture dans les deux sens, pour que la dette ne baisse pas
+  sans qu'on la voie baisser.
 - **Les examens du CI sont les plus fragiles.** Un enfant de cours d'initiation ne
   lit pas encore, et un examen écrit lui demande de déchiffrer la question. Il
   faudrait du son et des images.
