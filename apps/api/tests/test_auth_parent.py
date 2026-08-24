@@ -21,6 +21,7 @@ from sqlalchemy import Engine, create_engine, text
 
 from app.core.config import settings
 from app.core.db import DATABASE_URL
+from app.core.lockout import failure_key
 from app.core.security import (
     FAMILY_CODE_ALPHABET,
     FAMILY_CODE_LENGTH,
@@ -253,6 +254,61 @@ class TestLogin:
         assert wrong_password.json() == unknown_email.json()
 
 
+class TestLoginLockout:
+    """A password is stronger than a PIN, but nothing else caps repeated guesses."""
+
+    @pytest.fixture
+    def locked_parent(
+        self, client: TestClient, email: str, redis_client: sync_redis.Redis
+    ) -> Iterator[str]:
+        parent_id = register(client, email).json()["id"]
+
+        for _ in range(settings.PARENT_LOGIN_MAX_ATTEMPTS):
+            attempt = login(client, email, password=WRONG_PASSWORD)
+            assert attempt.status_code == 401
+
+        yield parent_id
+        redis_client.delete(failure_key(uuid.UUID(parent_id), scope="parent-login"))
+
+    def test_the_allowance_spent_the_login_is_refused(
+        self, client: TestClient, email: str, locked_parent: str
+    ) -> None:
+        response = login(client, email, password=WRONG_PASSWORD)
+
+        assert response.status_code == 429
+        assert response.json()["error"]["code"] == "RATE_LIMIT_EXCEEDED"
+
+    def test_the_lockout_holds_against_the_right_password(
+        self, client: TestClient, email: str, locked_parent: str
+    ) -> None:
+        """Otherwise the cap would only slow an attacker instead of stopping them."""
+        response = login(client, email)
+
+        assert response.status_code == 429
+        assert settings.SESSION_COOKIE_NAME not in response.cookies
+
+    def test_the_counter_expires_on_its_own(
+        self, redis_client: sync_redis.Redis, locked_parent: str
+    ) -> None:
+        ttl = redis_client.ttl(
+            failure_key(uuid.UUID(locked_parent), scope="parent-login")
+        )
+
+        assert 0 < ttl <= settings.PARENT_LOGIN_LOCKOUT_SECONDS
+
+    def test_a_successful_login_clears_the_counter(
+        self, client: TestClient, email: str, redis_client: sync_redis.Redis
+    ) -> None:
+        parent_id = register(client, email).json()["id"]
+        failed = login(client, email, password=WRONG_PASSWORD)
+        assert failed.status_code == 401
+
+        assert login(client, email).status_code == 200
+
+        key = failure_key(uuid.UUID(parent_id), scope="parent-login")
+        assert redis_client.exists(key) == 0
+
+
 class TestSessionAccess:
     def test_me_refuses_a_caller_without_a_cookie(self, client: TestClient) -> None:
         assert client.get(ME_URL).status_code == 401
@@ -288,7 +344,9 @@ class TestProfileUpdate:
         assert response.json()["display_name"] == "Nouveau nom"
         assert client.get(ME_URL).json()["display_name"] == "Nouveau nom"
 
-    def test_renaming_refuses_a_caller_without_a_cookie(self, client: TestClient) -> None:
+    def test_renaming_refuses_a_caller_without_a_cookie(
+        self, client: TestClient
+    ) -> None:
         response = client.put(ME_URL, json={"display_name": "Nouveau nom"})
         assert response.status_code == 401
 
@@ -300,7 +358,10 @@ class TestProfileUpdate:
 
         response = client.put(
             f"{ME_URL}/password",
-            json={"current_password": VALID_PASSWORD, "new_password": "un-autre-mot-de-passe"},
+            json={
+                "current_password": VALID_PASSWORD,
+                "new_password": "un-autre-mot-de-passe",
+            },
         )
 
         assert response.status_code == 200
@@ -315,7 +376,10 @@ class TestProfileUpdate:
 
         response = client.put(
             f"{ME_URL}/password",
-            json={"current_password": WRONG_PASSWORD, "new_password": "un-autre-mot-de-passe"},
+            json={
+                "current_password": WRONG_PASSWORD,
+                "new_password": "un-autre-mot-de-passe",
+            },
         )
 
         assert response.status_code == 401
@@ -339,7 +403,9 @@ class TestProfileUpdate:
 
         assert response.status_code == 200
         assert client.get(ME_URL).status_code == 200
-        assert redis_client.exists(f"session:{hash_session_token(elsewhere_token)}") == 0
+        assert (
+            redis_client.exists(f"session:{hash_session_token(elsewhere_token)}") == 0
+        )
 
 
 class TestLogout:

@@ -34,7 +34,7 @@ from app.core.exceptions import (
     NotFoundException,
     RateLimitException,
 )
-from app.core.lockout import clear_failures, is_locked, register_failure
+from app.core.lockout import LOCKED_MESSAGE, clear_failures, is_locked, register_failure
 from app.core.security import (
     hash_pin,
     needs_rehash,
@@ -68,7 +68,6 @@ router = APIRouter()
 # one: a different answer per cause would tell an attacker which pseudonyms
 # exist behind a family code.
 INVALID_CREDENTIALS_MESSAGE = "Identifiants invalides"
-LOCKED_MESSAGE = "Trop de tentatives, réessayez dans quelques minutes"
 PSEUDONYM_TAKEN_MESSAGE = "Ce pseudonyme est déjà utilisé dans cette famille"
 UNKNOWN_FAMILY_CODE_MESSAGE = "Code famille inconnu"
 PENDING_MESSAGE = "Profil en attente d'activation par le parent"

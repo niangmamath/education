@@ -25,7 +25,12 @@ from app.api.deps import (
     SessionToken,
 )
 from app.core.config import settings
-from app.core.exceptions import AuthenticationException, ConflictException
+from app.core.exceptions import (
+    AuthenticationException,
+    ConflictException,
+    RateLimitException,
+)
+from app.core.lockout import LOCKED_MESSAGE, clear_failures, is_locked, register_failure
 from app.core.security import (
     generate_family_code,
     hash_password,
@@ -147,8 +152,25 @@ async def login_parent(
         spend_dummy_verification(password)
         raise AuthenticationException(message=INVALID_CREDENTIALS_MESSAGE)
 
+    # Checked before the password is verified: once the allowance is spent,
+    # even the right password must wait, otherwise the lockout would only
+    # slow an attacker down rather than stop them (mirrors the child PIN
+    # login in `children.py`, the only other thing guarding a login here).
+    if await is_locked(
+        client, parent.id, settings.PARENT_LOGIN_MAX_ATTEMPTS, scope="parent-login"
+    ):
+        raise RateLimitException(message=LOCKED_MESSAGE)
+
     if not verify_password(password, parent.password_hash):
+        await register_failure(
+            client,
+            parent.id,
+            settings.PARENT_LOGIN_LOCKOUT_SECONDS,
+            scope="parent-login",
+        )
         raise AuthenticationException(message=INVALID_CREDENTIALS_MESSAGE)
+
+    await clear_failures(client, parent.id, scope="parent-login")
 
     if not parent.is_active:
         raise AuthenticationException(message=INVALID_CREDENTIALS_MESSAGE)
@@ -228,7 +250,9 @@ async def change_parent_password(
     that opened it — except the one making this request, which just proved
     itself with the current password and needs no second proof.
     """
-    if not verify_password(payload.current_password.get_secret_value(), parent.password_hash):
+    if not verify_password(
+        payload.current_password.get_secret_value(), parent.password_hash
+    ):
         raise AuthenticationException(message=INVALID_CREDENTIALS_MESSAGE)
 
     parent.password_hash = hash_password(payload.new_password.get_secret_value())

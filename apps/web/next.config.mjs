@@ -44,6 +44,28 @@ const nextConfig = {
       allowedOrigins: publicHosts,
     },
   },
+
+  // En-têtes de base, y compris derrière un tunnel : l'origine de contenu H5P
+  // (infrastructure/nginx/content-origin.conf.template) porte déjà les siens
+  // pour son propre bac à sable, mais l'application elle-même n'en avait
+  // aucun. Pas de CSP ici : Next a besoin de scripts et de styles inline, et
+  // la durcir sans casser le rendu demande un travail à part.
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=63072000; includeSubDomains',
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
