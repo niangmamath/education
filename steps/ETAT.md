@@ -1605,7 +1605,34 @@ propriétaire, comme la suite directe de `HORS-01` à `HORS-07`.
       d'une tentative est généré côté serveur, rien ne permet à un test de le
       choisir pour forcer deux tirages à différer. ADR-020.
 
+- [x] **`HORS-11`, pipeline de dépôt H5P et sortie du préfixe `demo-` pour le
+      contenu réel.** En déployant les trois premières activités H5P réelles
+      (`ci-fr-sons`, `cp-fr-syllabes`, `cp-fr-phonemes`) sur le checkout ngrok,
+      l'agent les avait enregistrées sous des codes `demo-son-*`, avec une
+      licence et une provenance inventées faute de trace écrite de ce que le
+      propriétaire aurait choisi. Le propriétaire a corrigé les deux : le
+      préfixe `demo-` désigne exclusivement le jeu de données fictif que
+      `python -m app.demo --reset` sait recréer, jamais du contenu réel — un
+      code de ce préfixe se ferait supprimer au reset suivant sans être
+      recréé, puisque le script de démo ignore son existence. Codes renommés
+      sans préfixe (`son-ci-fr-sons`, etc.) par un simple `UPDATE` sur
+      `catalog_activities.code`, sans risque : le schéma du catalogue ne relie
+      rien par ce code, seul `activity_id` (UUID) sert de clé étrangère.
+      Licence et source corrigées à `CC BY 4.0` /
+      `https://lumi.education, fabriqué par nos soins`, la convention que
+      `docs/contenus/a-telecharger.md` documentait déjà mais que la première
+      dépose n'avait pas suivie faute de l'avoir relue. Le geste de dépôt
+      lui-même — copier le fichier, ouvrir l'activité, enregistrer le paquet,
+      le déployer, vérifier la cohérence du catalogue — est maintenant une
+      seule commande, `infrastructure/scripts/deployer_h5p.sh`, qui accepte un
+      fichier source n'importe où lisible depuis WSL (le dossier
+      Téléchargements Windows en particulier, `/mnt/c/Users/<compte>/Downloads/`)
+      et fixe licence et source une fois pour toutes dans le script plutôt que
+      de les faire retaper, ou réinventer, à chaque dépôt.
+      `docs/contenus/a-telecharger.md` réécrit en conséquence.
+
 ## Prochaine action
 
-Le propriétaire reprend la fabrication des fichiers H5P selon la liste.
-Ensuite : ouvrir l'étape 14, notifications.
+Le propriétaire reprend la fabrication des fichiers H5P selon la liste, avec
+`infrastructure/scripts/deployer_h5p.sh` pour les déposer. Ensuite : ouvrir
+l'étape 14, notifications.
