@@ -57,7 +57,7 @@ qu'elle est le prérequis qui bloque toute remédiation sur `cp-fr-syllabes` pui
 `cp-fr-phonemes` : tant qu'elle n'est jamais observée, le moteur de diagnostic
 ne propose rien pour ses deux dépendantes, quel que soit le contenu déposé sur
 elles. Vérifié en le constatant : un enfant CP en échec sur les deux ne recevait
-aucune remédiation tant que `ci-fr-sons` restait sans activité ; `demo-son-ci-fr-sons`
+aucune remédiation tant que `ci-fr-sons` restait sans activité ; `son-ci-fr-sons`
 le corrige.
 
 Attention à ne pas confondre `ci-fr-sons` avec `ci-fr-lettres` (« Reconnaître les
