@@ -47,7 +47,9 @@ async def read_public_stats(db: DbSession) -> PublicStats:
         or 0
     )
     competencies_covered = (
-        await db.scalar(select(func.count(func.distinct(AttemptResult.competency_code))))
+        await db.scalar(
+            select(func.count(func.distinct(AttemptResult.competency_code)))
+        )
         or 0
     )
     competencies_total = await db.scalar(select(func.count(Competency.id))) or 0

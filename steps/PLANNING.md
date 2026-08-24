@@ -186,6 +186,7 @@ propriétaire, parce qu’ils bloquaient l’usage réel de la plateforme plutô
 | HORS-05 | Ouvrir le catalogue H5P | HORS-04 | Terminé | ADR-012 amendée à huit types, migration 0015, commande `libraries`, 1135 tests |
 | HORS-06 | Rendre la démonstration montrable | HORS-05 | Terminé | Recette par tunnel ; `PUBLIC_HOST` sans quoi toute connexion échouerait derrière un tunnel |
 | HORS-07 | Six classes cumulatives | HORS-06 | Terminé | CI→CM2, 36 compétences, un examen par classe, passage décidé par le parent, ADR-018 |
+| HORS-08 | Anglais et trois questions par compétence | HORS-07 | Terminé | 54 compétences, 3 matières, examen à 27 questions par classe, ADR-019 |
 
 `HORS-01` referme la première flèche du MVP, qui n’avait jamais été construite :
 un enfant inscrit n’avait aucune compétence observée, donc aucun diagnostic.
@@ -197,6 +198,18 @@ L’examen et les fiches partagent leur correction et **pas** ce qu’ils répon
 une fiche explique, l’examen se tait. Cette asymétrie a ouvert une faille — poster
 ses réponses d’examen à la route des fiches — refermée par un contrôle de la
 nature de l’activité. ADR-017 consigne l’ensemble.
+
+`HORS-08` ajoute l'anglais comme troisième matière et fait passer l'examen
+d'entrée d'une à trois questions par compétence, à la demande du propriétaire.
+Aucune migration : le référentiel modélisait déjà la matière comme une table,
+et le moteur de résultats regroupait déjà plusieurs questions par compétence.
+Amendée le jour même : le propriétaire a corrigé la décision initiale, qui
+séparait strictement les trois matières — résoudre un problème de
+mathématiques suppose de comprendre son énoncé en français, et lire ou écrire
+en anglais s'appuie sur la mécanique déjà acquise en français. Neuf prérequis
+croisés ajoutés ; le vocabulaire oral de l'anglais reste sans prérequis
+français, faute d'un point d'accroche. Dette ouverte : les dix-huit
+compétences d'anglais n'ont ni fiche de remédiation ni exercice H5P listé.
 
 ### Prochaine tâche
 

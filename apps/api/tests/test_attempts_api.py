@@ -520,9 +520,7 @@ class TestParentReadingAttempts:
         )
         family.as_child().post(f"{MY_ATTEMPTS_URL}/{attempt['id']}/complete")
 
-        listed = family.as_parent().get(
-            f"/api/v1/children/{family.child_id}/attempts"
-        )
+        listed = family.as_parent().get(f"/api/v1/children/{family.child_id}/attempts")
 
         assert listed.status_code == 200
         assert [row["id"] for row in listed.json()] == [attempt["id"]]

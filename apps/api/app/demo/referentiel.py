@@ -87,6 +87,9 @@ CI_FR_SENS: Final = "ci-fr-sens"
 CI_MA_DENOMBRER: Final = "ci-ma-denombrer"
 CI_MA_CHIFFRES: Final = "ci-ma-chiffres"
 CI_MA_COMPARER: Final = "ci-ma-comparer"
+CI_AN_SALUTATIONS: Final = "ci-an-salutations"
+CI_AN_COULEURS: Final = "ci-an-couleurs"
+CI_AN_NOMBRES5: Final = "ci-an-nombres-5"
 
 # CP
 CP_FR_SYLLABES: Final = "cp-fr-syllabes"
@@ -95,6 +98,9 @@ CP_FR_MOTS: Final = "cp-fr-mots"
 CP_MA_NOMBRES: Final = "cp-ma-nombres-20"
 CP_MA_RANGER: Final = "cp-ma-ranger"
 CP_MA_ADDITION: Final = "cp-ma-addition"
+CP_AN_ALPHABET: Final = "cp-an-alphabet"
+CP_AN_ANIMAUX: Final = "cp-an-animaux"
+CP_AN_NOMBRES10: Final = "cp-an-nombres-10"
 
 # CE1
 CE1_FR_PHRASE: Final = "ce1-fr-phrase"
@@ -103,6 +109,9 @@ CE1_FR_ACCORDS: Final = "ce1-fr-accords"
 CE1_MA_NOMBRES: Final = "ce1-ma-nombres-100"
 CE1_MA_SOUSTRACTION: Final = "ce1-ma-soustraction"
 CE1_MA_PROBLEME: Final = "ce1-ma-probleme"
+CE1_AN_FAMILLE: Final = "ce1-an-famille"
+CE1_AN_MOTS: Final = "ce1-an-mots"
+CE1_AN_PRESENTATION: Final = "ce1-an-presentation"
 
 # CE2
 CE2_FR_GROUPES: Final = "ce2-fr-groupes"
@@ -111,6 +120,9 @@ CE2_FR_TEXTE: Final = "ce2-fr-texte"
 CE2_MA_NOMBRES: Final = "ce2-ma-nombres-1000"
 CE2_MA_MULTIPLICATION: Final = "ce2-ma-multiplication"
 CE2_MA_MESURES: Final = "ce2-ma-mesures"
+CE2_AN_PHRASES: Final = "ce2-an-phrases"
+CE2_AN_QUESTIONS: Final = "ce2-an-questions"
+CE2_AN_JOURS: Final = "ce2-an-jours"
 
 # CM1
 CM1_FR_NATURE: Final = "cm1-fr-nature"
@@ -119,6 +131,9 @@ CM1_FR_ESSENTIEL: Final = "cm1-fr-essentiel"
 CM1_MA_FRACTIONS: Final = "cm1-ma-fractions"
 CM1_MA_DIVISION: Final = "cm1-ma-division"
 CM1_MA_PROBLEME2: Final = "cm1-ma-probleme-2"
+CM1_AN_ETRE_AVOIR: Final = "cm1-an-etre-avoir"
+CM1_AN_PLURIEL: Final = "cm1-an-pluriel"
+CM1_AN_QUOTIDIEN: Final = "cm1-an-quotidien"
 
 # CM2
 CM2_FR_ACCORDS: Final = "cm2-fr-accords"
@@ -127,6 +142,9 @@ CM2_FR_REDACTION: Final = "cm2-fr-redaction"
 CM2_MA_DECIMAUX: Final = "cm2-ma-decimaux"
 CM2_MA_PROPORTION: Final = "cm2-ma-proportion"
 CM2_MA_GEOMETRIE: Final = "cm2-ma-geometrie"
+CM2_AN_TEXTE: Final = "cm2-an-texte"
+CM2_AN_PRESENT: Final = "cm2-an-present"
+CM2_AN_REDACTION: Final = "cm2-an-redaction"
 
 
 def _c(
@@ -148,9 +166,20 @@ def _c(
     }
 
 
-# Trente-six compétences, six par classe, trois par matière. Les prérequis sont
-# la vraie affirmation pédagogique de ce fichier : c'est par eux que la
-# plateforme descend d'une difficulté visible à sa cause.
+# Cinquante-quatre compétences, neuf par classe, trois par matière. Les
+# prérequis sont la vraie affirmation pédagogique de ce fichier : c'est par eux
+# que la plateforme descend d'une difficulté visible à sa cause.
+#
+# Le français n'est prérequis de rien à l'oral : rien n'impose à un enfant de
+# lire en français avant de saluer en anglais, et compter jusqu'à cinq ne
+# demande pas de savoir lire. Mais deux familles de compétences en dépendent
+# à l'écrit, et le prérequis traverse alors la matière exprès. En
+# mathématiques, résoudre un problème commence par comprendre l'énoncé : un
+# enfant qui ne lit pas encore une phrase française butera sur l'énoncé avant
+# de buter sur le calcul, et le diagnostic doit le dire. En anglais, lire et
+# écrire s'appuient sur la mécanique déjà acquise en français — reconnaître
+# des lettres, décoder un mot, comprendre une phrase — le français servant de
+# base de traduction (« eat » se comprend par « manger », pas dans le vide).
 COMPETENCIES: Final[list[dict[str, Any]]] = [
     # ── CI ──────────────────────────────────────────────────────────────────
     _c(CI_FR_LETTRES, "Reconnaître les lettres de l’alphabet", "fr-code", CI, 1),
@@ -173,6 +202,15 @@ COMPETENCIES: Final[list[dict[str, Any]]] = [
         3,
         [CI_MA_DENOMBRER],
     ),
+    _c(
+        CI_AN_SALUTATIONS,
+        "Comprendre et utiliser des salutations simples",
+        "an-oral",
+        CI,
+        1,
+    ),
+    _c(CI_AN_COULEURS, "Nommer les couleurs de base", "an-oral", CI, 2),
+    _c(CI_AN_NOMBRES5, "Compter de un à cinq", "an-oral", CI, 3),
     # ── CP ──────────────────────────────────────────────────────────────────
     _c(CP_FR_SYLLABES, "Manipuler les syllabes", "fr-code", CP, 1, [CI_FR_SONS]),
     _c(CP_FR_PHONEMES, "Manipuler les phonèmes", "fr-code", CP, 2, [CP_FR_SYLLABES]),
@@ -201,6 +239,30 @@ COMPETENCIES: Final[list[dict[str, Any]]] = [
         [CP_MA_NOMBRES, CI_MA_COMPARER],
     ),
     _c(CP_MA_ADDITION, "Additionner jusqu’à 20", "ma-calcul", CP, 3, [CP_MA_RANGER]),
+    _c(
+        CP_AN_ALPHABET,
+        "Reconnaître les lettres de l’alphabet anglais",
+        "an-ecrit",
+        CP,
+        1,
+        [CI_FR_LETTRES],
+    ),
+    _c(
+        CP_AN_ANIMAUX,
+        "Nommer des animaux familiers",
+        "an-oral",
+        CP,
+        2,
+        [CI_AN_SALUTATIONS],
+    ),
+    _c(
+        CP_AN_NOMBRES10,
+        "Compter et lire les nombres jusqu’à dix",
+        "an-ecrit",
+        CP,
+        3,
+        [CI_AN_NOMBRES5, CP_AN_ALPHABET],
+    ),
     # ── CE1 ─────────────────────────────────────────────────────────────────
     _c(
         CE1_FR_PHRASE,
@@ -248,7 +310,31 @@ COMPETENCIES: Final[list[dict[str, Any]]] = [
         "ma-calcul",
         CE1,
         3,
-        [CE1_MA_SOUSTRACTION],
+        [CE1_MA_SOUSTRACTION, CE1_FR_PHRASE],
+    ),
+    _c(
+        CE1_AN_FAMILLE,
+        "Nommer les membres de la famille",
+        "an-oral",
+        CE1,
+        1,
+        [CP_AN_ANIMAUX],
+    ),
+    _c(
+        CE1_AN_MOTS,
+        "Lire et écrire des mots anglais simples",
+        "an-ecrit",
+        CE1,
+        2,
+        [CP_AN_ALPHABET, CP_FR_MOTS],
+    ),
+    _c(
+        CE1_AN_PRESENTATION,
+        "Se présenter en anglais",
+        "an-oral",
+        CE1,
+        3,
+        [CI_AN_SALUTATIONS],
     ),
     # ── CE2 ─────────────────────────────────────────────────────────────────
     # Les groupes de verbes viennent AVANT la conjugaison, et c'est le sens de la
@@ -302,6 +388,30 @@ COMPETENCIES: Final[list[dict[str, Any]]] = [
         3,
         [CE1_MA_NOMBRES],
     ),
+    _c(
+        CE2_AN_PHRASES,
+        "Lire et comprendre une phrase simple",
+        "an-ecrit",
+        CE2,
+        1,
+        [CE1_AN_MOTS, CE1_FR_PHRASE],
+    ),
+    _c(
+        CE2_AN_QUESTIONS,
+        "Poser et répondre à des questions simples",
+        "an-oral",
+        CE2,
+        2,
+        [CE1_AN_PRESENTATION],
+    ),
+    _c(
+        CE2_AN_JOURS,
+        "Nommer les jours de la semaine et les mois",
+        "an-oral",
+        CE2,
+        3,
+        [CE1_AN_FAMILLE],
+    ),
     # ── CM1 ─────────────────────────────────────────────────────────────────
     _c(
         CM1_FR_NATURE,
@@ -349,7 +459,31 @@ COMPETENCIES: Final[list[dict[str, Any]]] = [
         "ma-calcul",
         CM1,
         3,
-        [CE1_MA_PROBLEME, CE2_MA_MULTIPLICATION],
+        [CE1_MA_PROBLEME, CE2_MA_MULTIPLICATION, CE2_FR_TEXTE],
+    ),
+    _c(
+        CM1_AN_ETRE_AVOIR,
+        "Utiliser to be et to have au présent",
+        "an-ecrit",
+        CM1,
+        1,
+        [CE2_AN_PHRASES, CE2_FR_CONJUGAISON],
+    ),
+    _c(
+        CM1_AN_PLURIEL,
+        "Former le pluriel des noms réguliers",
+        "an-ecrit",
+        CM1,
+        2,
+        [CE1_AN_MOTS],
+    ),
+    _c(
+        CM1_AN_QUOTIDIEN,
+        "Utiliser le vocabulaire du quotidien",
+        "an-oral",
+        CM1,
+        3,
+        [CE2_AN_QUESTIONS],
     ),
     # ── CM2 ─────────────────────────────────────────────────────────────────
     _c(
@@ -390,7 +524,7 @@ COMPETENCIES: Final[list[dict[str, Any]]] = [
         "ma-calcul",
         CM2,
         2,
-        [CM1_MA_PROBLEME2],
+        [CM1_MA_PROBLEME2, CM1_FR_ESSENTIEL],
     ),
     _c(
         CM2_MA_GEOMETRIE,
@@ -399,6 +533,30 @@ COMPETENCIES: Final[list[dict[str, Any]]] = [
         CM2,
         3,
         [CE2_MA_MESURES, CE2_MA_MULTIPLICATION],
+    ),
+    _c(
+        CM2_AN_TEXTE,
+        "Comprendre un texte court en anglais",
+        "an-ecrit",
+        CM2,
+        1,
+        [CE2_AN_PHRASES, CM1_AN_ETRE_AVOIR, CE2_FR_TEXTE],
+    ),
+    _c(
+        CM2_AN_PRESENT,
+        "Décrire une habitude au présent simple",
+        "an-ecrit",
+        CM2,
+        2,
+        [CM1_AN_ETRE_AVOIR],
+    ),
+    _c(
+        CM2_AN_REDACTION,
+        "Rédiger des phrases simples sur soi-même",
+        "an-ecrit",
+        CM2,
+        3,
+        [CE1_AN_PRESENTATION, CM1_AN_PLURIEL, CE1_FR_DICTEE],
     ),
 ]
 
@@ -437,6 +595,15 @@ def referential(edition_code: str, edition_label: str) -> dict[str, Any]:
                         "label": "Calcul et problèmes",
                         "position": 2,
                     },
+                ],
+            },
+            {
+                "code": "an",
+                "label": "Anglais",
+                "position": 3,
+                "domains": [
+                    {"code": "an-oral", "label": "Écouter et parler", "position": 1},
+                    {"code": "an-ecrit", "label": "Lire et écrire", "position": 2},
                 ],
             },
         ],

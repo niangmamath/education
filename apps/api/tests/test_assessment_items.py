@@ -84,3 +84,21 @@ class TestTheAssessmentsAsAWhole:
         refs = [question["ref"] for question in ASSESSMENT]
 
         assert len(set(refs)) == len(refs)
+
+    @pytest.mark.parametrize("exam", EXAMS, ids=lambda e: e["level"])
+    def test_an_exam_asks_exactly_three_questions_per_competency(
+        self, exam: dict[str, object]
+    ) -> None:
+        """Une seule question par compétence ne rend qu'un verdict binaire.
+
+        Avec trois lectures, `read_counts` peut rendre une compétence
+        « partielle » (deux réponses sur trois) plutôt que de trancher entre
+        acquis et non acquis sur un seul coup de dé.
+        """
+        questions = exam["questions"]
+        assert isinstance(questions, list)
+        counts: dict[str, int] = {}
+        for question in questions:
+            counts[question["competency"]] = counts.get(question["competency"], 0) + 1
+
+        assert all(count == 3 for count in counts.values())

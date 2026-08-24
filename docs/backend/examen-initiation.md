@@ -74,10 +74,13 @@ qu'elle n'a pas dit qu'elle avait fini.
 
 ## Ce qu'il produit
 
-Douze questions, une par compétence du référentiel. À la clôture de la tentative,
-les règles de l'étape 10 lisent les réponses et écrivent un résultat par
-compétence ; le diagnostic de l'étape 12 en tire des lacunes, des reports et des
-propositions.
+Vingt-sept questions par classe, trois par compétence de la classe déclarée —
+neuf compétences, trois par matière (français, mathématiques, anglais). Trois
+questions et non une : `app.attempts.rules.read_counts` peut alors rendre une
+compétence « partielle » (deux bonnes réponses sur trois) plutôt que de
+trancher sur un seul coup de dé. À la clôture de la tentative, les règles de
+l'étape 10 lisent les réponses et écrivent un résultat par compétence ; le
+diagnostic de l'étape 12 en tire des lacunes, des reports et des propositions.
 
 Concrètement, sur le jeu de démonstration : Léa passe l'examen et la plateforme
 en sort **douze compétences observées, trois lacunes à travailler, quatre

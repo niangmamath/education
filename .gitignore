@@ -95,6 +95,10 @@ yarn-error.log*
 .pnpm-store/
 node_modules/.pnpm/
 
+# Le projet est en pnpm exclusivement (pnpm-lock.yaml) ; un package-lock.json
+# apparaît par accident si `npm install` tourne au lieu de `pnpm install`.
+package-lock.json
+
 # TurboRepo
 .turbo/
 .turbo/cache/
