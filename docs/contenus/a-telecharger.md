@@ -4,13 +4,14 @@ Cette page est une liste de courses. Elle dit **où** trouver les huit types
 autorisés, **où** déposer les fichiers et **quelle commande** lancer ensuite.
 Elle ne dit pas quel exercice construire pour quelle compétence : c'est le rôle
 de [`exercices-par-competence.md`](exercices-par-competence.md), qui couvre les
-trente-six compétences du référentiel à six classes.
+cinquante-quatre compétences du référentiel à six classes et trois matières.
 
 ## D'abord, la vérité sur ce qui manque vraiment
 
-Le contenu pédagogique existe déjà pour un tiers du référentiel. Douze fiches
-de remédiation sur trente-six compétences, quarante-huit questions, douze
-leçons, six examens d'entrée — tout est écrit, rattaché aux compétences et
+Le contenu pédagogique existe déjà pour une bonne part du référentiel. Douze
+fiches de remédiation sur cinquante-quatre compétences, quarante-huit
+questions, douze leçons, six examens d'entrée à cent soixante-deux questions
+au total (trois par compétence) — tout est écrit, rattaché aux compétences et
 corrigé côté serveur.
 
 **Ce que ce contenu-là ne sait pas faire, c'est se faire entendre et se faire
@@ -46,7 +47,7 @@ fichier n'atteigne le stockage.
 
 **Quel type pour quelle compétence** : voir
 [`exercices-par-competence.md`](exercices-par-competence.md), qui donne un
-exercice concret pour chacune des trente-six.
+exercice concret pour chacune des cinquante-quatre.
 
 **Refusés volontairement, et pourquoi** — pour que vous ne perdiez pas de temps
 dessus :

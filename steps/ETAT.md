@@ -1558,11 +1558,13 @@ propriétaire, comme la suite directe de `HORS-01` à `HORS-07`.
 
 ### Dette ouverte par ce travail
 
-- **Les dix-huit compétences d'anglais n'ont ni fiche de remédiation ni
-  exercice H5P listé.** Elles s'ajoutent aux vingt-quatre compétences de
-  français et de mathématiques déjà sans fiche : quarante-deux compétences sur
-  cinquante-quatre restent à réparer. `docs/contenus/exercices-par-competence.md`
-  ne couvre encore que les trente-six compétences antérieures.
+- **Les dix-huit compétences d'anglais n'ont pas de fiche de remédiation.**
+  Elles s'ajoutent aux vingt-quatre compétences de français et de
+  mathématiques déjà sans fiche : quarante-deux compétences sur cinquante-quatre
+  restent à réparer. `docs/contenus/exercices-par-competence.md` couvre
+  désormais les cinquante-quatre — l'anglais a sa propre priorité (2), classée
+  avant CE2 puisque ses compétences sans rien commencent dès le CI — mais rien
+  n'est encore fabriqué ni déposé pour ces dix-huit-là.
 
 ## Prochaine action
 

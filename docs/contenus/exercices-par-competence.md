@@ -2,7 +2,7 @@
 
 Cette liste complète [`a-telecharger.md`](a-telecharger.md), qui dit comment
 fabriquer et déposer un fichier. Celle-ci dit **quoi fabriquer**, pour chacune
-des trente-six compétences du référentiel.
+des cinquante-quatre compétences du référentiel.
 
 ## Comment lire cette liste
 
@@ -13,9 +13,10 @@ ne sait pas faire — entendre un son, manipuler un objet. Construire un QCM de
 plus sur une compétence déjà couverte ne vaut rien : la fiche le fait déjà, avec
 le rattachement à la compétence en plus.
 
-**Vingt-quatre compétences n'ont rien du tout.** Pour elles, la liste propose un
-jeu complet — de quoi produire une vraie remédiation, pas un seul exercice
-isolé.
+**Quarante-deux compétences n'ont rien du tout**, dont les dix-huit d'anglais,
+ajoutées après coup (ADR-019) et jamais couvertes par une fiche native. Pour
+elles, la liste propose un jeu complet — de quoi produire une vraie
+remédiation, pas un seul exercice isolé.
 
 **La priorité** suit un ordre simple : d'abord ce qui manque le plus (le son,
 partout où il manque), puis les classes dans l'ordre où un enfant les traverse
@@ -62,7 +63,31 @@ exercice : la fiche suffit.)*
 
 ---
 
-## Priorité 2 — CE2, rien n'existe encore
+## Priorité 2 — Anglais, CI à CE1, rien n'existe encore
+
+L'anglais est arrivé après cette liste (ADR-019) et n'a ni fiche native ni
+exercice. Ses neuf compétences du CI à la CE1 passent devant celles de CE2 :
+la logique de cette liste met les classes les plus précoces en premier, et
+rien ne justifie de faire exception pour la nouvelle matière.
+
+Le CI reste oral seulement, comme pour le français : un enfant de cet âge ne
+lit pas, donc chaque exercice part d'un mot **entendu**, jamais lu en premier.
+
+| Compétence | Type H5P principal | À construire |
+|---|---|---|
+| `ci-an-salutations` | **Dictation** | Une salutation prononcée (« Hello », « Goodbye ») ; l'enfant choisit le mot anglais entendu parmi trois, sans le lire d'abord. |
+| `ci-an-couleurs` | **Dictation** | Un nom de couleur prononcé en anglais ; l'enfant touche la pastille de la couleur correspondante parmi trois. |
+| `ci-an-nombres-5` | **Dictation** | Un nombre prononcé en anglais (« three ») ; l'enfant choisit le chiffre correspondant parmi trois. |
+| `cp-an-alphabet` | **Dictation** | Une lettre de l'alphabet anglais épelée à voix haute ; l'enfant la choisit parmi trois, comme pour les sons de lettres françaises. |
+| `cp-an-animaux` | **Dictation** | Un nom d'animal prononcé en anglais (« dog ») ; l'enfant choisit sa traduction française parmi trois. |
+| `cp-an-nombres-10` | **Dictation** | Un nombre prononcé en anglais (« eight ») ; l'enfant choisit le chiffre correspondant parmi trois. |
+| `ce1-an-famille` | **Dictation** | Un membre de la famille prononcé en anglais (« mother ») ; l'enfant choisit sa traduction française parmi trois. |
+| `ce1-an-mots` | **DragText** | Les lettres d'un mot anglais simple (« c-a-t ») à remettre dans l'ordre par glisser-déposer, comme pour les mots français. |
+| `ce1-an-presentation` | **Blanks** | Trois phrases de présentation à trous (« My name ___ Awa. », « I ___ eight years old. »), avec les mots proposés au-dessus. |
+
+---
+
+## Priorité 3 — CE2, rien n'existe encore
 
 | Compétence | Type H5P principal | À construire |
 |---|---|---|
@@ -72,10 +97,13 @@ exercice : la fiche suffit.)*
 | `ce2-ma-nombres-1000` | **DragQuestion** | Placer cinq nombres sur une droite graduée de 0 à 1000, par glisser-déposer. |
 | `ce2-ma-multiplication` | **DragQuestion** ou PhET | Une grille à remplir en glissant des jetons pour former un rectangle de multiplication (4 × 3 = 4 rangées de 3) ; PhET *Multiplication* fait la même chose en manipulation libre, sans note. |
 | `ce2-ma-mesures` | **DragQuestion** | Associer un objet illustré (une porte, un crayon, un trajet) à l'unité qui convient (cm, m, min, h) par glisser-déposer. |
+| `ce2-an-phrases` | **MultiChoice** | Une phrase anglaise courte (« The cat is on the table. ») suivie d'une question de compréhension à trois choix, comme les items de l'examen. |
+| `ce2-an-questions` | **Blanks** | Trois questions à trous sur le mot interrogatif (« ___ is your name? », « ___ old are you? »), avec les mots proposés au-dessus. |
+| `ce2-an-jours` | **Dictation** | Un jour ou un mois prononcé en anglais (« Monday ») ; l'enfant choisit sa traduction française parmi trois. |
 
 ---
 
-## Priorité 3 — CM1, rien n'existe encore
+## Priorité 4 — CM1, rien n'existe encore
 
 | Compétence | Type H5P principal | À construire |
 |---|---|---|
@@ -85,10 +113,13 @@ exercice : la fiche suffit.)*
 | `cm1-ma-fractions` | **DragQuestion** | Associer une fraction écrite (1/4, 1/2, 3/4) à la portion coloriée d'une figure correspondante, par glisser-déposer ; PhET *Fractions* en complément pour manipuler librement. |
 | `cm1-ma-division` | **DragQuestion** | Répartir une collection d'objets en parts égales par glisser-déposer, puis saisir le quotient et le reste s'il y en a un. |
 | `cm1-ma-probleme-2` | **MultiChoice** | Un énoncé à deux étapes (« Awa achète... elle paie... combien lui rend-on »), avec les résultats intermédiaires plausibles parmi les choix, pour repérer qui s'arrête après la première étape. |
+| `cm1-an-etre-avoir` | **Blanks** | Cinq phrases à trous avec « to be » ou « to have » au présent (« She ___ happy. », « They ___ two dogs. »), les formes possibles rappelées au-dessus. |
+| `cm1-an-pluriel` | **DragText** | Cinq noms singuliers ; l'enfant glisse la terminaison qui convient (« -s » ou « -es ») pour former le pluriel. |
+| `cm1-an-quotidien` | **Dictation** | Un mot du quotidien prononcé en anglais (« school », « eat ») ; l'enfant choisit sa traduction française parmi trois. |
 
 ---
 
-## Priorité 4 — CM2, rien n'existe encore
+## Priorité 5 — CM2, rien n'existe encore
 
 | Compétence | Type H5P principal | À construire |
 |---|---|---|
@@ -98,6 +129,9 @@ exercice : la fiche suffit.)*
 | `cm2-ma-decimaux` | **DragQuestion** | Placer cinq nombres décimaux sur une droite graduée entre deux entiers consécutifs. |
 | `cm2-ma-proportion` | **MultiChoice** ou DragQuestion | Trois énoncés de proportionnalité (prix, recette, vitesse) avec la bonne réponse et deux erreurs de raisonnement courantes (addition au lieu de multiplication, oubli du rapport). |
 | `cm2-ma-geometrie` | **DragQuestion** ou PhET | Une figure avec ses mesures ; l'enfant compose le calcul de périmètre ou d'aire en glissant les bonnes opérations, ou PhET *Aire et périmètre* pour une manipulation libre sur quadrillage. |
+| `cm2-an-texte` | **MultiChoice** | Un texte anglais de trois à quatre phrases (« Tom wakes up at seven... ») suivi de deux questions de compréhension à choix. |
+| `cm2-an-present` | **Blanks** | Cinq phrases à trous au présent simple (« He ___ football. », « I ___ to school. »), les formes du verbe rappelées au-dessus. |
+| `cm2-an-redaction` | **DragText** | Les mots d'une phrase simple sur soi-même, dans le désordre (« years / I / nine / am / old »), à remettre dans l'ordre par glisser-déposer. |
 
 ---
 
@@ -123,7 +157,7 @@ que l'origine de contenu isolée sait servir.
 
 Chaque exercice construit reste **à côté** de la fiche existante quand il y en a
 une, jamais à sa place : la fiche garde sa leçon et ses explications, qu'aucun
-paquet H5P ne porte. Pour les vingt-quatre compétences sans rien, une seule
+paquet H5P ne porte. Pour les quarante-deux compétences sans rien, une seule
 activité H5P suffit à sortir la compétence de la dette mesurée par
 `test_the_sheets_cover_the_competencies_they_are_written_for` — ce test devra
 être mis à jour (le compte de 12 devra monter) le jour où une vraie fiche native

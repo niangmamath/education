@@ -208,8 +208,10 @@ séparait strictement les trois matières — résoudre un problème de
 mathématiques suppose de comprendre son énoncé en français, et lire ou écrire
 en anglais s'appuie sur la mécanique déjà acquise en français. Neuf prérequis
 croisés ajoutés ; le vocabulaire oral de l'anglais reste sans prérequis
-français, faute d'un point d'accroche. Dette ouverte : les dix-huit
-compétences d'anglais n'ont ni fiche de remédiation ni exercice H5P listé.
+français, faute d'un point d'accroche. `docs/contenus/exercices-par-competence.md`
+couvre désormais l'anglais (priorité 2, avant CE2). Dette ouverte : les
+dix-huit compétences d'anglais n'ont toujours pas de fiche de remédiation, ni
+d'exercice H5P réellement fabriqué.
 
 ### Prochaine tâche
 
