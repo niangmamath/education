@@ -228,7 +228,9 @@ async def change_parent_password(
     that opened it — except the one making this request, which just proved
     itself with the current password and needs no second proof.
     """
-    if not verify_password(payload.current_password.get_secret_value(), parent.password_hash):
+    if not verify_password(
+        payload.current_password.get_secret_value(), parent.password_hash
+    ):
         raise AuthenticationException(message=INVALID_CREDENTIALS_MESSAGE)
 
     parent.password_hash = hash_password(payload.new_password.get_secret_value())

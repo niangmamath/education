@@ -67,7 +67,7 @@ export default async function HomePage() {
               <span className="sc-brand-mark" aria-hidden="true">SC</span>
               <span>
                 <span className="sc-marque-nom d-block">StudentConnect</span>
-                <span className="sc-marque-role d-block">Français et mathématiques · 6 à 11 ans</span>
+                <span className="sc-marque-role d-block">Français, mathématiques et anglais · 6 à 11 ans</span>
               </span>
             </Link>
             <nav className="d-flex align-items-center gap-2" aria-label="Accès au compte">

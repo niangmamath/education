@@ -74,7 +74,8 @@ EDITION_LABEL: Final = "Élémentaire, six classes, démonstration"
 
 
 def referential() -> dict[str, object]:
-    """L'édition à importer : six classes, deux matières, trente-six compétences."""
+    """L'édition à importer : six classes, trois matières, cinquante-quatre
+    compétences."""
     return _referential(EDITION_CODE, EDITION_LABEL)
 
 

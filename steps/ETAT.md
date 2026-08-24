@@ -1493,6 +1493,8 @@ Base        : 12 compétences, examen à 12 questions, 12 fiches à 4 questions
 - **Un appel d'API par enfant** sur le tableau de bord Parent.
 - **Aucun écran d'administration des profils** : étape 15.
 - **ADR-012** : antivirus et vérification de licence encore partiels.
+- **Quarante-deux compétences sur cinquante-quatre sans fiche de remédiation**,
+  dont les dix-huit d'anglais (`HORS-08`, 24 août 2026).
 
 ## Contenus H5P, la liste par compétence
 
@@ -1522,11 +1524,40 @@ changer de mot de passe, renommer un enfant, réinitialiser un PIN).
 Rapport complet :
 [`steps/detour_2026-08-20_contenu_h5p_et_ux/rapport_2026-08-20_1900_contenu_h5p_et_ux.md`](detour_2026-08-20_contenu_h5p_et_ux/rapport_2026-08-20_1900_contenu_h5p_et_ux.md).
 
-Rien de ce détour n'est fusionné sur `main` : le propriétaire a demandé
-d'attendre la fin de sa fabrication de paquets avant d'ouvrir une Pull Request.
+Ce détour est fusionné sur `main` (PR #54), ainsi que plusieurs correctifs et
+ajouts qui ont suivi : statistiques publiques sur la page d'accueil (#55),
+activités et progression cliquables côté parent avec un graphique en anneau
+(#56), documentation `AGENTS.md`/`CLAUDE.md` pour `apps/web`, badges et cartes
+de tableau de bord retravaillés (#58), une pile Docker Compose isolée pour ce
+worktree de développement (#59, #60).
+
+## Travaux hors étape, 24 août 2026
+
+Menés après la clôture de l'étape 13, sur autorisation permanente du
+propriétaire, comme la suite directe de `HORS-01` à `HORS-07`.
+
+- [x] **`HORS-08`, anglais et trois questions par compétence.** Le
+      propriétaire a demandé une troisième matière et jugé qu'une seule
+      question par compétence à l'examen d'entrée ne suffisait pas. Anglais
+      ajouté au référentiel : sujet `an`, deux domaines (`an-oral`,
+      `an-ecrit`), dix-huit compétences cumulatives du CI au CM2, arbre de
+      prérequis propre à la matière — aucune migration nécessaire, le
+      référentiel modélisait déjà la matière comme une table plutôt qu'un
+      préfixe codé en dur. Le référentiel compte désormais neuf compétences
+      par classe, cinquante-quatre au total. L'examen d'entrée passe de six
+      questions par classe à vingt-sept, trois par compétence ; le calcul des
+      résultats n'a demandé aucun changement, `_compute_results()` regroupait
+      déjà les réponses par compétence avant d'appeler `read_counts`. ADR-019.
+
+### Dette ouverte par ce travail
+
+- **Les dix-huit compétences d'anglais n'ont ni fiche de remédiation ni
+  exercice H5P listé.** Elles s'ajoutent aux vingt-quatre compétences de
+  français et de mathématiques déjà sans fiche : quarante-deux compétences sur
+  cinquante-quatre restent à réparer. `docs/contenus/exercices-par-competence.md`
+  ne couvre encore que les trente-six compétences antérieures.
 
 ## Prochaine action
 
-Clore le détour ci-dessus (contrôles complets, une seule Pull Request), puis
-le propriétaire reprend la fabrication des fichiers H5P selon la liste.
+Le propriétaire reprend la fabrication des fichiers H5P selon la liste.
 Ensuite : ouvrir l'étape 14, notifications.

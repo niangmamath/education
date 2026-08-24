@@ -2,8 +2,10 @@
 
 ## Ce que couvre la plateforme
 
-L'élémentaire, six ans : **CI, CP, CE1, CE2, CM1, CM2**. Trente-six compétences,
-six par classe, trois en français et trois en mathématiques.
+L'élémentaire, six ans : **CI, CP, CE1, CE2, CM1, CM2**. Cinquante-quatre
+compétences, neuf par classe, trois en français, trois en mathématiques et
+trois en anglais. L'anglais forme son propre arbre de prérequis, indépendant
+des deux autres matières.
 
 Les niveaux ne sont pas écrits dans le code. Ils appartiennent à l'édition du
 référentiel en vigueur, et `app.levels.service` les lit — une plateforme qui les
@@ -24,12 +26,14 @@ multiplication du CE2, qui dépend de l'addition du CP.
 
 ## Un examen d'entrée par classe
 
-Six examens, six questions chacun, une par compétence de la classe.
+Six examens, vingt-sept questions chacun, trois par compétence de la classe.
+Trois lectures et non une, pour qu'une compétence puisse être dite « partielle »
+plutôt que jugée sur une seule question.
 
 **Il ne porte que sur la classe déclarée.** Un examen qui balaierait aussi les
-classes antérieures ferait trente-six questions à un CM2, et aucun enfant ne le
-finirait — un examen abandonné produit une lecture pire qu'une absence de
-lecture.
+classes antérieures ferait plus de cent soixante questions à un CM2, et aucun
+enfant ne le finirait — un examen abandonné produit une lecture pire qu'une
+absence de lecture.
 
 L'examen est donné à **l'entrée dans une classe** : à l'inscription, puis à
 chaque passage. C'est toujours la seule chose que la plateforme assigne d'elle-
@@ -115,9 +119,11 @@ couvre pas et sur lequel elle ne prétend rien.
 
 ## Ce qui reste en dette
 
-- **Vingt-quatre compétences sur trente-six n'ont pas de fiche de remédiation.**
-  Les douze existantes couvrent du CI au CE1. Un test épingle la couverture dans
-  les deux sens, pour que la dette ne baisse pas sans qu'on la voie baisser.
+- **Quarante-deux compétences sur cinquante-quatre n'ont pas de fiche de
+  remédiation**, dont les dix-huit d'anglais. Les douze existantes couvrent du
+  CI au CE1, en français et en mathématiques seulement. Un test épingle la
+  couverture dans les deux sens, pour que la dette ne baisse pas sans qu'on la
+  voie baisser.
 - **Les examens du CI sont les plus fragiles.** Un enfant de cours d'initiation ne
   lit pas encore, et un examen écrit lui demande de déchiffrer la question. Il
   faudrait du son et des images.

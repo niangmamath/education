@@ -82,9 +82,7 @@ def main(argv: list[str] | None = None) -> int:
         help="retirer le paquet H5P d’une activité, pour en enregistrer un autre",
     )
     retirer.add_argument("activite", help="code de l’activité dont on retire le paquet")
-    retirer.add_argument(
-        "--database-url", default=DATABASE_URL, help=argparse.SUPPRESS
-    )
+    retirer.add_argument("--database-url", default=DATABASE_URL, help=argparse.SUPPRESS)
 
     creer = verbs.add_parser(
         "creer",

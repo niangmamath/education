@@ -288,7 +288,9 @@ class TestProfileUpdate:
         assert response.json()["display_name"] == "Nouveau nom"
         assert client.get(ME_URL).json()["display_name"] == "Nouveau nom"
 
-    def test_renaming_refuses_a_caller_without_a_cookie(self, client: TestClient) -> None:
+    def test_renaming_refuses_a_caller_without_a_cookie(
+        self, client: TestClient
+    ) -> None:
         response = client.put(ME_URL, json={"display_name": "Nouveau nom"})
         assert response.status_code == 401
 
@@ -300,7 +302,10 @@ class TestProfileUpdate:
 
         response = client.put(
             f"{ME_URL}/password",
-            json={"current_password": VALID_PASSWORD, "new_password": "un-autre-mot-de-passe"},
+            json={
+                "current_password": VALID_PASSWORD,
+                "new_password": "un-autre-mot-de-passe",
+            },
         )
 
         assert response.status_code == 200
@@ -315,7 +320,10 @@ class TestProfileUpdate:
 
         response = client.put(
             f"{ME_URL}/password",
-            json={"current_password": WRONG_PASSWORD, "new_password": "un-autre-mot-de-passe"},
+            json={
+                "current_password": WRONG_PASSWORD,
+                "new_password": "un-autre-mot-de-passe",
+            },
         )
 
         assert response.status_code == 401
@@ -339,7 +347,9 @@ class TestProfileUpdate:
 
         assert response.status_code == 200
         assert client.get(ME_URL).status_code == 200
-        assert redis_client.exists(f"session:{hash_session_token(elsewhere_token)}") == 0
+        assert (
+            redis_client.exists(f"session:{hash_session_token(elsewhere_token)}") == 0
+        )
 
 
 class TestLogout:

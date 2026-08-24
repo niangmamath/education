@@ -11,7 +11,8 @@
 
 ## Architecture
 
-- Frontend Next.js 16 et Tailwind CSS 4.
+- Frontend Next.js 16 et Bootstrap 5 (migré depuis Tailwind CSS 4, voir
+  `docs/ux/migration-tailwind-bootstrap.md`).
 - Backend FastAPI.
 - REST, pas GraphQL.
 - PostgreSQL, pas Neo4j pour le MVP.
@@ -20,6 +21,9 @@
 - Stockage compatible S3.
 - Monolithe modulaire backend.
 - Monorepo pour frontend, backend, packages et infrastructure.
+- Le web n'appelle l'API que depuis son propre serveur, par des actions Next.js
+  nommées une par une : le navigateur ne connaît jamais l'adresse de l'API ni un
+  jeton de session (ADR-016).
 
 ## Authentification
 
@@ -41,6 +45,28 @@
 - Quarantaine, scan, contrôle ZIP et extraction versionnée.
 - Origine de contenu isolée.
 - Capture xAPI par dispatcher et bridge `postMessage`.
+
+## Référentiel, diagnostic et remédiation
+
+- Le catalogue d'activités est lié au référentiel par code métier stable,
+  résolu à la lecture, plutôt que par clé étrangère vers une édition figée
+  (ADR-013).
+- Les événements xAPI du runtime H5P sont ingérés par un endpoint autorisé par
+  ticket, jamais par une identité déclarée côté client ; l'acteur est
+  pseudonymisé par HMAC(`SECRET_KEY`) ; un événement xAPI prime sur une réponse
+  déclarée pour la même question (ADR-014).
+- Les douze fiches de remédiation sont écrites dans la plateforme, pas
+  importées : le rattachement à une compétence, la bibliothèque H5P unique
+  d'ADR-012 et le déploiement de l'origine de contenu l'imposent (ADR-017).
+- Six classes cumulatives, du CI au CM2. Un examen d'entrée par classe, donné à
+  l'inscription et à chaque passage, ne porte que sur la classe déclarée. Le
+  passage est décidé par le parent, jamais automatique. Un prérequis jamais
+  observé produit une hypothèse de remédiation plutôt qu'un constat d'échec
+  (ADR-018).
+- Trois matières : français, mathématiques, anglais. L'anglais forme son propre
+  arbre de prérequis, indépendant des deux autres. L'examen d'entrée pose trois
+  questions par compétence, pas une, pour qu'une compétence puisse être dite
+  « partielle » plutôt que jugée sur un seul coup de dé (ADR-019).
 
 ## PhET
 
