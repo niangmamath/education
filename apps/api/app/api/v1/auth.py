@@ -25,12 +25,8 @@ from app.api.deps import (
     SessionToken,
 )
 from app.core.config import settings
-from app.core.exceptions import (
-    AuthenticationException,
-    ConflictException,
-    RateLimitException,
-)
-from app.core.lockout import LOCKED_MESSAGE, clear_failures, is_locked, register_failure
+from app.core.exceptions import AuthenticationException, ConflictException
+from app.core.lockout import clear_failures, is_locked, register_failure
 from app.core.security import (
     generate_family_code,
     hash_password,
@@ -156,10 +152,18 @@ async def login_parent(
     # even the right password must wait, otherwise the lockout would only
     # slow an attacker down rather than stop them (mirrors the child PIN
     # login in `children.py`, the only other thing guarding a login here).
+    #
+    # Raised as the same exception as a wrong password, not as a distinct
+    # `RateLimitException`: an unknown email never locks (it always takes the
+    # `parent is None` branch above), so a distinct status/message here would
+    # let an attacker tell a registered email apart from one that doesn't
+    # exist just by submitting enough wrong passwords and watching for the
+    # response to change — exactly the oracle `INVALID_CREDENTIALS_MESSAGE`
+    # exists to deny them.
     if await is_locked(
         client, parent.id, settings.PARENT_LOGIN_MAX_ATTEMPTS, scope="parent-login"
     ):
-        raise RateLimitException(message=LOCKED_MESSAGE)
+        raise AuthenticationException(message=INVALID_CREDENTIALS_MESSAGE)
 
     if not verify_password(password, parent.password_hash):
         await register_failure(

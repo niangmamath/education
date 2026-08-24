@@ -117,6 +117,24 @@ class Settings(BaseSettings):
             return self.SESSION_COOKIE_SECURE
         return self.ENVIRONMENT != "development"
 
+    @field_validator("SECRET_KEY")
+    @classmethod
+    def reject_empty_secret_key(cls, value: str) -> str:
+        """Reject a present-but-empty key, not only a missing one.
+
+        `SECRET_KEY` having no default already fails startup when the
+        variable is absent, but pydantic-settings accepts an explicitly
+        empty value (`SECRET_KEY=`, exactly what `.env.example` ships as a
+        template) as a valid string — silently reintroducing the empty key
+        the missing default was meant to rule out.
+        """
+        if not value.strip():
+            raise ValueError(
+                "SECRET_KEY must not be empty: generate one with "
+                'python3 -c "import secrets; print(secrets.token_urlsafe(48))"'
+            )
+        return value
+
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
     def parse_cors_origins(cls, value: Any) -> Any:

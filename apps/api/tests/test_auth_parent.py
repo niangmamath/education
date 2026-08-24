@@ -275,8 +275,8 @@ class TestLoginLockout:
     ) -> None:
         response = login(client, email, password=WRONG_PASSWORD)
 
-        assert response.status_code == 429
-        assert response.json()["error"]["code"] == "RATE_LIMIT_EXCEEDED"
+        assert response.status_code == 401
+        assert response.json()["error"]["code"] == "AUTHENTICATION_ERROR"
 
     def test_the_lockout_holds_against_the_right_password(
         self, client: TestClient, email: str, locked_parent: str
@@ -284,8 +284,21 @@ class TestLoginLockout:
         """Otherwise the cap would only slow an attacker instead of stopping them."""
         response = login(client, email)
 
-        assert response.status_code == 429
+        assert response.status_code == 401
         assert settings.SESSION_COOKIE_NAME not in response.cookies
+
+    def test_a_locked_account_answers_exactly_like_an_unknown_email(
+        self, client: TestClient, email: str, locked_parent: str
+    ) -> None:
+        """A distinct status here would let an attacker confirm the email is
+        registered just by exhausting the lockout — the same oracle
+        `INVALID_CREDENTIALS_MESSAGE` already denies them on a plain wrong
+        password."""
+        locked = login(client, email, password=WRONG_PASSWORD)
+        unknown_email = login(client, f"absent-{uuid.uuid4().hex}@{TEST_EMAIL_DOMAIN}")
+
+        assert locked.status_code == unknown_email.status_code == 401
+        assert locked.json() == unknown_email.json()
 
     def test_the_counter_expires_on_its_own(
         self, redis_client: sync_redis.Redis, locked_parent: str
