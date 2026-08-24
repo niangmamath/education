@@ -3,9 +3,10 @@
 Le dernier maillon de la chaîne, qui manquait.
 
 Le diagnostic savait nommer une lacune, remonter au prérequis qui la cause et
-proposer une réparation courte. Mais **les douze remédiations étaient des lignes
-de catalogue sans rien derrière** : un parent pouvait donner une activité qui
-s'ouvrait sur une page vide. Le parcours avait l'air complet et ne l'était pas.
+proposer une réparation courte. Mais **les douze premières remédiations étaient
+des lignes de catalogue sans rien derrière** : un parent pouvait donner une
+activité qui s'ouvrait sur une page vide. Le parcours avait l'air complet et ne
+l'était pas.
 
 ## Ce qu'est une fiche
 
@@ -13,10 +14,13 @@ Trois à sept minutes, une compétence, et deux temps :
 
 1. **Ce qu'il faut retenir** — la leçon, adressée à l'enfant. Elle est visible
    avant les questions et le reste pendant qu'on y répond.
-2. **Quatre questions**, chacune suivie d'une explication.
+2. **Quatre questions**, chacune suivie d'une explication, tirées d'une réserve
+   de huit (HORS-10, ADR-020) — voir plus bas.
 
-Douze fiches, une par compétence du référentiel, pour qu'aucune difficulté que
-le diagnostic sait nommer ne reste sans réponse.
+Quinze fiches aujourd'hui : les douze premières (français et mathématiques, du
+CI au CE1), et trois de plus pour l'anglais du CI (ADR-019). Trente-neuf
+compétences sur cinquante-quatre restent sans réparation ; un test épingle
+cette couverture dans les deux sens.
 
 ## Pourquoi elles ne sont pas en H5P
 
@@ -75,11 +79,31 @@ La route vérifie donc la nature de l'activité derrière la tentative, plutôt 
 de faire confiance aux clients pour appeler la bonne adresse.
 `test_an_assessment_attempt_is_refused_here` est le verrou.
 
+## Une réserve de huit, quatre servies
+
+Une fiche reprise montrait les quatre mêmes questions dans le même ordre à
+chaque tentative — une invitation à mémoriser la réponse plutôt qu'à retravailler
+la compétence. Chaque fiche porte désormais une réserve de huit questions ;
+`app.authored.service.questions_of` en tire quatre à chaque lecture, avec
+`random.Random(seed)` où `seed` est l'identifiant de la tentative en cours.
+
+Tant que la tentative reste ouverte, le tirage ne change pas : recharger la
+page ne doit pas faire bouger les questions sous les yeux d'une enfant qui y
+répond déjà. Une nouvelle tentative — la fiche reprise depuis le début — porte
+un nouvel identifiant et tire donc à nouveau. Aucune migration : l'identifiant
+de tentative existe déjà et suffit de graine.
+
+**L'examen n'est pas concerné.** `questions_of` accepte le tirage en paramètre
+optionnel plutôt que de le décider elle-même — la politique reste à
+l'appelant, comme tout ce qui distingue déjà une fiche de l'examen. La route
+de l'examen ne passe jamais ce paramètre et continue de recevoir sa réserve
+entière. ADR-020 consigne la décision.
+
 ## Les routes
 
 | Route | Ce qu'elle fait |
 |---|---|
-| `GET /me/activities/{assignment_id}/fiche` | La leçon et les questions, sans réponse ni explication |
+| `GET /me/activities/{assignment_id}/fiche` | La leçon et quatre questions tirées de la réserve, sans réponse ni explication |
 | `POST /me/fiches/attempts/{attempt_id}/answers` | Une réponse, et ce que la fiche dit en retour |
 
 Ouvrir la tentative et la terminer passent par les routes de tentative qui

@@ -329,6 +329,17 @@ async def _own_assignment(
     return assignment
 
 
+async def running_attempt(db: AsyncSession, assignment_id: uuid.UUID) -> Attempt | None:
+    """The attempt currently in progress for this assignment, if there is one.
+
+    Public because a sheet reader needs to know whether one exists before it can
+    draw a stable subset of questions for it — the same reason `own_attempt` is
+    public: a second, private-only implementation of "which attempt is this"
+    is a second chance to get it wrong.
+    """
+    return await _running_attempt(db, assignment_id)
+
+
 async def own_attempt(db: AsyncSession, child: Child, attempt_id: uuid.UUID) -> Attempt:
     """One attempt of this child, or a refusal that says nothing more.
 

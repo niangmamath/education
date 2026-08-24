@@ -6,10 +6,11 @@ des cinquante-quatre compétences du référentiel.
 
 ## Comment lire cette liste
 
-**Quinze compétences ont déjà une fiche native** — une leçon et quatre
-questions, écrites dans la plateforme, sans H5P. Douze depuis la première
-version du produit (français et mathématiques, CI à CE1), trois de plus pour
-l'anglais du CI. Pour elles, cette liste ne propose **pas** de tout refaire :
+**Quinze compétences ont déjà une fiche native** — une leçon et une réserve de
+huit questions dont quatre sont tirées au hasard à chaque tentative (ADR-020),
+écrites dans la plateforme, sans H5P. Douze depuis la première version du
+produit (français et mathématiques, CI à CE1), trois de plus pour l'anglais du
+CI. Pour elles, cette liste ne propose **pas** de tout refaire :
 elle propose un seul exercice H5P, réservé à ce que la fiche ne sait pas
 faire — entendre un son, manipuler un objet. Construire un QCM de plus sur une
 compétence déjà couverte ne vaut rien : la fiche le fait déjà, avec le

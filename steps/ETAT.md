@@ -1584,6 +1584,27 @@ propriétaire, comme la suite directe de `HORS-01` à `HORS-07`.
       n'existe) à la priorité 1 (le son manquant), au même titre que les
       douze fiches françaises et mathématiques.
 
+- [x] **`HORS-10`, rotation des questions de fiche.** Relayé par une session
+      sœur travaillant sur le déploiement : le propriétaire a remarqué qu'une
+      fiche reprise montre les quatre mêmes questions dans le même ordre à
+      chaque tentative, ce qui invite à mémoriser plutôt qu'à retravailler.
+      Chaque fiche passe d'une réserve de quatre questions à une réserve de
+      huit ; `app.authored.service.questions_of` en tire quatre au hasard à
+      chaque lecture, la graine étant l'identifiant de la tentative en cours
+      (`app.attempts.service.running_attempt`, nouvellement public) — stable
+      tant que la tentative reste ouverte, renouvelée à la suivante. Aucune
+      migration : l'identifiant de tentative existe déjà. L'examen n'est pas
+      concerné, sur demande explicite du propriétaire ; `questions_of` reçoit
+      le tirage en paramètre optionnel plutôt que de le décider elle-même, et
+      la route de l'examen ne le passe jamais. Soixante nouvelles questions
+      écrites (quatre de plus par fiche existante, cent vingt en tout).
+      `test_the_bank_has_room_to_draw_from` épingle que chaque fiche déborde
+      ce qu'une tentative en sert. Le tirage lui-même se vérifie par appel
+      direct de `questions_of` avec des graines connues à l'avance
+      (`TestTheDrawItself`), pas par un flux HTTP complet : l'identifiant
+      d'une tentative est généré côté serveur, rien ne permet à un test de le
+      choisir pour forcer deux tirages à différer. ADR-020.
+
 ## Prochaine action
 
 Le propriétaire reprend la fabrication des fichiers H5P selon la liste.

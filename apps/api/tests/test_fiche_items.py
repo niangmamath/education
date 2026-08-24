@@ -19,14 +19,15 @@ no sheet is a difficulty the platform can name and then do nothing about, which 
 worse than not naming it.
 
 None of these catches a bad question on its merits. They catch the mechanical
-failures — the ones that slip through when somebody writes forty-eight items in
-one sitting.
+failures — the ones that slip through when somebody writes a hundred and
+twenty items in a few sittings.
 """
 
 from __future__ import annotations
 
 import pytest
 
+from app.api.v1.fiches import FICHE_QUESTIONS_SERVED
 from app.demo.referentiel import COMPETENCIES
 from app.demo.fiches import FICHES, Sheet, SheetQuestion
 from app.models.catalog import MAX_DURATION_MINUTES, MIN_DURATION_MINUTES
@@ -125,6 +126,12 @@ class TestEverySheet:
     def test_asks_at_least_three_questions(self, sheet: Sheet) -> None:
         """One right answer out of one is luck; the proof has to be worth something."""
         assert len(sheet["questions"]) >= 3
+
+    def test_the_bank_has_room_to_draw_from(self, sheet: Sheet) -> None:
+        """HORS-10 : servir la réserve entière à chaque tentative reviendrait à
+        ne jamais tirer — la rotation exige que la banque déborde ce qu'on en
+        sert."""
+        assert len(sheet["questions"]) > FICHE_QUESTIONS_SERVED
 
     def test_uses_each_question_reference_once(self, sheet: Sheet) -> None:
         """Two questions under one reference would be one answer overwriting the
