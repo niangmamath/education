@@ -203,8 +203,13 @@ nature de l’activité. ADR-017 consigne l’ensemble.
 d'entrée d'une à trois questions par compétence, à la demande du propriétaire.
 Aucune migration : le référentiel modélisait déjà la matière comme une table,
 et le moteur de résultats regroupait déjà plusieurs questions par compétence.
-Dette ouverte : les dix-huit compétences d'anglais n'ont ni fiche de
-remédiation ni exercice H5P listé.
+Amendée le jour même : le propriétaire a corrigé la décision initiale, qui
+séparait strictement les trois matières — résoudre un problème de
+mathématiques suppose de comprendre son énoncé en français, et lire ou écrire
+en anglais s'appuie sur la mécanique déjà acquise en français. Neuf prérequis
+croisés ajoutés ; le vocabulaire oral de l'anglais reste sans prérequis
+français, faute d'un point d'accroche. Dette ouverte : les dix-huit
+compétences d'anglais n'ont ni fiche de remédiation ni exercice H5P listé.
 
 ### Prochaine tâche
 

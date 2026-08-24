@@ -63,10 +63,13 @@
   passage est décidé par le parent, jamais automatique. Un prérequis jamais
   observé produit une hypothèse de remédiation plutôt qu'un constat d'échec
   (ADR-018).
-- Trois matières : français, mathématiques, anglais. L'anglais forme son propre
-  arbre de prérequis, indépendant des deux autres. L'examen d'entrée pose trois
-  questions par compétence, pas une, pour qu'une compétence puisse être dite
-  « partielle » plutôt que jugée sur un seul coup de dé (ADR-019).
+- Trois matières : français, mathématiques, anglais, apprises en parallèle sauf
+  à deux endroits où le prérequis traverse la matière : résoudre un problème de
+  mathématiques suppose de comprendre son énoncé en français, et lire ou écrire
+  en anglais s'appuie sur la mécanique déjà acquise en français, qui sert de
+  base de traduction. L'examen d'entrée pose trois questions par compétence,
+  pas une, pour qu'une compétence puisse être dite « partielle » plutôt que
+  jugée sur un seul coup de dé (ADR-019).
 
 ## PhET
 

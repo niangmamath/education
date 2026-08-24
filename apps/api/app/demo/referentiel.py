@@ -168,9 +168,18 @@ def _c(
 
 # Cinquante-quatre compétences, neuf par classe, trois par matière. Les
 # prérequis sont la vraie affirmation pédagogique de ce fichier : c'est par eux
-# que la plateforme descend d'une difficulté visible à sa cause. L'anglais
-# forme son propre arbre de prérequis, indépendant du français et des maths :
-# rien n'impose à un enfant de lire en français avant de saluer en anglais.
+# que la plateforme descend d'une difficulté visible à sa cause.
+#
+# Le français n'est prérequis de rien à l'oral : rien n'impose à un enfant de
+# lire en français avant de saluer en anglais, et compter jusqu'à cinq ne
+# demande pas de savoir lire. Mais deux familles de compétences en dépendent
+# à l'écrit, et le prérequis traverse alors la matière exprès. En
+# mathématiques, résoudre un problème commence par comprendre l'énoncé : un
+# enfant qui ne lit pas encore une phrase française butera sur l'énoncé avant
+# de buter sur le calcul, et le diagnostic doit le dire. En anglais, lire et
+# écrire s'appuient sur la mécanique déjà acquise en français — reconnaître
+# des lettres, décoder un mot, comprendre une phrase — le français servant de
+# base de traduction (« eat » se comprend par « manger », pas dans le vide).
 COMPETENCIES: Final[list[dict[str, Any]]] = [
     # ── CI ──────────────────────────────────────────────────────────────────
     _c(CI_FR_LETTRES, "Reconnaître les lettres de l’alphabet", "fr-code", CI, 1),
@@ -236,6 +245,7 @@ COMPETENCIES: Final[list[dict[str, Any]]] = [
         "an-ecrit",
         CP,
         1,
+        [CI_FR_LETTRES],
     ),
     _c(
         CP_AN_ANIMAUX,
@@ -300,7 +310,7 @@ COMPETENCIES: Final[list[dict[str, Any]]] = [
         "ma-calcul",
         CE1,
         3,
-        [CE1_MA_SOUSTRACTION],
+        [CE1_MA_SOUSTRACTION, CE1_FR_PHRASE],
     ),
     _c(
         CE1_AN_FAMILLE,
@@ -316,7 +326,7 @@ COMPETENCIES: Final[list[dict[str, Any]]] = [
         "an-ecrit",
         CE1,
         2,
-        [CP_AN_ALPHABET],
+        [CP_AN_ALPHABET, CP_FR_MOTS],
     ),
     _c(
         CE1_AN_PRESENTATION,
@@ -384,7 +394,7 @@ COMPETENCIES: Final[list[dict[str, Any]]] = [
         "an-ecrit",
         CE2,
         1,
-        [CE1_AN_MOTS],
+        [CE1_AN_MOTS, CE1_FR_PHRASE],
     ),
     _c(
         CE2_AN_QUESTIONS,
@@ -449,7 +459,7 @@ COMPETENCIES: Final[list[dict[str, Any]]] = [
         "ma-calcul",
         CM1,
         3,
-        [CE1_MA_PROBLEME, CE2_MA_MULTIPLICATION],
+        [CE1_MA_PROBLEME, CE2_MA_MULTIPLICATION, CE2_FR_TEXTE],
     ),
     _c(
         CM1_AN_ETRE_AVOIR,
@@ -457,7 +467,7 @@ COMPETENCIES: Final[list[dict[str, Any]]] = [
         "an-ecrit",
         CM1,
         1,
-        [CE2_AN_PHRASES],
+        [CE2_AN_PHRASES, CE2_FR_CONJUGAISON],
     ),
     _c(
         CM1_AN_PLURIEL,
@@ -514,7 +524,7 @@ COMPETENCIES: Final[list[dict[str, Any]]] = [
         "ma-calcul",
         CM2,
         2,
-        [CM1_MA_PROBLEME2],
+        [CM1_MA_PROBLEME2, CM1_FR_ESSENTIEL],
     ),
     _c(
         CM2_MA_GEOMETRIE,
@@ -530,7 +540,7 @@ COMPETENCIES: Final[list[dict[str, Any]]] = [
         "an-ecrit",
         CM2,
         1,
-        [CE2_AN_PHRASES, CM1_AN_ETRE_AVOIR],
+        [CE2_AN_PHRASES, CM1_AN_ETRE_AVOIR, CE2_FR_TEXTE],
     ),
     _c(
         CM2_AN_PRESENT,
@@ -546,7 +556,7 @@ COMPETENCIES: Final[list[dict[str, Any]]] = [
         "an-ecrit",
         CM2,
         3,
-        [CE1_AN_PRESENTATION, CM1_AN_PLURIEL],
+        [CE1_AN_PRESENTATION, CM1_AN_PLURIEL, CE1_FR_DICTEE],
     ),
 ]
 

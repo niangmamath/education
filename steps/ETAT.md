@@ -1540,14 +1540,21 @@ propriétaire, comme la suite directe de `HORS-01` à `HORS-07`.
       propriétaire a demandé une troisième matière et jugé qu'une seule
       question par compétence à l'examen d'entrée ne suffisait pas. Anglais
       ajouté au référentiel : sujet `an`, deux domaines (`an-oral`,
-      `an-ecrit`), dix-huit compétences cumulatives du CI au CM2, arbre de
-      prérequis propre à la matière — aucune migration nécessaire, le
-      référentiel modélisait déjà la matière comme une table plutôt qu'un
-      préfixe codé en dur. Le référentiel compte désormais neuf compétences
-      par classe, cinquante-quatre au total. L'examen d'entrée passe de six
-      questions par classe à vingt-sept, trois par compétence ; le calcul des
-      résultats n'a demandé aucun changement, `_compute_results()` regroupait
-      déjà les réponses par compétence avant d'appeler `read_counts`. ADR-019.
+      `an-ecrit`), dix-huit compétences cumulatives du CI au CM2 — aucune
+      migration nécessaire, le référentiel modélisait déjà la matière comme
+      une table plutôt qu'un préfixe codé en dur. Le référentiel compte
+      désormais neuf compétences par classe, cinquante-quatre au total.
+      L'examen d'entrée passe de six questions par classe à vingt-sept, trois
+      par compétence ; le calcul des résultats n'a demandé aucun changement,
+      `_compute_results()` regroupait déjà les réponses par compétence avant
+      d'appeler `read_counts`. **Amendement le jour même** : le propriétaire a
+      corrigé la première version, qui posait des arbres de prérequis
+      strictement séparés par matière — résoudre un problème de mathématiques
+      suppose de comprendre son énoncé en français, et lire ou écrire en
+      anglais s'appuie sur la mécanique déjà acquise en français, qui sert de
+      base de traduction. Neuf prérequis croisés ajoutés en conséquence, le
+      vocabulaire oral de l'anglais restant sans prérequis français faute d'un
+      point d'accroche dans le référentiel. ADR-019.
 
 ### Dette ouverte par ce travail
 

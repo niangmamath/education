@@ -4,8 +4,11 @@
 
 L'élémentaire, six ans : **CI, CP, CE1, CE2, CM1, CM2**. Cinquante-quatre
 compétences, neuf par classe, trois en français, trois en mathématiques et
-trois en anglais. L'anglais forme son propre arbre de prérequis, indépendant
-des deux autres matières.
+trois en anglais. Les trois matières s'apprennent en parallèle, sauf à deux
+endroits précis où le prérequis traverse la matière : résoudre un problème de
+mathématiques suppose de comprendre son énoncé en français, et lire ou écrire
+en anglais s'appuie sur la mécanique déjà acquise en français, qui sert de
+base de traduction (ADR-019).
 
 Les niveaux ne sont pas écrits dans le code. Ils appartiennent à l'édition du
 référentiel en vigueur, et `app.levels.service` les lit — une plateforme qui les
