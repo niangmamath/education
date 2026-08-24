@@ -40,6 +40,11 @@ router = APIRouter()
 
 NOT_A_SHEET_MESSAGE = "Cette activité ne se fait pas ici"
 
+# HORS-10 : quatre questions servies par lecture, tirées d'une réserve d'environ
+# huit, pour qu'une fiche reprise ne montre plus systématiquement les mêmes
+# quatre dans le même ordre. L'examen n'est pas concerné — ADR-020.
+FICHE_QUESTIONS_SERVED = 4
+
 
 @router.get("/me/activities/{assignment_id}/fiche", response_model=FichePublic)
 async def read_my_fiche(
@@ -59,7 +64,13 @@ async def read_my_fiche(
     if activity.kind != ACTIVITY_KIND_REMEDIATION:
         raise NotFoundException(message=NOT_A_SHEET_MESSAGE)
 
-    questions = await service.questions_of(db, activity.id)
+    running = await attempts.running_attempt(db, assignment.id)
+    questions = await service.questions_of(
+        db,
+        activity.id,
+        draw=FICHE_QUESTIONS_SERVED,
+        seed=str(running.id) if running is not None else None,
+    )
     return FichePublic(
         assignment_id=assignment.id,
         activity_code=activity.code,

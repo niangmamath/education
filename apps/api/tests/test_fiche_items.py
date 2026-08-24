@@ -19,14 +19,15 @@ no sheet is a difficulty the platform can name and then do nothing about, which 
 worse than not naming it.
 
 None of these catches a bad question on its merits. They catch the mechanical
-failures — the ones that slip through when somebody writes forty-eight items in
-one sitting.
+failures — the ones that slip through when somebody writes a hundred and
+twenty items in a few sittings.
 """
 
 from __future__ import annotations
 
 import pytest
 
+from app.api.v1.fiches import FICHE_QUESTIONS_SERVED
 from app.demo.referentiel import COMPETENCIES
 from app.demo.fiches import FICHES, Sheet, SheetQuestion
 from app.models.catalog import MAX_DURATION_MINUTES, MIN_DURATION_MINUTES
@@ -126,6 +127,12 @@ class TestEverySheet:
         """One right answer out of one is luck; the proof has to be worth something."""
         assert len(sheet["questions"]) >= 3
 
+    def test_the_bank_has_room_to_draw_from(self, sheet: Sheet) -> None:
+        """HORS-10 : servir la réserve entière à chaque tentative reviendrait à
+        ne jamais tirer — la rotation exige que la banque déborde ce qu'on en
+        sert."""
+        assert len(sheet["questions"]) > FICHE_QUESTIONS_SERVED
+
     def test_uses_each_question_reference_once(self, sheet: Sheet) -> None:
         """Two questions under one reference would be one answer overwriting the
         other, since a reading keeps the last response per question."""
@@ -146,14 +153,14 @@ class TestTheSheetsAsAWhole:
     def test_the_sheets_cover_the_competencies_they_are_written_for(self) -> None:
         """La couverture actuelle, épinglée pour qu'elle ne régresse pas en silence.
 
-        Le référentiel couvre six classes et trois matières ; ces fiches-là
-        couvrent les douze compétences que la première version du produit avait
-        écrites, du CI au CE1, en français et en mathématiques seulement.
-        **Les quarante-deux autres — dont les dix-huit d'anglais — n'ont pas
-        encore de réparation**, et c'est la dette la mieux mesurée du projet :
-        une lacune que la plateforme sait nommer et ne sait pas réparer est pire
-        qu'une lacune dont elle ne parle pas, parce que le parent agit et il ne
-        se passe rien.
+        Le référentiel couvre six classes et trois matières ; douze de ces
+        fiches couvrent les compétences que la première version du produit
+        avait écrites, du CI au CE1, en français et en mathématiques
+        seulement. Trois de plus couvrent l'anglais du CI (ADR-019).
+        **Les trente-neuf autres n'ont pas encore de réparation**, et c'est la
+        dette la mieux mesurée du projet : une lacune que la plateforme sait
+        nommer et ne sait pas réparer est pire qu'une lacune dont elle ne
+        parle pas, parce que le parent agit et il ne se passe rien.
 
         Ce test échoue dans les deux sens. Il échoue si une fiche disparaît, et
         il échoue quand de nouvelles fiches arrivent — auquel cas on relève le
@@ -163,8 +170,8 @@ class TestTheSheetsAsAWhole:
         repaired = {sheet["competency"] for sheet in FICHES}
         declared = {row["code"] for row in COMPETENCIES}
 
-        assert len(repaired) == 12
-        assert len(declared - repaired) == 42
+        assert len(repaired) == 15
+        assert len(declared - repaired) == 39
 
     def test_no_competency_has_two_sheets(self) -> None:
         """The recommender proposes one repair per competency; a second sheet

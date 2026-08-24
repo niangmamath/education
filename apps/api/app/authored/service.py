@@ -18,6 +18,7 @@ it did.
 
 from __future__ import annotations
 
+import random
 import uuid
 from collections.abc import Sequence
 
@@ -36,15 +37,35 @@ SHEET_UNKNOWN_MESSAGE = "Cette activité n’est pas la tienne"
 
 
 async def questions_of(
-    db: AsyncSession, activity_id: uuid.UUID
+    db: AsyncSession,
+    activity_id: uuid.UUID,
+    *,
+    draw: int | None = None,
+    seed: str | None = None,
 ) -> Sequence[AuthoredQuestion]:
-    """Every question of an authored activity, in the order it is asked."""
+    """Every question of an authored activity, or a stable subset of them.
+
+    Left at its default, `draw` returns the whole bank in a fixed order — the
+    assessment's own use, unchanged since ADR-019 tripled its bank per
+    competency without this parameter needing to exist. A sheet asks for a
+    subset instead (HORS-10): fewer questions served than the bank holds, so a
+    child who repeats a sheet is not shown the same four in the same order
+    every time. `seed` is what makes one draw reproducible — the caller passes
+    the running attempt's id, so every read during that attempt draws the same
+    subset, and a new attempt draws again. Which policy applies is not this
+    module's decision; it stays with whoever calls it, exactly as the module
+    docstring says of everything else that separates a sheet from the
+    assessment.
+    """
     rows = await db.scalars(
         select(AuthoredQuestion)
         .where(AuthoredQuestion.activity_id == activity_id)
         .order_by(AuthoredQuestion.position, AuthoredQuestion.question_ref)
     )
-    return rows.all()
+    bank = rows.all()
+    if draw is None or draw >= len(bank):
+        return bank
+    return random.Random(seed).sample(bank, draw)
 
 
 async def open_sheet_for(

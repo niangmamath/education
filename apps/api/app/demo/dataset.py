@@ -10,9 +10,10 @@ for mathematics, counting a collection, reading and comparing numbers, then
 adding, subtracting and solving a one-step problem. Borrowing that structure
 costs nothing and means nobody has to defend a carving of the subject we made up.
 
-The prerequisites cross the two levels on purpose. A CE1 child who fails at
-adding is sent back to counting, which is CP — and that is the platform's most
-useful behaviour, not an edge case.
+The prerequisites cross levels on purpose. A CP child who fails at ranging
+numbers can be sent back to comparing them at CI — a level her own exam never
+touches, since an exam only ever covers the class declared — and that is the
+platform's most useful behaviour, not an edge case.
 
 The dataset is arranged so a demonstration walks through the least obvious
 behaviours without anybody setting them up:
@@ -29,7 +30,14 @@ from __future__ import annotations
 from typing import Final, TypedDict
 
 from app.demo.examens import EXAMS_BY_LEVEL
-from app.demo.referentiel import CE1, CI_MA_DENOMBRER, CM1
+from app.demo.referentiel import (
+    CI,
+    CI_MA_DENOMBRER,
+    CP,
+    CP_FR_MOTS,
+    CP_MA_ADDITION,
+    CP_MA_RANGER,
+)
 from app.demo.referentiel import referential as _referential
 
 
@@ -54,9 +62,9 @@ PREFIX: Final = "demo-"
 
 EDITION_CODE: Final = f"{PREFIX}2026"
 
-# The twelve repairs live in `app.demo.fiches`: they are sheets written here,
-# with a lesson and four questions each, and they were long enough to deserve
-# their own module.
+# The fifteen repairs live in `app.demo.fiches`: they are sheets written here,
+# with a lesson and a reserve of eight questions each (four drawn per attempt,
+# HORS-10), and they were long enough to deserve their own module.
 #
 # What stays here is the one imported activity. The pilot holds exactly one
 # vetted H5P package, and ADR-012 allows exactly one library, so it cannot be
@@ -89,37 +97,39 @@ FAMILIES: Final[list[FamilyProfile]] = [
         "email": f"{PREFIX}parent.martin@example.com",
         "display_name": "Camille Martin",
         "children": [
-            {"pseudonym": "lea", "display_name": "Léa", "pin": "240613", "level": CE1},
-            {"pseudonym": "tom", "display_name": "Tom", "pin": "731502", "level": CE1},
+            {"pseudonym": "lea", "display_name": "Léa", "pin": "240613", "level": CP},
+            {"pseudonym": "tom", "display_name": "Tom", "pin": "731502", "level": CP},
         ],
     },
     {
         "email": f"{PREFIX}parent.diallo@example.com",
         "display_name": "Awa Diallo",
         "children": [
-            # En CM1, pour que la démonstration montre deux classes et non une.
-            {"pseudonym": "noa", "display_name": "Noa", "pin": "518274", "level": CM1},
+            # En CI, pour que la démonstration montre les deux classes
+            # retenues pour l'instant, CI et CP, plutôt qu'une seule.
+            {"pseudonym": "noa", "display_name": "Noa", "pin": "518274", "level": CI},
         ],
     },
 ]
 
+# Léa échoue trois compétences de CP : lire des mots simples, et la chaîne
+# ranger puis additionner. `cp-ma-addition` dépend de `cp-ma-ranger`, qui
+# dépend à son tour de `ci-ma-comparer` — un niveau que l'examen de Léa ne
+# couvre jamais, puisqu'un examen ne porte que sur la classe déclarée. C'est
+# la chaîne que l'arbre décrit, jusqu'à un prérequis jamais observé. Tom
+# réussit partout, parce qu'une démonstration où tous les enfants sont en
+# difficulté enseigne le contraire de ce que fait le produit. Noa est absente
+# de cette table exprès : son examen de CI l'attend, non passé.
+_CP_QUESTIONS: Final = EXAMS_BY_LEVEL[CP]["questions"]
+_LEA_FAILS: Final = {CP_FR_MOTS, CP_MA_RANGER, CP_MA_ADDITION}
+
 # Comment chaque enfant a répondu à l'examen de sa classe. Rien ici n'énonce un
 # résultat : ce sont les règles de la plateforme qui transforment ces réponses en
-# lecture, de sorte que la démonstration ne peut pas contredire le produit.
-#
-# Léa bute sur ce qui dépend de l'écrit et sur la soustraction — la chaîne que
-# l'arbre décrit, et qui redescend jusqu'au CP puis au CI. Tom réussit partout,
-# parce qu'une démonstration où tous les enfants sont en difficulté enseigne le
-# contraire de ce que fait le produit. Noa est absente de cette table exprès :
-# son examen de CM1 l'attend, non passé.
+# lecture, de sorte que la démonstration ne puisse pas contredire le produit.
 ASSESSMENT_ANSWERS: Final[dict[str, dict[str, bool]]] = {
     "lea": {
-        "ce1-q1": True,
-        "ce1-q2": False,
-        "ce1-q3": False,
-        "ce1-q4": True,
-        "ce1-q5": False,
-        "ce1-q6": False,
+        question["ref"]: question["competency"] not in _LEA_FAILS
+        for question in _CP_QUESTIONS
     },
-    "tom": {question["ref"]: True for question in EXAMS_BY_LEVEL[CE1]["questions"]},
+    "tom": {question["ref"]: True for question in _CP_QUESTIONS},
 }

@@ -24,10 +24,13 @@ from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import Engine, create_engine, text
+from sqlalchemy import Engine, create_engine, select, text
 from sqlalchemy.orm import Session
 
-from app.core.db import sync_database_url
+from app.api.v1.fiches import FICHE_QUESTIONS_SERVED
+from app.authored import service as authored_service
+from app.core.db import AsyncSessionFactory, sync_database_url
+from app.core.db import engine as async_engine
 from app.main import app
 from app.models.catalog import (
     ACTIVITY_KIND_ASSESSMENT,
@@ -144,6 +147,47 @@ def catalogue(engine: Engine) -> Iterator[dict[str, str]]:
 def client() -> Iterator[TestClient]:
     with TestClient(app) as test_client:
         yield test_client
+
+
+@pytest.fixture
+def big_sheet(engine: Engine) -> Iterator[str]:
+    """A sheet with eight questions — the reserve HORS-10 draws four from."""
+    code = f"{TEST_CODE_PREFIX}rotation-{uuid.uuid4().hex[:8]}"
+    with Session(engine) as session:
+        sheet = Activity(
+            code=code,
+            title="Une fiche à réserve",
+            kind=ACTIVITY_KIND_REMEDIATION,
+            status=ACTIVITY_STATUS_PUBLISHED,
+            duration_minutes=6,
+            guidance=GUIDANCE,
+        )
+        session.add(sheet)
+        session.flush()
+        _authored(
+            session,
+            sheet,
+            [
+                (f"rq{n}", f"Question numéro {n} ?", ["A", "B", "C"], 0, "Explication.")
+                for n in range(1, 9)
+            ],
+        )
+        session.commit()
+
+    yield code
+
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "DELETE FROM assignments WHERE activity_id IN "
+                "(SELECT id FROM catalog_activities WHERE code LIKE :p)"
+            ),
+            {"p": f"{TEST_CODE_PREFIX}%"},
+        )
+        connection.execute(
+            text("DELETE FROM catalog_activities WHERE code LIKE :p"),
+            {"p": f"{TEST_CODE_PREFIX}%"},
+        )
 
 
 class Family:
@@ -455,3 +499,92 @@ class TestAnsweringASheet:
             ).status_code
             == 401
         )
+
+
+class TestQuestionRotation:
+    """HORS-10 : quatre questions servies par lecture, tirées d'une réserve de
+    huit, pour qu'une fiche reprise ne montre plus toujours les mêmes quatre
+    dans le même ordre. ADR-020."""
+
+    def test_a_read_serves_only_the_configured_count(
+        self, family: Family, big_sheet: str
+    ) -> None:
+        assignment_id = family.give(big_sheet)
+
+        body = (
+            family.as_child().get(f"{MY_ACTIVITIES_URL}/{assignment_id}/fiche").json()
+        )
+
+        assert len(body["questions"]) == FICHE_QUESTIONS_SERVED
+
+    def test_the_same_attempt_reads_the_same_subset_twice(
+        self, family: Family, big_sheet: str
+    ) -> None:
+        """Reloading the page mid-attempt must not shuffle the questions a
+        child has already started answering."""
+        assignment_id = family.give(big_sheet)
+        family.open_attempt(assignment_id)
+        child = family.as_child()
+
+        first = child.get(f"{MY_ACTIVITIES_URL}/{assignment_id}/fiche").json()
+        second = child.get(f"{MY_ACTIVITIES_URL}/{assignment_id}/fiche").json()
+
+        assert [q["question_ref"] for q in first["questions"]] == [
+            q["question_ref"] for q in second["questions"]
+        ]
+
+
+class TestTheDrawItself:
+    """What one HTTP flow cannot show, because an attempt's id is not ours to
+    pick: the same seed reproduces its draw, and a different seed need not
+    pick the same four.
+
+    `app.core.db.engine` is a single module-level engine, its pool tied to
+    whichever event loop first checked out a connection. pytest-asyncio hands
+    each async test its own loop, so a connection pooled by one test attaches
+    to a loop the next test does not have — disposing the pool after each use
+    here forces the next checkout to open fresh rather than reuse a dead one.
+    """
+
+    async def test_a_fixed_seed_reproduces_and_a_different_one_can_differ(
+        self, engine: Engine, big_sheet: str
+    ) -> None:
+        with Session(engine) as session:
+            activity_id = session.scalar(
+                select(Activity.id).where(Activity.code == big_sheet)
+            )
+        assert activity_id is not None
+
+        async with AsyncSessionFactory() as db:
+            first = await authored_service.questions_of(
+                db, activity_id, draw=FICHE_QUESTIONS_SERVED, seed="attempt-a"
+            )
+            again = await authored_service.questions_of(
+                db, activity_id, draw=FICHE_QUESTIONS_SERVED, seed="attempt-a"
+            )
+            other = await authored_service.questions_of(
+                db, activity_id, draw=FICHE_QUESTIONS_SERVED, seed="attempt-b"
+            )
+        await async_engine.dispose()
+
+        assert [q.question_ref for q in first] == [q.question_ref for q in again]
+        assert {q.question_ref for q in first} != {q.question_ref for q in other}
+
+    async def test_a_bank_no_bigger_than_the_draw_is_returned_whole(
+        self, engine: Engine, catalogue: dict[str, str]
+    ) -> None:
+        """`catalogue`'s sheet holds two questions, fewer than are ever
+        served: the draw must not come up short."""
+        with Session(engine) as session:
+            activity_id = session.scalar(
+                select(Activity.id).where(Activity.code == catalogue["fiche"])
+            )
+        assert activity_id is not None
+
+        async with AsyncSessionFactory() as db:
+            questions = await authored_service.questions_of(
+                db, activity_id, draw=FICHE_QUESTIONS_SERVED, seed="whatever"
+            )
+        await async_engine.dispose()
+
+        assert len(questions) == 2

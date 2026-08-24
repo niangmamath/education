@@ -1558,11 +1558,52 @@ propriétaire, comme la suite directe de `HORS-01` à `HORS-07`.
 
 ### Dette ouverte par ce travail
 
-- **Les dix-huit compétences d'anglais n'ont ni fiche de remédiation ni
-  exercice H5P listé.** Elles s'ajoutent aux vingt-quatre compétences de
-  français et de mathématiques déjà sans fiche : quarante-deux compétences sur
+- **Les dix-huit compétences d'anglais n'ont, à ce stade, aucune fiche de
+  remédiation.** Elles s'ajoutent aux vingt-quatre compétences de français et
+  de mathématiques déjà sans fiche : quarante-deux compétences sur
   cinquante-quatre restent à réparer. `docs/contenus/exercices-par-competence.md`
-  ne couvre encore que les trente-six compétences antérieures.
+  couvre désormais les cinquante-quatre — l'anglais a sa propre priorité (2),
+  classée avant CE2 puisque ses compétences sans rien commencent dès le CI —
+  mais rien n'est encore fabriqué ni déposé pour ces dix-huit-là. **Trois
+  d'entre elles referment ce point le jour même, voir `HORS-09` ci-dessous.**
+
+- [x] **`HORS-09`, trois fiches d'anglais.** Le propriétaire a demandé de
+      fabriquer quelques remédiations d'anglais plutôt que de laisser les
+      dix-huit compétences entièrement sans réparation. Trois fiches natives
+      écrites pour le CI (`ci-an-salutations`, `ci-an-couleurs`,
+      `ci-an-nombres-5`), même format que les douze déjà existantes — une
+      leçon, quatre questions expliquées, trois à sept minutes. Le CI est
+      couvert en priorité parce que c'est la classe la plus fragile du
+      référentiel (aucune lecture) et celle où les fiches de français et de
+      mathématiques concentrent déjà le plus d'attention. Quinze fiches en
+      tout désormais, trente-neuf compétences sur cinquante-quatre restent
+      sans réparation (dont quinze d'anglais, du CP au CM2). Le test de
+      couverture (`test_the_sheets_cover_the_competencies_they_are_written_for`)
+      et `docs/contenus/exercices-par-competence.md` mis à jour en
+      conséquence — les trois compétences passent de la priorité 2 (rien
+      n'existe) à la priorité 1 (le son manquant), au même titre que les
+      douze fiches françaises et mathématiques.
+
+- [x] **`HORS-10`, rotation des questions de fiche.** Relayé par une session
+      sœur travaillant sur le déploiement : le propriétaire a remarqué qu'une
+      fiche reprise montre les quatre mêmes questions dans le même ordre à
+      chaque tentative, ce qui invite à mémoriser plutôt qu'à retravailler.
+      Chaque fiche passe d'une réserve de quatre questions à une réserve de
+      huit ; `app.authored.service.questions_of` en tire quatre au hasard à
+      chaque lecture, la graine étant l'identifiant de la tentative en cours
+      (`app.attempts.service.running_attempt`, nouvellement public) — stable
+      tant que la tentative reste ouverte, renouvelée à la suivante. Aucune
+      migration : l'identifiant de tentative existe déjà. L'examen n'est pas
+      concerné, sur demande explicite du propriétaire ; `questions_of` reçoit
+      le tirage en paramètre optionnel plutôt que de le décider elle-même, et
+      la route de l'examen ne le passe jamais. Soixante nouvelles questions
+      écrites (quatre de plus par fiche existante, cent vingt en tout).
+      `test_the_bank_has_room_to_draw_from` épingle que chaque fiche déborde
+      ce qu'une tentative en sert. Le tirage lui-même se vérifie par appel
+      direct de `questions_of` avec des graines connues à l'avance
+      (`TestTheDrawItself`), pas par un flux HTTP complet : l'identifiant
+      d'une tentative est généré côté serveur, rien ne permet à un test de le
+      choisir pour forcer deux tirages à différer. ADR-020.
 
 ## Prochaine action
 

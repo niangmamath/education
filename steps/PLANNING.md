@@ -187,6 +187,8 @@ propriétaire, parce qu’ils bloquaient l’usage réel de la plateforme plutô
 | HORS-06 | Rendre la démonstration montrable | HORS-05 | Terminé | Recette par tunnel ; `PUBLIC_HOST` sans quoi toute connexion échouerait derrière un tunnel |
 | HORS-07 | Six classes cumulatives | HORS-06 | Terminé | CI→CM2, 36 compétences, un examen par classe, passage décidé par le parent, ADR-018 |
 | HORS-08 | Anglais et trois questions par compétence | HORS-07 | Terminé | 54 compétences, 3 matières, examen à 27 questions par classe, ADR-019 |
+| HORS-09 | Trois fiches de remédiation en anglais | HORS-08 | Terminé | CI complet (salutations, couleurs, nombres), 15 fiches en tout |
+| HORS-10 | Rotation des questions de fiche | HORS-09 | Terminé | Réserve de 8 par fiche, 4 tirées par tentative, examen non concerné, ADR-020 |
 
 `HORS-01` referme la première flèche du MVP, qui n’avait jamais été construite :
 un enfant inscrit n’avait aucune compétence observée, donc aucun diagnostic.
@@ -208,8 +210,28 @@ séparait strictement les trois matières — résoudre un problème de
 mathématiques suppose de comprendre son énoncé en français, et lire ou écrire
 en anglais s'appuie sur la mécanique déjà acquise en français. Neuf prérequis
 croisés ajoutés ; le vocabulaire oral de l'anglais reste sans prérequis
-français, faute d'un point d'accroche. Dette ouverte : les dix-huit
-compétences d'anglais n'ont ni fiche de remédiation ni exercice H5P listé.
+français, faute d'un point d'accroche. `docs/contenus/exercices-par-competence.md`
+couvre désormais l'anglais (priorité 2, avant CE2). Dette ouverte à sa
+clôture : les dix-huit compétences d'anglais n'avaient toujours pas de fiche
+de remédiation, ni d'exercice H5P réellement fabriqué.
+
+`HORS-09` referme une partie de cette dette : trois fiches natives pour le CI
+d'anglais (salutations, couleurs, compter jusqu'à cinq), même format que les
+douze déjà écrites — une leçon, quatre questions expliquées, trois à sept
+minutes. Quinze fiches en tout désormais ; trente-neuf compétences sur
+cinquante-quatre restent sans réparation, dont quinze d'anglais (CP à CM2).
+`exercices-par-competence.md` déplace les trois compétences couvertes de la
+priorité 2 (rien n'existe) à la priorité 1 (le son manquant).
+
+`HORS-10` répond à une demande relayée par la session sœur du déploiement : une
+fiche reprise montrait les quatre mêmes questions dans le même ordre à chaque
+tentative. Chaque fiche passe d'une réserve de quatre à une réserve de huit ;
+quatre sont tirées au hasard à chaque lecture, la graine étant l'identifiant de
+la tentative en cours — stable tant qu'elle reste ouverte, renouvelée à la
+suivante. Aucune migration. L'examen n'est pas concerné, sur demande explicite
+du propriétaire : `questions_of` reçoit le tirage en paramètre optionnel, la
+route de l'examen ne le passe jamais. Soixante questions de plus écrites (cent
+vingt en tout pour les fiches). ADR-020.
 
 ### Prochaine tâche
 

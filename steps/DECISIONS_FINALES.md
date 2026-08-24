@@ -55,9 +55,12 @@
   ticket, jamais par une identité déclarée côté client ; l'acteur est
   pseudonymisé par HMAC(`SECRET_KEY`) ; un événement xAPI prime sur une réponse
   déclarée pour la même question (ADR-014).
-- Les douze fiches de remédiation sont écrites dans la plateforme, pas
+- Les quinze fiches de remédiation sont écrites dans la plateforme, pas
   importées : le rattachement à une compétence, la bibliothèque H5P unique
   d'ADR-012 et le déploiement de l'origine de contenu l'imposent (ADR-017).
+  Chacune porte une réserve de huit questions dont quatre sont tirées au hasard
+  à chaque tentative, pour qu'une fiche reprise ne montre plus toujours les
+  mêmes ; l'examen d'entrée n'est pas concerné (ADR-020).
 - Six classes cumulatives, du CI au CM2. Un examen d'entrée par classe, donné à
   l'inscription et à chaque passage, ne porte que sur la classe déclarée. Le
   passage est décidé par le parent, jamais automatique. Un prérequis jamais
