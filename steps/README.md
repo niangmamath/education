@@ -37,20 +37,24 @@ steps/02_initialisation_monorepo/rapport_2026-08-11_1530_initialisation.md
 5. UX, design system et navigation
 6. Backend, identité et famille
 7. Référentiel de compétences
-8. Évaluations, résultats et lacunes
-9. Content Studio et stockage
-10. Lecteur H5P et collecte xAPI
-11. Intégration PhET
-12. Moteur de remédiation et Quick Repairs
+8. Catalogue de contenus et activités
+9. Affectations et parcours
+10. Tentatives et résultats
+11. Événements xAPI et progrès
+12. Diagnostic et remédiation
 13. Dashboards Élève et Parent
-14. Sécurité, performance et observabilité
-15. Tests d’acceptation et données de démonstration
-16. Déploiement, documentation et release
+14. Évaluation par paliers
+15. Cours d’escalade de compétences (brouillon)
+16. Notifications
+17. Administration, sécurité et exploitation
+18. Validation, MVP et livraison
 
 ## Important
 
 - Le dépôt est considéré comme vide au départ.
 - Le projet ne dépend pas de GitHub Project.
 - Le planning est maintenu dans `PLANNING.md`.
-- Ne pas utiliser Django, Bootstrap, Moodle ou CK-12 dans l’architecture active.
+- Ne pas utiliser Django, Moodle ou CK-12 dans l’architecture active. Bootstrap
+  5.3.8 est le design system retenu depuis l’étape 05 (ADR-002 amendée),
+  Tailwind ayant été retiré.
 - Ne pas réintroduire les anciennes décisions sans ADR validé.

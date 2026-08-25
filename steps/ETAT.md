@@ -1625,7 +1625,40 @@ propriétaire, comme la suite directe de `HORS-01` à `HORS-07`.
       `docker-compose.dev.yml` (ici, isolé) ou `docker-compose.yml` (le
       déploiement) plutôt que de supposer lequel des deux tourne.
 
+- [x] **`HORS-12`, dépôt réorganisé et feuille de route redéfinie.** Le
+      propriétaire a jugé le 25 août 2026 que le dépôt était devenu trop
+      mélangé pour rester compréhensible et a demandé une refonte le soir
+      même. Nettoyage : quatorze paquets Python vides sous `apps/api/`,
+      orphelins depuis l'étape 02 et jamais référencés (dont deux entraient
+      en collision de nom avec le vrai code, `core` et `workers`),
+      supprimés ; suppression de `docker-compose.yml` à la racine finalisée
+      (ce worktree utilise `docker-compose.dev.yml`, l'autre checkout de
+      déploiement garde `docker-compose.yml`) ; `a-ajouter.txt`, pense-bête
+      redondant avec `docs/contenus/exercices-par-competence.md`, retiré ;
+      `README.md` et `AGENTS.md` réécrits, ils décrivaient encore l'état du
+      10 août (Tailwind, `apps/api/routes/`, phase 01) ; `package.json`
+      pointait trois scripts `docker:*` vers un chemin qui n'a jamais
+      existé, corrigé ; `docs/architecture/decision-register.md` s'arrêtait
+      à ADR-018 en affirmant dix-neuf ADR alors que vingt-et-une existent
+      sur disque, ADR-019 et ADR-020 ajoutées, comptage corrigé.
+
+      Feuille de route redéfinie en même temps : les étapes 14 à 16
+      (`notifications`, `administration_securite_exploitation`,
+      `validation_mvp_livraison`) étaient encore des brouillons vides,
+      jamais ouverts, donc renommées 16 à 18 sans rien perdre — les faire
+      suivre la boucle pédagogique plutôt que la précéder évite de valider
+      un MVP avant que son évaluation soit correcte. Nouvelle étape 14,
+      **évaluation par paliers** : remplacer l'examen d'entrée statique, qui
+      teste toutes les compétences d'une classe d'un coup, par une
+      évaluation hiérarchique où un enfant n'est testé que sur les premières
+      compétences nécessaires, un échec déclenche une remédiation par le
+      vrai prérequis puis un retest, et un enfant qui valide 100 % à un
+      palier passe simplement au suivant. Nouvelle étape 15, **cours
+      d'escalade de compétences**, laissée en brouillon : c'est la brique
+      qui enseigne, annoncée par le propriétaire comme l'étape suivante,
+      pas construite ce soir. `steps/MANIFESTE.md` régénéré, 99 fiches.
+
 ## Prochaine action
 
-Le propriétaire reprend la fabrication des fichiers H5P selon la liste.
-Ensuite : ouvrir l'étape 14, notifications.
+Étape 14, évaluation par paliers, ouverte le 25 août 2026. Ensuite : étape
+15, cours d'escalade de compétences (brouillon jusque-là), puis 16 à 18.

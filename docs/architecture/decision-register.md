@@ -1,6 +1,6 @@
 # Registre des Décisions d'Architecture (ADR Register)
 
-> **Dernière mise à jour : 18 août 2026**
+> **Dernière mise à jour : 25 août 2026**
 > **Statut : à jour, reconstruit depuis les fichiers d'ADR**
 
 Ce document est le **registre central** de toutes les Architecture Decision Records (ADR) du projet StudentConnect. Chaque ADR documente une décision architecturale structurante prise par l'équipe.
@@ -18,8 +18,8 @@ Ce document est le **registre central** de toutes les Architecture Decision Reco
 
 ## Structure des dossiers
 
-Les dix-neuf ADR existent toutes en fichier ; ce registre les résume et ne les
-remplace pas.
+Les vingt-et-une ADR existent toutes en fichier ; ce registre les résume et ne
+les remplace pas.
 
 ```
 docs/
@@ -42,7 +42,9 @@ docs/
 │   ├── ADR-015-diagnostic-explicable.md       # Diagnostic explicable et non stocké
 │   ├── ADR-016-web-parle-a-l-api-par-le-serveur.md  # Le web appelle l’API par son serveur
 │   ├── ADR-017-fiches-de-remediation-ecrites-ici.md # Fiches de remédiation écrites ici
-│   └── ADR-018-six-classes-cumulatives.md      # Six classes cumulatives, un examen par classe
+│   ├── ADR-018-six-classes-cumulatives.md      # Six classes cumulatives, un examen par classe
+│   ├── ADR-019-anglais-et-trois-questions-par-competence.md # Anglais, prérequis inter-matières
+│   └── ADR-020-rotation-des-questions-de-fiche.md # Rotation des questions de fiche
 └── architecture/
     └── decision-register.md                   # Ce fichier
 ```
@@ -386,17 +388,51 @@ docs/
 
 ---
 
+### ADR-019 : Anglais et trois questions par compétence
+
+| Champ | Valeur |
+|-------|--------|
+| **Titre** | Anglais et trois questions par compétence |
+| **Statut** | ✅ **Accepted**, amendée le jour même |
+| **Date** | 18 août 2026 |
+| **Auteur** | Équipe StudentConnect |
+| **Décision** | L'anglais devient une troisième matière, l'examen passe à trois questions par compétence, des prérequis croisés relient les matières |
+| **Fichier** | [docs/adr/ADR-019-anglais-et-trois-questions-par-competence.md](../adr/ADR-019-anglais-et-trois-questions-par-competence.md) |
+| **Dépendances** | ADR-004, ADR-018 |
+| **Impact** | Référentiel, Contenu |
+
+**Résumé** : Aucune migration, le référentiel modélisait déjà la matière comme une table et le moteur de résultats regroupait déjà plusieurs questions par compétence. Amendée le jour même sur correction du propriétaire : la séparation stricte des trois matières initialement décidée est abandonnée — résoudre un problème de mathématiques suppose de comprendre son énoncé en français, et l'anglais s'appuie sur la mécanique déjà acquise en français. Neuf prérequis croisés ajoutés entre matières, preuve que le graphe de prérequis n'est pas cloisonné par matière.
+
+---
+
+### ADR-020 : Rotation des questions de fiche
+
+| Champ | Valeur |
+|-------|--------|
+| **Titre** | Rotation des questions de fiche |
+| **Statut** | ✅ **Accepted** |
+| **Date** | 20 août 2026 |
+| **Auteur** | Équipe StudentConnect |
+| **Décision** | Chaque fiche de remédiation passe d'une réserve de quatre à une réserve de huit questions ; quatre sont tirées au hasard à chaque tentative, l'examen n'est pas concerné |
+| **Fichier** | [docs/adr/ADR-020-rotation-des-questions-de-fiche.md](../adr/ADR-020-rotation-des-questions-de-fiche.md) |
+| **Dépendances** | ADR-017 |
+| **Impact** | Contenu, Backend |
+
+**Résumé** : Une fiche reprise montrait les quatre mêmes questions dans le même ordre à chaque tentative. La graine du tirage est l'identifiant de la tentative en cours, stable tant qu'elle reste ouverte, renouvelée à la suivante. `questions_of` reçoit le tirage en paramètre optionnel ; la route de l'examen ne le passe jamais, sur demande explicite du propriétaire — l'examen mesure, il ne doit pas varier d'une tentative à l'autre.
+
+---
+
 ## Statistiques
 
 | Statut | Count |
 |--------|-------|
-| ✅ Accepted | 16 |
+| ✅ Accepted | 20 |
 | ⚠️ Proposed | 1 |
 | ⏳ À créer | 0 |
 | ❌ Deprecated | 0 |
 | ⛔ Rejected | 0 |
 | 🔄 Superseeded | 0 |
-| **Total** | **17** |
+| **Total** | **21** |
 
 Une seule ADR reste ouverte, ADR-000 sur la licence du projet. ADR-012 est
 acceptée **sous conditions**, comptée ici parmi les acceptées. Ses huit conditions
@@ -410,7 +446,7 @@ aucune n'est plus entièrement à faire.
 
 1. **Vérifier** qu'aucune décision existante ne couvre déjà le sujet
 2. **Discuter** avec l'équipe avant de rédiger
-3. **Suivre la forme des ADR existantes** : statut, date, décision, conséquences. Aucun template séparé n'est maintenu, les dix-sept fichiers en tiennent lieu
+3. **Suivre la forme des ADR existantes** : statut, date, décision, conséquences. Aucun template séparé n'est maintenu, les vingt-et-un fichiers en tiennent lieu
 4. **Numérotation** : Utiliser le prochain numéro disponible
 5. **Statut initial** : `Proposed`
 6. **Créer un PR** avec le nouvel ADR

@@ -99,25 +99,29 @@ Le projet est organisé en étapes numérotées dans le dossier `steps/` :
 
 ```
 steps/
-├── 01_gouvernance_et_audit/    # Vérification, fichiers racine, ADR initiaux
-├── 02_initialisation_monorepo/ # Workspace, Next.js, FastAPI
-├── 03_infrastructure_locale_ci/ # Docker, DB, migrations, CI
-├── 04_spike_h5p_critique/     # Collecte, lecture, xAPI, périmètre H5P
-├── 05_ux_design_navigation/   # Design system, layouts, routes
-├── 06_backend_identite_famille/ # Modèles, auth parent, accès enfant
-├── 07_referentiel_competences/  # Référentiel, arbre de compétences
-├── 08_evaluations_resultats_lacunes/ # Diagnostic, détection gaps, score
-├── 09_content_studio_stockage/ # Modèles contenus, upload, pipeline
-├── 10_lecteur_h5p_xapi/        # Lecteur, endpoint xAPI, projections
-├── 11_integration_phet/        # Catalogue, lecteur PhET
-├── 12_moteur_remediation/      # Mapping, plans, réévaluation
-├── 13_dashboards/             # Dashboards élève/parent, notifications
-├── 14_securite_performance_observabilite/ # Sécurité, perf, logs
-├── 15_tests_acceptation_demo/ # Fixtures, tests E2E, acceptation
-└── 16_deploiement_documentation_release/ # Hébergement, déploiement, docs
+├── 01_gouvernance_et_audit/            # Vérification, fichiers racine, ADR initiaux
+├── 02_initialisation_monorepo/         # Workspace, Next.js, FastAPI
+├── 03_infrastructure_locale_ci/        # Docker, DB, migrations, CI
+├── 04_spike_h5p_critique/              # Collecte, lecture, xAPI, périmètre H5P
+├── 05_ux_design_navigation/            # Design system, layouts, routes
+├── 06_backend_identite_famille/        # Modèles, auth parent, accès enfant
+├── 07_referentiel_competences/         # Référentiel, arbre de prérequis
+├── 08_catalogue_contenus_activites/    # Catalogue, paquets H5P autorisés
+├── 09_affectations_parcours/           # Affectations, ouverture du contenu
+├── 10_tentatives_resultats/            # Tentatives, réponses, résultats
+├── 11_evenements_xapi_progres/         # Événements xAPI, progrès agrégés
+├── 12_diagnostic_remediation/          # Diagnostic explicable, Quick Repairs
+├── 13_dashboards/                      # Dashboards élève/parent
+├── 14_evaluation_par_paliers/          # Évaluation hiérarchique, séquentielle
+├── 15_cours_escalade_competences/      # Cours d'escalade (brouillon)
+├── 16_notifications/                   # Notifications et préférences
+├── 17_administration_securite_exploitation/ # Administration, durcissement
+└── 18_validation_mvp_livraison/        # Tests bout en bout, démo, livraison
 ```
 
 Chaque étape contient des sous-étapes numérotées à exécuter dans l'ordre.
+Une fiche d'étape non ouverte est un brouillon : elle décrit ce qui est
+prévu, pas ce qui est décidé, et l'ouverture de l'étape la réécrit souvent.
 
 ---
 
@@ -125,16 +129,16 @@ Chaque étape contient des sous-étapes numérotées à exécuter dans l'ordre.
 
 ### Frontend
 - Next.js 16, React, TypeScript strict, App Router
-- Tailwind CSS 4, Radix UI, Lucide React, Framer Motion
-- TanStack Query, Zustand, React Hook Form, Zod, next-intl, Recharts
+- Bootstrap 5.3.8, Lucide React
 
 ### Backend
-- FastAPI, Python 3.11+, Pydantic
-- SQLAlchemy 2, Alembic, PostgreSQL
+- FastAPI, Python 3.12+, Pydantic
+- SQLAlchemy 2 async, Alembic, PostgreSQL 17
 - Redis, Celery
 
 ### Contenus
-- h5p-standalone, stockage S3-compatible, URLs présignées
+- h5p-standalone, stockage compatible S3 (MinIO en local), URLs présignées
+- Origine de contenu isolée, servie par nginx
 - PhET HTML5 français en iframe isolée
 
 ### Infrastructure

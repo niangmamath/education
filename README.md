@@ -1,91 +1,96 @@
 # StudentConnect
 
 > **Plateforme EdTech B2C pour élèves de 6 à 11 ans et leurs parents**
-> 
-> *Score de santé académique, détection de lacunes, Quick Repairs déterministes*
+>
+> *Diagnostic hiérarchique par paliers, remédiation ciblée, historique conservé*
 
 ---
 
 ## Produit
 
-StudentConnect est une plateforme éducative innovante qui permet aux parents de suivre la santé académique de leurs enfants (6-11 ans) et aux élèves de combler leurs lacunes via des parcours de remédiation personnalisés.
+StudentConnect est une plateforme éducative qui permet aux parents de suivre
+la santé académique de leurs enfants (6-11 ans) et aux élèves de combler leurs
+lacunes via des parcours de remédiation personnalisés. Un enfant n'est jamais
+évalué sur tout un programme d'un coup : il est testé palier de compétences
+après palier, chaque lacune déclenche une remédiation ciblant le vrai
+prérequis en cause, puis un retest confirme l'acquisition avant de débloquer
+le palier suivant.
 
 ### Fonctionnalités clés
 
-- **Dashboards distincts** : Espace Parent avec score de santé académique et espace Élève gamifié
-- **Quick Repairs** : Exercices courts (3-7 minutes) ciblant les lacunes détectées
-- **Arbre de compétences** : Modélisation des prérequis et dépendances entre compétences
-- **Détection de lacunes** : Identification automatique des lacunes localisées et générales
-- **Contenus interactifs** : Lecture native de H5P et intégration de simulations PhET
-- **Preuves d'apprentissage** : Capture xAPI des interactions avec les contenus
+- **Dashboards distincts** : Espace Parent avec score de santé académique et
+  espace Élève centré sur les prochaines actions
+- **Quick Repairs** : Exercices courts (3-7 minutes) ciblant les lacunes
+  détectées, toujours par le vrai prérequis en cause
+- **Référentiel versionné** : Compétences, domaines, matières et classes,
+  avec un graphe de prérequis pouvant traverser matières et niveaux
+- **Diagnostic explicable** : Rien n'est stocké, tout se recalcule à chaque
+  lecture, cinq règles nommées et publiées
+- **Contenus interactifs** : Lecture native de H5P, fiches de remédiation
+  écrites nativement dans la plateforme
+- **Preuves d'apprentissage** : Capture xAPI des interactions avec les
+  contenus, via une origine de contenu isolée
 
 ### Score de santé académique
 
 Un indicateur explicable (non comparatif) basé sur :
 - Résultats aux diagnostics internes
 - Progression dans les compétences
-- Historique des lacunes comblées
+- Historique des lacunes comblées, pondéré par le nombre de tentatives
 - Engagement avec les contenus
 
 ---
 
-## Stack Technique
+## Stack technique
 
 ### Architecture
 
 ```
 Next.js Web (Frontend)
-    │ REST/HTTPS
+    │ REST/HTTPS, appelé depuis les composants serveur
     ▼
-FastAPI modular monolith (Backend)
+FastAPI monolithe modulaire (Backend)
     ├── PostgreSQL (données relationnelles)
     ├── Redis (sessions, cache)
     ├── Celery (tâches asynchrones)
-    └── S3-compatible (stockage objet)
+    └── S3-compatible / MinIO (stockage objet)
 
-Content origin isolée
+Origine de contenu isolée (nginx)
     ├── h5p-standalone (lecture H5P)
-    └── paquets H5P versionnés
-
-PhET
-    └── iframe française sécurisée
+    └── paquets H5P versionnés par empreinte
 ```
 
 ### Frontend
 
 - **Framework** : Next.js 16 (App Router)
 - **Langage** : TypeScript strict
-- **UI** : Tailwind CSS 4, Radix UI, Lucide React, Framer Motion
-- **Data** : TanStack Query, Zustand
-- **Forms** : React Hook Form, Zod
-- **i18n** : next-intl
-- **Charts** : Recharts
+- **UI** : Bootstrap 5.3.8, Lucide React
 
 ### Backend
 
 - **Framework** : FastAPI
-- **Langage** : Python 3.11+
-- **ORM** : SQLAlchemy 2, Alembic (migrations)
+- **Langage** : Python 3.12+
+- **ORM** : SQLAlchemy 2 async, Alembic (migrations)
 - **Validation** : Pydantic
-- **Base de données** : PostgreSQL
-- **Cache** : Redis
-- **Task Queue** : Celery
+- **Base de données** : PostgreSQL 17
+- **Cache et sessions** : Redis
+- **Task queue** : Celery
 
-### Contenus et Stockage
+### Contenus et stockage
 
-- **H5P** : h5p-standalone pour lecture native
-- **Stockage** : Compatible S3 avec URLs présignées
-- **CDN** : Origine de contenu dédiée pour isolation
-- **PhET** : Simulations HTML5 françaises en iframe
+- **H5P** : `h5p-standalone` pour lecture native, huit types autorisés
+  (ADR-012), jamais extrait sur disque avant vérification
+- **Stockage** : MinIO en local, compatible S3, URLs présignées
+- **Isolation** : origine de contenu dédiée servie par nginx, jamais
+  l'origine de l'application
 
-### Tests et Infrastructure
+### Tests et infrastructure
 
-- **Tests Backend** : Pytest
-- **Tests Frontend** : Vitest, Testing Library
-- **Tests E2E** : Playwright
+- **Tests backend** : Pytest, intégration comprise contre PostgreSQL réel
+- **Qualité backend** : Ruff, Mypy
+- **Qualité frontend** : ESLint, TypeScript
 - **Conteneurisation** : Docker Compose
 - **CI/CD** : GitHub Actions
-- **Sécurité** : HTTPS, reverse proxy, logs structurés
 
 ---
 
@@ -94,131 +99,76 @@ PhET
 ### Logiciels requis
 
 - [Git](https://git-scm.com/) 2.40+
-- [Node.js](https://nodejs.org/) 20+
-- [Python](https://www.python.org/) 3.11+
-- [Docker](https://www.docker.com/) 24+
-- [Docker Compose](https://docs.docker.com/compose/) 2.20+
+- [Node.js](https://nodejs.org/) 20+ et [pnpm](https://pnpm.io/) 11+
+- [Python](https://www.python.org/) 3.12+
+- [Docker](https://www.docker.com/) 24+ avec Docker Compose 2.20+
 
-### Espace disque
+### Espace disque et mémoire
 
-- Minimum 10 Go disponibles (pour Docker, dépendances, caches)
-
-### Mémoire
-
+- Minimum 10 Go disponibles (Docker, dépendances, caches)
 - Minimum 8 Go RAM (16 Go recommandé pour développement)
 
 ---
 
-## Structure du Projet (Cible)
+## Structure du projet
 
 ```
-studentconnect/
+StudentConnect-dev/
 ├── apps/
-│   ├── web/                 # Next.js frontend
-│   │   ├── app/            # App Router
+│   ├── web/                     # Next.js frontend
+│   │   ├── app/                 # App Router
 │   │   ├── components/
-│   │   ├── lib/
-│   │   ├── styles/
-│   │   └── package.json
-│   └── api/                 # FastAPI backend
-│       ├── main.py
-│       ├── models/
-│       ├── routes/
-│       ├── services/
-│       └── requirements.txt
-├── packages/
-│   ├── ui/                  # Composants partagés
-│   ├── schemas/            # Schémas Pydantic/Zod
-│   └── config/             # Configuration commune
-├── infrastructure/
-│   ├── docker/
-│   │   ├── docker-compose.yml
-│   │   ├── Dockerfile.web
-│   │   └── Dockerfile.api
-│   ├── nginx/
-│   │   └── nginx.conf
-│   └── scripts/            # Scripts utilitaires
+│   │   └── lib/
+│   └── api/                     # FastAPI backend
+│       ├── app/
+│       │   ├── api/             # Routes v1
+│       │   ├── models/          # Modèles SQLAlchemy
+│       │   ├── schemas/         # Schémas Pydantic
+│       │   └── <domaine>/       # referential, catalog, assignments,
+│       │                        # attempts, diagnostic, xapi, authored...
+│       ├── alembic/
+│       └── tests/
 ├── docs/
-│   ├── architecture/
-│   │   ├── decision-register.md
-│   │   └── diagrams/
-│   ├── adr/                # Architecture Decision Records
-│   ├── api/                # Documentation API
-│   ├── security/
-│   ├── planning/
-│   └── user-guide/
-├── steps/                  # Prompts de développement
-├── .gitignore
-├── .editorconfig
-├── .gitattributes
+│   ├── adr/                     # Architecture Decision Records
+│   ├── architecture/            # Registre des décisions
+│   ├── backend/                 # Référence technique par domaine
+│   ├── ux/                      # Parcours, navigation, design system
+│   ├── contenus/                # Contenus H5P et fiches à fabriquer
+│   └── deploiement/             # Démonstration par tunnel
+├── steps/                       # Feuille de route par étape, un dossier
+│                                 # numéroté par étape, brouillon tant que
+│                                 # l'étape n'est pas ouverte
+├── infrastructure/
+│   ├── nginx/                   # Configuration de l'origine de contenu
+│   └── scripts/                 # check_step03.sh, deployer_h5p.sh...
+├── experiments/h5p-spike/       # Spike H5P de l'étape 04, toujours actif
+├── docker-compose.dev.yml       # Pile locale de ce worktree de développement
 ├── .env.example
-├── README.md
 └── .github/workflows/
-    ├── ci.yml
-    └── deploy.yml
 ```
 
 ---
 
-## Démarrage Futur
-
-> ⚠️ **En développement** - Les instructions ci-dessous sont la cible pour la phase de développement.
-
-### 1. Cloner le dépôt
+## Démarrage
 
 ```bash
 git clone git@github.com:Tidianesarrndiaye-org/StudentConnect.git
 cd StudentConnect
-```
 
-### 2. Configurer l'environnement
-
-```bash
-# Copier le fichier d'exemple
 cp .env.example .env
+# éditer .env avec vos configurations locales
 
-# Éditer .env avec vos configurations locales
-nano .env  # ou utilisez votre éditeur préféré
-```
+pnpm install --recursive
 
-### 3. Démarrer les conteneurs
+docker compose -f docker-compose.dev.yml up -d
+./infrastructure/scripts/create_minio_buckets.sh
 
-```bash
-docker-compose -f infrastructure/docker/docker-compose.yml up -d
-```
-
-### 4. Installer les dépendances
-
-```bash
-# Frontend
-cd apps/web
-npm install
-
-# Backend
-cd ../api
-pip install -r requirements.txt
-```
-
-### 5. Initialiser la base de données
-
-```bash
 cd apps/api
 alembic upgrade head
+cd ../..
+
+pnpm dev
 ```
-
-### 6. Démarrer les applications
-
-```bash
-# Dans un terminal
-cd apps/web
-npm run dev
-
-# Dans un autre terminal
-cd apps/api
-uvicorn main:app --reload --port 8000
-```
-
-### 7. Accéder à l'application
 
 - Frontend : http://localhost:3000
 - Backend API : http://localhost:8000
@@ -230,19 +180,19 @@ uvicorn main:app --reload --port 8000
 
 ### Principes
 
-- **Zéro donnée réelle** : Toutes les données du stage sont fictives
-- **Protection des enfants** : Aucun email ou téléphone requis pour les comptes enfants
-- **Sessions sécurisées** : Cookies HttpOnly, Secure, SameSite
-- **Stockage des secrets** : Jamais dans le code ou les fichiers trackés
-- **Audit régulier** : Vérification des dépendances et configurations
+- **Zéro donnée réelle** : toutes les données de démonstration sont fictives,
+  préfixées `demo-` et recréées par `python -m app.demo`
+- **Protection des enfants** : aucun email ni téléphone requis pour un compte
+  Enfant, connexion par code famille et PIN
+- **Sessions sécurisées** : cookies `HttpOnly`, `Secure`, `SameSite`, sessions
+  opaques en Redis, jamais en SQL
+- **Stockage des secrets** : jamais dans le code ou les fichiers trackés
 
 ### Bonnes pratiques
 
 - Ne jamais commiter `.env`, secrets, tokens ou clés
 - Utiliser des variables d'environnement pour toute configuration sensible
 - Valider toutes les entrées utilisateur
-- Sanitizer les sorties avant affichage
-- Limiter les permissions selon le principe du moindre privilège
 
 ### Reporting de vulnérabilités
 
@@ -250,21 +200,14 @@ Voir [SECURITY.md](./SECURITY.md) pour les procédures de reporting.
 
 ---
 
-## Statut Actuel
+## Statut actuel
 
-> **📦 Phase : 01 - Gouvernance et Audit**
-
-- ✅ Dépôt vidé et vérifié
-- 🔄 Création des fichiers racine en cours
-- ⏳ Initialisation du monorepo
-- ⏳ Configuration de l'infrastructure locale
-
-### Prochaines étapes
-
-1. ✅ Vérification du dépôt vide (Terminé)
-2. 🔄 Création des fichiers racine (En cours)
-3. ⏳ Création des ADR initiaux
-4. ⏳ Initialisation du workspace monorepo
+La boucle complète du MVP est fonctionnelle et éprouvée sur la pile vivante :
+inscription, examen d'entrée par palier de compétences, diagnostic
+explicable, remédiation ciblée par prérequis, retest, tableaux de bord Parent
+et Élève. L'état détaillé, étape par étape, vit dans
+[`steps/ETAT.md`](./steps/ETAT.md) ; la feuille de route à venir vit dans
+[`steps/PLANNING.md`](./steps/PLANNING.md).
 
 ---
 
@@ -278,13 +221,11 @@ Voir [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) pour nos engagements.
 
 ## Licence
 
-Le projet est en cours de décision de licence. Voir [LICENSE](./LICENSE) ou [docs/adr/ADR-000-licence-projet.md](./docs/adr/ADR-000-licence-projet.md) pour plus d'informations.
+Le projet est en cours de décision de licence. Voir [LICENSE](./LICENSE) ou
+[docs/adr/ADR-000-licence-projet.md](./docs/adr/ADR-000-licence-projet.md)
+pour plus d'informations.
 
 ## Contact
 
 - **Organisation** : [tidianesarrndiaye-org](https://github.com/tidianesarrndiaye-org)
 - **Dépôt** : [StudentConnect](https://github.com/Tidianesarrndiaye-org/StudentConnect)
-
----
-
-*Documentation générée le 10 août 2026*
