@@ -1660,5 +1660,31 @@ propriétaire, comme la suite directe de `HORS-01` à `HORS-07`.
 
 ## Prochaine action
 
-Étape 14, évaluation par paliers, ouverte le 25 août 2026. Ensuite : étape
-15, cours d'escalade de compétences (brouillon jusque-là), puis 16 à 18.
+Étape 14, évaluation par paliers, ouverte le 25 août 2026, **en cours,
+interrompue par la limite de session**. État exact sur la branche
+`feat/etape-14-evaluation-paliers`, commit `1ebe04a` (WIP, poussé, non
+fusionné) :
+
+- Fait, Ruff et Mypy verts : `app/referential/graph.py`
+  (`CompetencyGraph.frontier`, `unmet_ancestors`), `app/assessment/tiers.py`
+  (`next_sitting`), `give_to`/`is_done` réécrits pour redonner l'examen
+  palier par palier, `questions_of` filtré par `competency_codes`,
+  `GET /me/assessment` déclenche `give_to`, `diagnostic/service.py._tree`
+  partagé avec le nouveau module.
+- **À reprendre en premier** : deux tests de `test_assessment_api.py`
+  (`TestEveryUsableProfileHasOneWaiting::test_a_profile_the_parent_opens_has_it`
+  et `TestWhatItProduces::test_once_done_it_is_not_offered_again`) échouent de
+  façon non déterministe lorsqu'ils tournent ensemble, alors que chacun passe
+  isolément. Piste la plus probable : `assessment_for` choisit « le plus
+  récent » sans départage parmi les activités `cp` publiées, et `give_to`
+  étant désormais appelé à chaque lecture élargit la fenêtre où deux
+  activités de niveau `cp` peuvent se départager arbitrairement. Pas encore
+  investigué à fond.
+- Pas commencé : suite complète Pytest non rejouée (seules les tranches
+  diagnostic et référentiel l'ont été, vertes), 14.3 volontairement limité
+  au partage du module de lecture sans généraliser `_root_causes` /
+  `_unobserved_causes` au delà d'un saut (écart assumé, à documenter), 14.5
+  (documentation, ADR, clôture) pas commencé.
+
+Le nettoyage du dépôt et la renumérotation des étapes (HORS-12) sont déjà
+fusionnés sur cette même branche, dans un commit antérieur au WIP.
