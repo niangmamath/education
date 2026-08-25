@@ -44,4 +44,19 @@ de 14.1 au lieu d'une seconde implémentation.
 
 ## Statut
 
-À faire.
+Terminé, avec un écart assumé par rapport au prompt.
+
+`diagnostic/service.py:_tree` a bien été remplacé par un appel à
+`referential.graph.load`, ce qui partage la lecture du graphe entre l'examen
+et le diagnostic et supprime la requête dupliquée. En revanche
+`_root_causes` et `_unobserved_causes` **n'ont pas** été réécrites pour
+marcher à plusieurs sauts, et ce n'est pas un renforcement reporté faute de
+temps : la lecture montre que `_root_causes` reconstruit déjà une chaîne
+entière de lacunes confirmées en une seule passe, puisqu'elle examine chaque
+lacune et trouve donc chaque arête indépendamment. Ce que le pas unique ne
+fait délibérément pas, c'est franchir un prérequis **jamais testé** pour
+aller chercher plus loin derrière lui — avancer une hypothèse à deux sauts
+de toute lecture contredirait ADR-015. Un module
+`app.referential.graph.unmet_ancestors` avait été esquissé pour cette marche
+transitive puis retiré, faute d'appelant sain qui en aurait eu besoin. Détail
+complet dans ADR-021.

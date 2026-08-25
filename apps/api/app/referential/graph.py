@@ -1,7 +1,6 @@
 """Reading the competency graph of the published referential.
 
-Two callers need the same graph for two different questions, and both belong
-here rather than duplicated where they are asked.
+Two callers share this reading rather than each fetching it their own way.
 
 The assessment (étape 14) asks *"which competencies are ready to be tested
 right now"* — a class's competencies whose prerequisites, staying inside that
@@ -11,12 +10,17 @@ outside the class is never resolved and `frontier` cannot see it. That is
 deliberate, not a limitation to work around — the palier a child is tested on
 stays bounded to her declared class, and a descent into an earlier class stays
 the diagnostic's reactive business, never a proactive scan of the whole
-programme (décision du propriétaire, 25 août 2026).
+programme (décision du propriétaire, 25 août 2026, ADR-021).
 
-The diagnostic (étape 12) asks the opposite question — *"what, anywhere in the
-referential, explains this one gap"* — and calls `load` unscoped, so
-`unmet_ancestors` can walk as many hops as it takes, across classes and
-subjects, exactly as the seed data's own prerequisite edges already do.
+The diagnostic (étape 12) calls `load` unscoped, to place every gap in its
+domain and find the direct edges between two gaps — `_root_causes` and
+`_unobserved_causes` in `app.diagnostic.service` keep their one-hop walk
+deliberately: a chain of *confirmed* gaps is already reconstructed in a
+single read this way, since every gap-to-gap edge is found independently,
+and stopping at the first **untested** prerequisite is the correct place to
+stop — reporting a hypothesis two hops into ground nobody has any reading on
+would contradict ADR-015's own rule that a cause is a hypothesis only once
+something points to it, not a guess the graph's shape alone can justify.
 
 Nothing here is stored. Like every derived reading since ADR-015, the graph is
 rebuilt from `ref_competencies` and `ref_competency_prerequisites` at the
@@ -115,30 +119,6 @@ class CompetencyGraph:
                 code,
             ),
         )
-
-    def unmet_ancestors(self, code: str, *, mastered: set[str]) -> list[str]:
-        """Every prerequisite behind `code` that is not yet mastered, however
-        many hops back it takes.
-
-        A branch stops the moment it reaches a mastered node: mastered is
-        evidence against being the cause (ADR-015). An unmet branch keeps
-        being walked, whether or not it has ever been tested — an untested
-        prerequisite is exactly what `unobserved-prerequisite` needs to find,
-        several classes back if that is where the chain leads.
-        """
-        found: list[str] = []
-        seen: set[str] = {code}
-        stack = list(self.prerequisites.get(code, ()))
-        while stack:
-            node = stack.pop()
-            if node in seen:
-                continue
-            seen.add(node)
-            if node in mastered:
-                continue
-            found.append(node)
-            stack.extend(self.prerequisites.get(node, ()))
-        return found
 
 
 async def load(db: AsyncSession, *, level_code: str | None = None) -> CompetencyGraph:

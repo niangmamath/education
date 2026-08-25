@@ -18,7 +18,7 @@ Ce document est le **registre central** de toutes les Architecture Decision Reco
 
 ## Structure des dossiers
 
-Les vingt-et-une ADR existent toutes en fichier ; ce registre les résume et ne
+Les vingt-deux ADR existent toutes en fichier ; ce registre les résume et ne
 les remplace pas.
 
 ```
@@ -44,7 +44,8 @@ docs/
 │   ├── ADR-017-fiches-de-remediation-ecrites-ici.md # Fiches de remédiation écrites ici
 │   ├── ADR-018-six-classes-cumulatives.md      # Six classes cumulatives, un examen par classe
 │   ├── ADR-019-anglais-et-trois-questions-par-competence.md # Anglais, prérequis inter-matières
-│   └── ADR-020-rotation-des-questions-de-fiche.md # Rotation des questions de fiche
+│   ├── ADR-020-rotation-des-questions-de-fiche.md # Rotation des questions de fiche
+│   └── ADR-021-evaluation-par-paliers.md       # Évaluation par paliers, bornée à la classe
 └── architecture/
     └── decision-register.md                   # Ce fichier
 ```
@@ -422,17 +423,34 @@ docs/
 
 ---
 
+### ADR-021 : Évaluation par paliers, bornée à la classe déclarée
+
+| Champ | Valeur |
+|-------|--------|
+| **Titre** | Évaluation par paliers, bornée à la classe déclarée |
+| **Statut** | ✅ **Accepted** |
+| **Date** | 25 août 2026 |
+| **Auteur** | Équipe StudentConnect |
+| **Décision** | L'examen d'entrée sert un palier de compétences prêtes à la fois, jamais toute la classe d'un coup ; un palier reste borné à la classe déclarée, la descente vers une classe antérieure reste réactive |
+| **Fichier** | [docs/adr/ADR-021-evaluation-par-paliers.md](../adr/ADR-021-evaluation-par-paliers.md) |
+| **Dépendances** | ADR-013, ADR-015, ADR-018, ADR-019 |
+| **Impact** | Produit, Référentiel, Backend |
+
+**Résumé** : Correction du propriétaire, 25 août 2026 — un enfant qui valide 100 % à un palier ne reçoit rien de plus à ce palier, juste l'accès au suivant. Aucune migration : `app.referential.graph` partage la lecture du graphe de prérequis entre l'examen et le diagnostic, tout se recalcule à la lecture comme le diagnostic depuis ADR-015. Le seuil de maîtrise est celui qui existe déjà (`RULE_ALL_CORRECT`), sans nouveau seuil inventé. `_root_causes`/`_unobserved_causes` gardent leur marche à un saut, volontairement, le renforcement transitif étant écarté de cette étape.
+
+---
+
 ## Statistiques
 
 | Statut | Count |
 |--------|-------|
-| ✅ Accepted | 20 |
+| ✅ Accepted | 21 |
 | ⚠️ Proposed | 1 |
 | ⏳ À créer | 0 |
 | ❌ Deprecated | 0 |
 | ⛔ Rejected | 0 |
 | 🔄 Superseeded | 0 |
-| **Total** | **21** |
+| **Total** | **22** |
 
 Une seule ADR reste ouverte, ADR-000 sur la licence du projet. ADR-012 est
 acceptée **sous conditions**, comptée ici parmi les acceptées. Ses huit conditions
@@ -446,7 +464,7 @@ aucune n'est plus entièrement à faire.
 
 1. **Vérifier** qu'aucune décision existante ne couvre déjà le sujet
 2. **Discuter** avec l'équipe avant de rédiger
-3. **Suivre la forme des ADR existantes** : statut, date, décision, conséquences. Aucun template séparé n'est maintenu, les vingt-et-un fichiers en tiennent lieu
+3. **Suivre la forme des ADR existantes** : statut, date, décision, conséquences. Aucun template séparé n'est maintenu, les vingt-deux fichiers en tiennent lieu
 4. **Numérotation** : Utiliser le prochain numéro disponible
 5. **Statut initial** : `Proposed`
 6. **Créer un PR** avec le nouvel ADR

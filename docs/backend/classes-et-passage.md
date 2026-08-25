@@ -27,7 +27,7 @@ Les prérequis traversent donc les niveaux exprès. La conjugaison du CE2 dépen
 la reconnaissance des groupes de verbes ; la division du CM1 dépend de la
 multiplication du CE2, qui dépend de l'addition du CP.
 
-## Un examen d'entrée par classe
+## Un examen d'entrée par classe, servi par palier
 
 Six examens, vingt-sept questions chacun, trois par compétence de la classe.
 Trois lectures et non une, pour qu'une compétence puisse être dite « partielle »
@@ -38,10 +38,18 @@ classes antérieures ferait plus de cent soixante questions à un CM2, et aucun
 enfant ne le finirait — un examen abandonné produit une lecture pire qu'une
 absence de lecture.
 
+**Depuis l'étape 14 (25 août 2026), les neuf compétences d'une classe ne sont
+plus interrogées d'un coup.** Une enfant n'est testée que sur le palier
+prêt — les compétences dont tout prérequis, à l'intérieur de sa classe, est
+déjà maîtrisé — et le palier suivant n'apparaît qu'une fois celui-ci dégagé,
+compétence maîtrisée ou lacune reportée en remédiation. Voir
+`examen-initiation.md` pour le détail du mécanisme, et ADR-021 pour la
+décision de border un palier à la classe plutôt que de l'étendre au cumul.
+
 L'examen est donné à **l'entrée dans une classe** : à l'inscription, puis à
-chaque passage. C'est toujours la seule chose que la plateforme assigne d'elle-
-même, et pour la même raison qu'avant : sans lui, elle ne sait rien de l'année
-qui commence.
+chaque passage, et de nouveau à chaque palier franchi. C'est toujours la
+seule chose que la plateforme assigne d'elle-même, et pour la même raison
+qu'avant : sans lui, elle ne sait rien de l'année qui commence.
 
 ## Comment le diagnostic descend quand même
 
@@ -93,7 +101,7 @@ Ce que le passage fait :
 
 - le palier de compétences monte, et la plateforme propose désormais celles de la
   nouvelle classe ;
-- l'élève reçoit l'examen d'entrée de cette classe ;
+- l'élève reçoit le premier palier de l'examen d'entrée de cette classe ;
 - une ligne s'ajoute à son historique de classes, avec la date et le parent qui a
   décidé.
 

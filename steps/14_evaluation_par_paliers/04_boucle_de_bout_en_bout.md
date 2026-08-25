@@ -47,4 +47,4 @@ débloqué — sans construire de mécanisme parallèle à celui de l'étape 10.
 
 ## Statut
 
-À faire.
+Terminé.

@@ -18,12 +18,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.attempt import OUTCOME_MASTERED
-from app.models.catalog import (
-    ACTIVITY_KIND_ASSESSMENT,
-    ACTIVITY_STATUS_PUBLISHED,
-    Activity,
-    ActivityCompetency,
-)
+from app.models.catalog import ActivityCompetency
 from app.models.identity import Child
 from app.progress import service as progress_service
 from app.referential import graph as referential_graph
@@ -43,17 +38,19 @@ async def next_sitting(db: AsyncSession, child: Child) -> list[str]:
     `catalog_activity_competencies` — what the catalogue says this class's
     paper actually asks — not from the referential graph, which only refines
     the order and the prerequisite gating among them (ADR-013).
+
+    The assessment itself is looked up through `assessment_for`, imported
+    late to avoid a cycle: re-implementing "the published assessment of this
+    class" here, without its ordering, is exactly what let two published
+    activities of the same class answer a plain `db.scalar` in whichever
+    order Postgres happened to return them.
     """
     if child.level_code is None:
         return []
 
-    assessment = await db.scalar(
-        select(Activity).where(
-            Activity.kind == ACTIVITY_KIND_ASSESSMENT,
-            Activity.status == ACTIVITY_STATUS_PUBLISHED,
-            Activity.level_code == child.level_code,
-        )
-    )
+    from app.assessment.service import assessment_for
+
+    assessment = await assessment_for(db, child.level_code)
     if assessment is None:
         return []
 

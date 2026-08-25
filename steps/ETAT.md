@@ -1658,33 +1658,129 @@ propriétaire, comme la suite directe de `HORS-01` à `HORS-07`.
       qui enseigne, annoncée par le propriétaire comme l'étape suivante,
       pas construite ce soir. `steps/MANIFESTE.md` régénéré, 99 fiches.
 
+## Étape 14, évaluation par paliers, clôturée
+
+Travaux menés sur la branche `feat/etape-14-evaluation-paliers`. Ouverte et
+clôturée le 25 août 2026, sur la correction du propriétaire : l'examen
+d'entrée testait toutes les compétences d'une classe d'un coup ; il teste
+désormais un palier de compétences prêtes à la fois, gagné un à un.
+
+Une interruption par la limite de session a eu lieu en cours d'étape ; la
+reprise a d'abord réglé un défaut réel trouvé pendant l'interruption (voir
+« Deux défauts trouvés » ci-dessous) avant de continuer.
+
+### 14.1, moteur de paliers, terminée
+
+- [x] `app/referential/graph.py`, nouveau : `load(db, level_code=None)`
+      charge le graphe de prérequis de l'édition publiée, borné à une classe
+      ou non. `CompetencyGraph.frontier(codes, mastered, tested)` rend, parmi
+      des codes donnés par l'appelant, ceux prêts à être testés — sans
+      prérequis dans ce graphe, ou tous déjà maîtrisés — ordonnés comme le
+      programme les enseigne.
+- [x] Les candidats viennent du **catalogue** (`catalog_activity_competencies`,
+      ADR-013), pas du graphe : un code que l'édition publiée ne connaît pas
+      est traité comme sans prérequis plutôt qu'exclu, pour ne jamais faire
+      dépendre le service d'un examen de l'exactitude du référentiel en
+      vigueur au même instant.
+
+### 14.2, examen servi par palier, terminée
+
+- [x] `app/assessment/tiers.py`, nouveau : `next_sitting(db, child)` compose
+      le graphe borné à la classe de l'enfant avec ses lectures déjà
+      produites (`app.progress`) pour dire ce qui est dû maintenant.
+- [x] `app/authored/service.py:questions_of` gagne un filtre optionnel
+      `competency_codes`, via la même jointure d'attribution que
+      `attempts/service.py`.
+- [x] `app/assessment/service.py` : `give_to(db, child)` perd le paramètre
+      `parent_id` (dérivé de `child.parent_id`), son idempotence porte
+      désormais sur les affectations **ouvertes** (même motif que
+      `assign_activity`) plutôt que sur « une ligne existe, point » ; elle ne
+      crée une affectation que si un palier est dû. `is_done` devient « rien
+      à servir maintenant et rien en attente ». Les cinq sites d'appel
+      (`children.py` × 4, `demo/__main__.py` × 1) mis à jour.
+- [x] Contenu de l'examen (`app.demo.examens`) inchangé : seule la politique
+      de service change, ses docstrings corrigées en conséquence.
+
+### 14.3, diagnostic généralisé, terminée avec un écart assumé
+
+- [x] `diagnostic/service.py:_tree` partagé avec `referential.graph.load`,
+      requête dupliquée supprimée.
+- [x] `_root_causes` et `_unobserved_causes` **gardent** leur marche à un
+      seul saut : la lecture montre qu'elles reconstruisent déjà une chaîne
+      entière de lacunes confirmées en une seule passe, et franchir un
+      prérequis jamais testé pour en proposer un plus profond contredirait
+      ADR-015 (une cause racine n'est une hypothèse qu'une fois qu'une
+      lecture pointe vers elle). Détail dans ADR-021.
+
+### 14.4, boucle de bout en bout, terminée
+
+- [x] `GET /api/v1/me/assessment` appelle `give_to` avant de répondre :
+      seule lecture du projet qui écrit, extension d'un cran de l'exception
+      déjà en vigueur (l'examen est le seul endroit où la plateforme
+      s'auto-assigne) plutôt qu'une nouvelle créée.
+- [x] `AssessmentPublic` gagne un champ optionnel `competency_codes`.
+- [x] Retest après remédiation entièrement réutilisé : `quick_repairs`,
+      inchangé, et `app.progress.child_progress` prenant déjà la dernière
+      lecture par compétence toutes activités confondues, une compétence
+      réparée repasse « maîtrisée » sans mécanisme séparé.
+- [x] `tests/test_assessment_tiers.py`, nouveau, 4 tests d'intégration contre
+      un référentiel et un examen réels : le palier 1 seul est servi
+      d'abord ; le palier 2 apparaît une fois le premier maîtrisé ; plus rien
+      n'est dû une fois les deux testés ; un échec laisse le palier suivant
+      hors de portée sans redemander de nouvelle tentative sur la même
+      compétence.
+
+### 14.5, documentation et clôture, terminée
+
+- [x] ADR-021, évaluation par paliers bornée à la classe déclarée : décision
+      confirmée par le propriétaire entre deux lectures possibles de sa
+      demande, palier borné plutôt que cumulatif depuis la première classe.
+- [x] `docs/backend/examen-initiation.md`, `docs/backend/classes-et-passage.md`
+      et `docs/backend/diagnostic-remediation.md` réécrits.
+- [x] `docs/architecture/decision-register.md` mis à jour, ADR-021 ajoutée.
+- [x] `steps/MANIFESTE.md` régénéré.
+- [x] Séquence complète de l'API CI rejouée en local, tout vert.
+
+### Deux défauts trouvés pendant la reprise, corrigés
+
+- [x] **`app.assessment.tiers.next_sitting` cherchait l'examen sans
+      l'ordre ni la limite** que `assessment_for` applique partout ailleurs
+      (« le plus récent parmi les activités `cp` publiées ») : avec deux
+      activités candidates en base (une activité de démonstration ancienne
+      et l'activité fraîchement créée par un test), `db.scalar` sans
+      `ORDER BY` rendait l'une ou l'autre selon l'ordre où PostgreSQL
+      choisissait de répondre — non déterministe, deux tests de
+      `test_assessment_api.py` en souffraient. Corrigé en réutilisant
+      `assessment_for` (import tardif, pour casser le cycle avec
+      `service.py` qui importe déjà `tiers`) plutôt qu'en dupliquant sa
+      requête.
+- [x] **`test_once_done_it_is_not_offered_again` complétait une tentative
+      sans répondre à aucune question.** Sous l'ancien modèle, une
+      affectation terminée suffisait à dire « fait ». Sous le nouveau,
+      « fait » veut dire « palier dégagé », et une tentative sans réponse
+      évaluée n'écrit aucun résultat (règle de l'étape 10) : la compétence
+      reste non testée et serait reproposée, comme il se doit. Le test a été
+      corrigé pour répondre aux deux questions avant de terminer,
+      correctement.
+
+### Résultats techniques de l'étape 14
+
+```text
+Ruff       : vert, format inclus
+Mypy       : vert sur 93 fichiers
+Alembic    : aucune migration, aucune dérive détectée
+Pytest     : 2545 tests réussis, 4 nouveaux dédiés à test_assessment_tiers.py
+Tests      : palier 1 seul servi, palier 2 après maîtrise du 1, rien après les deux
+Tests      : un échec sur le palier 1 ne redemande rien tant que la remédiation n'a pas conclu
+```
+
+Deux tests préexistants de `test_health.py` (`TestCORS`) échouent, sans lien
+avec cette étape : ils supposent l'origine `http://localhost:3000`, alors que
+ce worktree isolé sert sur le port `3100` (`.env`). Signalé, non corrigé —
+hors périmètre de l'étape 14.
+
 ## Prochaine action
 
-Étape 14, évaluation par paliers, ouverte le 25 août 2026, **en cours,
-interrompue par la limite de session**. État exact sur la branche
-`feat/etape-14-evaluation-paliers`, commit `1ebe04a` (WIP, poussé, non
-fusionné) :
-
-- Fait, Ruff et Mypy verts : `app/referential/graph.py`
-  (`CompetencyGraph.frontier`, `unmet_ancestors`), `app/assessment/tiers.py`
-  (`next_sitting`), `give_to`/`is_done` réécrits pour redonner l'examen
-  palier par palier, `questions_of` filtré par `competency_codes`,
-  `GET /me/assessment` déclenche `give_to`, `diagnostic/service.py._tree`
-  partagé avec le nouveau module.
-- **À reprendre en premier** : deux tests de `test_assessment_api.py`
-  (`TestEveryUsableProfileHasOneWaiting::test_a_profile_the_parent_opens_has_it`
-  et `TestWhatItProduces::test_once_done_it_is_not_offered_again`) échouent de
-  façon non déterministe lorsqu'ils tournent ensemble, alors que chacun passe
-  isolément. Piste la plus probable : `assessment_for` choisit « le plus
-  récent » sans départage parmi les activités `cp` publiées, et `give_to`
-  étant désormais appelé à chaque lecture élargit la fenêtre où deux
-  activités de niveau `cp` peuvent se départager arbitrairement. Pas encore
-  investigué à fond.
-- Pas commencé : suite complète Pytest non rejouée (seules les tranches
-  diagnostic et référentiel l'ont été, vertes), 14.3 volontairement limité
-  au partage du module de lecture sans généraliser `_root_causes` /
-  `_unobserved_causes` au delà d'un saut (écart assumé, à documenter), 14.5
-  (documentation, ADR, clôture) pas commencé.
-
-Le nettoyage du dépôt et la renumérotation des étapes (HORS-12) sont déjà
-fusionnés sur cette même branche, dans un commit antérieur au WIP.
+Étape 15, cours d'escalade de compétences — la brique qui enseigne,
+toujours en brouillon. Ensuite, étapes 16 à 18 (notifications, sécurité et
+exploitation, validation et livraison du MVP).

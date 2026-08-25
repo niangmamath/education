@@ -251,16 +251,15 @@ d'écoute du détour du 20 août, renommées côté déploiement en conséquence
 
 | ID | Travail | Dépendances | Statut | Preuve |
 |---|---|---|---|---|
-| PAL-01 | Moteur de paliers, graphe de prérequis lu à la demande | HORS-12 | À faire | `app/referential/graph.py`, tests d'intégration |
-| PAL-02 | Examen servi par palier plutôt que toute la classe d'un coup | PAL-01 | À faire | `assessment/service.py`, `authored/service.py` |
-| PAL-03 | Diagnostic généralisé sur le graphe complet | PAL-01 | À faire | `diagnostic/service.py`, suite existante sans régression |
-| PAL-04 | Boucle de bout en bout, retest après remédiation | PAL-02, PAL-03 | À faire | test d'intégration palier → échec → remédiation → palier suivant |
-| PAL-05 | Clôturer l'étape 14 | PAL-04 | À faire | documentation réécrite, ADR, séquence API CI, PR unique |
+| PAL-01 | Moteur de paliers, graphe de prérequis lu à la demande | HORS-12 | Terminé | `app/referential/graph.py`, `test_assessment_tiers.py` |
+| PAL-02 | Examen servi par palier plutôt que toute la classe d'un coup | PAL-01 | Terminé | `assessment/tiers.py`, `assessment/service.py`, `authored/service.py` |
+| PAL-03 | Diagnostic généralisé sur le graphe complet | PAL-01 | Terminé | `diagnostic/service.py` partagé, marche à un saut confirmée correcte (ADR-021) |
+| PAL-04 | Boucle de bout en bout, retest après remédiation | PAL-02, PAL-03 | Terminé | `test_assessment_tiers.py`, 4 tests d'intégration |
+| PAL-05 | Clôturer l'étape 14 | PAL-04 | Terminé | ADR-021, documentation réécrite, 2545 tests, séquence API CI |
 
 ### Prochaine tâche
 
-Construire l’étape 14, évaluation par paliers. L’étape 15, cours d’escalade
-de compétences, reste en brouillon jusqu’à sa clôture — c’est la brique qui
-enseigne, annoncée par le propriétaire comme l’étape suivante. La page « Ce
-qui a changé » livrée par `DASH-03` reste la présentation provisoire des
-notifications, reportées à l’étape 16.
+Étape 15, cours d’escalade de compétences, reste en brouillon jusqu’à son
+ouverture — c’est la brique qui enseigne, annoncée par le propriétaire comme
+l’étape suivante. La page « Ce qui a changé » livrée par `DASH-03` reste la
+présentation provisoire des notifications, reportées à l’étape 16.

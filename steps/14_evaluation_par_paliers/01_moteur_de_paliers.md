@@ -45,4 +45,4 @@ publié et en tire, pour une classe donnée, la liste des compétences prêtes �
 
 ## Statut
 
-À faire.
+Terminé.

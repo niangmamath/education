@@ -50,4 +50,4 @@ seule la politique de service change.
 
 ## Statut
 
-À faire.
+Terminé.
