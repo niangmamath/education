@@ -502,7 +502,7 @@ async def _families(db: AsyncSession) -> list[SeededFamily]:
             # Activation is what gives the assessment, and these profiles are
             # created already active. Giving it here is what the activation route
             # would have done, not a shortcut around it.
-            await assessment.give_to(db, parent.id, child)
+            await assessment.give_to(db, child)
             children.append(SeededChild(child=child, pin=str(profile["pin"])))
 
         built.append(SeededFamily(parent=parent, children=children))

@@ -32,4 +32,9 @@ class AssessmentPublic(BaseModel):
     done: bool
     assignment_id: uuid.UUID | None
     title: str | None
+    # The competencies this sitting covers — one palier, not the whole class.
+    # Optional so a client that ignores it loses nothing: the questions below
+    # already carry which competency each belongs to, via ADR-019's
+    # attribution.
+    competency_codes: list[str] = Field(default_factory=list)
     questions: list[AuthoredQuestionPublic] = Field(default_factory=list)

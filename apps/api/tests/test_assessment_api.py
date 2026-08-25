@@ -338,6 +338,10 @@ class TestWhatItProduces:
     def test_once_done_it_is_not_offered_again(
         self, family: Family, assessment: str
     ) -> None:
+        """Done means the palier is cleared, not merely that a paper was
+        handed in: completing an attempt with nothing answered leaves the
+        competency untested (step 10 writes no result for it), so the same
+        sitting would stay due. Answering is what makes it a reading."""
         child = family.add_child(f"lea{uuid.uuid4().hex[:6]}")
         session = family.as_child(child["pseudonym"])
         body = session.get(ASSESSMENT_URL).json()
@@ -345,6 +349,11 @@ class TestWhatItProduces:
         attempt = session.post(
             f"{MY_ACTIVITIES_URL}/{body['assignment_id']}/attempts"
         ).json()
+        for ref, chosen in (("q1", 1), ("q2", 0)):
+            session.post(
+                f"/api/v1/me/assessment/attempts/{attempt['id']}/answers",
+                json={"question_ref": ref, "chosen_index": chosen},
+            )
         session.post(f"{MY_ATTEMPTS_URL}/{attempt['id']}/complete")
 
         again = session.get(ASSESSMENT_URL).json()

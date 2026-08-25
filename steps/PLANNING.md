@@ -190,6 +190,7 @@ propriétaire, parce qu’ils bloquaient l’usage réel de la plateforme plutô
 | HORS-09 | Trois fiches de remédiation en anglais | HORS-08 | Terminé | CI complet (salutations, couleurs, nombres), 15 fiches en tout |
 | HORS-10 | Rotation des questions de fiche | HORS-09 | Terminé | Réserve de 8 par fiche, 4 tirées par tentative, examen non concerné, ADR-020 |
 | HORS-11 | Pipeline de dépôt H5P en une commande | HORS-10 | Terminé | `deployer_h5p.sh`, licence/source fixées, plus de préfixe `demo-` pour le contenu réel |
+| HORS-12 | Dépôt réorganisé, feuille de route redéfinie | HORS-11 | Terminé | 14 paquets vides supprimés, docs stales corrigées, étapes 14-16 renumérotées 16-18, étapes 14 et 15 redéfinies |
 
 `HORS-01` referme la première flèche du MVP, qui n’avait jamais été construite :
 un enfant inscrit n’avait aucune compétence observée, donc aucun diagnostic.
@@ -246,7 +247,19 @@ préfixe `demo-` pour du contenu réel et déployé, qui serait sinon supprimé 
 `python -m app.demo --reset` sans jamais être recréé — les trois activités
 d'écoute du détour du 20 août, renommées côté déploiement en conséquence.
 
+### Phase 10, évaluation par paliers
+
+| ID | Travail | Dépendances | Statut | Preuve |
+|---|---|---|---|---|
+| PAL-01 | Moteur de paliers, graphe de prérequis lu à la demande | HORS-12 | Terminé | `app/referential/graph.py`, `test_assessment_tiers.py` |
+| PAL-02 | Examen servi par palier plutôt que toute la classe d'un coup | PAL-01 | Terminé | `assessment/tiers.py`, `assessment/service.py`, `authored/service.py` |
+| PAL-03 | Diagnostic généralisé sur le graphe complet | PAL-01 | Terminé | `diagnostic/service.py` partagé, marche à un saut confirmée correcte (ADR-021) |
+| PAL-04 | Boucle de bout en bout, retest après remédiation | PAL-02, PAL-03 | Terminé | `test_assessment_tiers.py`, 4 tests d'intégration |
+| PAL-05 | Clôturer l'étape 14 | PAL-04 | Terminé | ADR-021, documentation réécrite, 2545 tests, séquence API CI |
+
 ### Prochaine tâche
 
-Ouvrir l’étape 14, notifications. La page « Ce qui a changé » livrée par
-`DASH-03` en est la présentation provisoire et devra s’y raccorder.
+Étape 15, cours d’escalade de compétences, reste en brouillon jusqu’à son
+ouverture — c’est la brique qui enseigne, annoncée par le propriétaire comme
+l’étape suivante. La page « Ce qui a changé » livrée par `DASH-03` reste la
+présentation provisoire des notifications, reportées à l’étape 16.
