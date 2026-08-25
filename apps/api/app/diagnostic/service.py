@@ -27,21 +27,14 @@ import uuid
 from collections.abc import Sequence
 from datetime import datetime, timezone
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.assignments import service as assignments_service
 from app.core.exceptions import ConflictException
 from app.diagnostic import remediation, rules
 from app.models.identity import Parent
-from app.models.referential import (
-    VERSION_STATUS_PUBLISHED,
-    Competency,
-    CompetencyPrerequisite,
-    Domain,
-    ReferentialVersion,
-)
 from app.progress import service as progress_service
+from app.referential import graph as referential_graph
 from app.schemas.diagnostic import (
     AppliedRemediation,
     ChildDiagnostic,
@@ -442,91 +435,23 @@ class _Tree:
 async def _tree(db: AsyncSession, codes: list[str]) -> _Tree:
     """Place these competency codes in the edition in force, if there is one.
 
-    Read by code, as everywhere the rest of the platform meets the referential:
-    ADR-013. A code the edition does not know is simply not placed — the
-    catalogue may name a competency an older edition had, and losing the gap
-    over it would be worse than reporting it unplaced.
+    Read through `app.referential.graph`, unscoped by class: a prerequisite of
+    a localized gap can sit in any class, any subject — the seed data already
+    has edges crossing both (ADR-019) — and the diagnostic must be able to
+    name it wherever it is. Loading the whole graph rather than only `codes`
+    and their immediate prerequisites is a superset of what the old, hand-rolled
+    two-query version placed, and costs nothing worth avoiding at this scale:
+    a school referential is dozens of rows, not thousands.
     """
     if not codes:
         return _Tree(True, {}, {})
 
-    version = await db.scalar(
-        select(ReferentialVersion).where(
-            ReferentialVersion.status == VERSION_STATUS_PUBLISHED
-        )
-    )
-    if version is None:
+    competency_graph = await referential_graph.load(db)
+    if not competency_graph.nodes:
         return _Tree(False, {}, {})
 
-    rows = (
-        await db.execute(
-            select(
-                Competency.id,
-                Competency.code,
-                Competency.label,
-                Domain.code,
-                Domain.label,
-            )
-            .join(Domain, Domain.id == Competency.domain_id)
-            .where(
-                Competency.version_id == version.id,
-                Competency.code.in_(codes),
-            )
-        )
-    ).all()
-
     placed = {
-        code: _Placed(label, domain_code, domain_label)
-        for _, code, label, domain_code, domain_label in rows
+        code: _Placed(node.label, node.domain_code, node.domain_label)
+        for code, node in competency_graph.nodes.items()
     }
-    identifiers = {identifier: code for identifier, code, _, _, _ in rows}
-
-    edges = (
-        await db.execute(
-            select(
-                CompetencyPrerequisite.competency_id,
-                CompetencyPrerequisite.prerequisite_id,
-            ).where(
-                CompetencyPrerequisite.version_id == version.id,
-                CompetencyPrerequisite.competency_id.in_(list(identifiers)),
-            )
-        )
-    ).all()
-
-    # Les prérequis qu'aucune lecture ne couvre sont résolus à part, et c'est le
-    # changement qu'ont imposé les six classes. Un examen d'entrée ne porte que
-    # sur la classe déclarée : les compétences des classes antérieures n'ont donc
-    # aucune lecture tant que rien ne les a travaillées. L'ancienne version les
-    # écartait — « rien à en dire » — ce qui empêchait le diagnostic de descendre
-    # là où se trouve précisément la cause la plus fréquente.
-    unread_ids = {
-        prerequisite_id
-        for _, prerequisite_id in edges
-        if prerequisite_id not in identifiers
-    }
-    if unread_ids:
-        extra = (
-            await db.execute(
-                select(
-                    Competency.id,
-                    Competency.code,
-                    Competency.label,
-                    Domain.code,
-                    Domain.label,
-                )
-                .join(Domain, Domain.id == Competency.domain_id)
-                .where(Competency.id.in_(list(unread_ids)))
-            )
-        ).all()
-        for identifier, code, label, domain_code, domain_label in extra:
-            identifiers[identifier] = code
-            placed.setdefault(code, _Placed(label, domain_code, domain_label))
-
-    prerequisites: dict[str, list[str]] = {}
-    for competency_id, prerequisite_id in edges:
-        code = identifiers.get(competency_id)
-        required = identifiers.get(prerequisite_id)
-        if code is not None and required is not None:
-            prerequisites.setdefault(code, []).append(required)
-
-    return _Tree(True, placed, prerequisites)
+    return _Tree(True, placed, competency_graph.prerequisites)

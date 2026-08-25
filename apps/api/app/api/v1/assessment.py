@@ -15,7 +15,7 @@ from typing import Any
 from fastapi import APIRouter, status
 
 from app.api.deps import CurrentChild, DbSession
-from app.assessment import service
+from app.assessment import service, tiers
 from app.attempts import service as attempts
 from app.authored import service as authored
 from app.core.exceptions import NotFoundException
@@ -31,13 +31,23 @@ router = APIRouter()
 
 @router.get("/me/assessment", response_model=AssessmentPublic)
 async def read_my_assessment(child: CurrentChild, db: DbSession) -> Any:
-    """The assessment waiting for this child, with its questions.
+    """The palier of her class's assessment waiting for this child, with its
+    questions.
 
-    `done` says she has already been through the one for her class, which is what
-    a client needs to know whether to invite her in or leave her alone. There is
-    no way here to ask for a second one: an assessment opens a class, it is not a
-    habit — the next one comes when she is promoted, and it is a different paper.
+    This is the one read of the project that writes: it calls `give_to` first,
+    so that clearing a palier on the previous read makes the next one appear
+    here without anyone having to ask for it. That mirrors the exception the
+    assessment already was — the single place the platform assigns anything
+    of its own accord — extended one notch rather than a new one made.
+
+    `done` says nothing new is due right now, which is what a client needs to
+    know to invite her in or leave her alone. There is no way here to ask for
+    a palier out of order: what is due is `tiers.next_sitting`'s decision, not
+    the child's.
     """
+    await service.give_to(db, child)
+    await db.commit()
+
     done = await service.is_done(db, child)
     pending = await service.pending_for(db, child.id)
 
@@ -48,11 +58,13 @@ async def read_my_assessment(child: CurrentChild, db: DbSession) -> Any:
     if assessment is None:
         raise NotFoundException(message=service.NO_ASSESSMENT_MESSAGE)
 
-    questions = await authored.questions_of(db, assessment.id)
+    due = await tiers.next_sitting(db, child)
+    questions = await authored.questions_of(db, assessment.id, competency_codes=due)
     return AssessmentPublic(
         done=done,
         assignment_id=pending.id,
         title=assessment.title,
+        competency_codes=due,
         questions=[
             AuthoredQuestionPublic(
                 question_ref=row.question_ref,
