@@ -120,11 +120,6 @@ export default async function EnfantPage({
       <LevelControls
         childId={studentId}
         levelCode={child.level_code}
-        levelLabel={
-          classes.ok
-            ? (classes.data.find((row) => row.code === child.level_code)?.label ?? null)
-            : null
-        }
         levels={classes.ok ? classes.data : []}
       />
 
