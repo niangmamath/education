@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { ChildLoginForm } from '../../../components/auth/child-login-form';
+import { ConnexionTabs } from '../../../components/auth/connexion-tabs';
 
 export const metadata = {
   title: 'Connexion Élève',
@@ -29,13 +30,11 @@ export default async function ConnexionElevePage({
       <div className="row g-5 justify-content-center align-items-start">
         <div className="col-lg-5 col-xl-4">
           <p className="sc-oeilleton">Connexion</p>
+          <ConnexionTabs />
           <h1 className="mb-3">Bonjour !</h1>
-          <p className="text-secondary">
+          <p className="text-secondary mb-0">
             Il te faut ton pseudo et le code de ta famille. Si tu ne connais pas
             le code, demande-le à un adulte de chez toi.
-          </p>
-          <p className="sc-marge sc-marge-seyes mb-0 text-secondary">
-            Vous êtes un parent ? <Link href="/connexion">Votre espace est ici.</Link>
           </p>
         </div>
 
