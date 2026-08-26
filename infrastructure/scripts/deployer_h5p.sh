@@ -10,6 +10,13 @@ set -Eeuo pipefail
 # séparées, qui obligeait à réinventer titre, licence et provenance à chaque
 # dépôt faute d'un endroit où les fixer une fois pour toutes.
 #
+# Marche dans les deux checkouts du dépôt, qui n'utilisent pas le même nom de
+# fichier Compose : `docker-compose.yml` pour le déploiement,
+# `docker-compose.dev.yml` pour ce worktree de développement, isolé exprès
+# (réseau, volumes, ports propres). Le script cherche le second en premier —
+# absent du checkout de déploiement par construction — et retombe sur le
+# premier sinon, plutôt que de supposer lequel des deux tourne ici.
+#
 # Usage :
 #   infrastructure/scripts/deployer_h5p.sh <fichier.h5p> <code-activite> \
 #     <code-competence> "<titre>" [minutes]
@@ -39,8 +46,19 @@ MINUTES="${5:-5}"
 LICENCE="CC BY 4.0"
 SOURCE="https://lumi.education, fabriqué par nos soins"
 
-DEPOT_DIR="$(cd "$(dirname "$0")/../../experiments/h5p-spike/packages" && pwd)"
+REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+DEPOT_DIR="$REPO_ROOT/experiments/h5p-spike/packages"
 DESTINATION="$DEPOT_DIR/$CODE.h5p"
+
+if [ -f "$REPO_ROOT/docker-compose.dev.yml" ]; then
+  COMPOSE_FILE="$REPO_ROOT/docker-compose.dev.yml"
+elif [ -f "$REPO_ROOT/docker-compose.yml" ]; then
+  COMPOSE_FILE="$REPO_ROOT/docker-compose.yml"
+else
+  echo "Ni docker-compose.dev.yml ni docker-compose.yml trouvé dans $REPO_ROOT" >&2
+  exit 1
+fi
+COMPOSE=(docker compose -f "$COMPOSE_FILE")
 
 if [ ! -f "$FICHIER" ]; then
   echo "Fichier introuvable : $FICHIER" >&2
@@ -50,12 +68,12 @@ fi
 cp "$FICHIER" "$DESTINATION"
 echo "Copié vers $DESTINATION"
 
-docker compose exec -T api python -m app.catalog creer "$CODE" \
+"${COMPOSE[@]}" exec -T api python -m app.catalog creer "$CODE" \
   --titre "$TITRE" --competence "$COMPETENCE" --minutes "$MINUTES"
 
-docker compose exec -T api python -m app.catalog register "$CODE" \
+"${COMPOSE[@]}" exec -T api python -m app.catalog register "$CODE" \
   "/opt/h5p-spike/packages/$CODE.h5p" --licence "$LICENCE" --source "$SOURCE"
 
-docker compose exec -T api python -m app.catalog deploy "$CODE"
+"${COMPOSE[@]}" exec -T api python -m app.catalog deploy "$CODE"
 
-docker compose exec -T api python -m app.catalog check
+"${COMPOSE[@]}" exec -T api python -m app.catalog check

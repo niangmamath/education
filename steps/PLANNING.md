@@ -189,7 +189,8 @@ propriétaire, parce qu’ils bloquaient l’usage réel de la plateforme plutô
 | HORS-08 | Anglais et trois questions par compétence | HORS-07 | Terminé | 54 compétences, 3 matières, examen à 27 questions par classe, ADR-019 |
 | HORS-09 | Trois fiches de remédiation en anglais | HORS-08 | Terminé | CI complet (salutations, couleurs, nombres), 15 fiches en tout |
 | HORS-10 | Rotation des questions de fiche | HORS-09 | Terminé | Réserve de 8 par fiche, 4 tirées par tentative, examen non concerné, ADR-020 |
-| HORS-11 | Pipeline de dépôt H5P et sortie du préfixe `demo-` pour le contenu réel | HORS-05 | Terminé | `infrastructure/scripts/deployer_h5p.sh`, trois activités renommées, licence CC BY 4.0 |
+| HORS-11 | Pipeline de dépôt H5P en une commande | HORS-10 | Terminé | `deployer_h5p.sh`, licence/source fixées, plus de préfixe `demo-` pour le contenu réel |
+| HORS-12 | Dépôt réorganisé, feuille de route redéfinie | HORS-11 | Terminé | 14 paquets vides supprimés, docs stales corrigées, étapes 14-16 renumérotées 16-18, étapes 14 et 15 redéfinies |
 
 `HORS-01` referme la première flèche du MVP, qui n’avait jamais été construite :
 un enfant inscrit n’avait aucune compétence observée, donc aucun diagnostic.
@@ -234,24 +235,31 @@ du propriétaire : `questions_of` reçoit le tirage en paramètre optionnel, la
 route de l'examen ne le passe jamais. Soixante questions de plus écrites (cent
 vingt en tout pour les fiches). ADR-020.
 
-`HORS-11` corrige trois choix pris dans l'urgence en déployant sur le checkout
-ngrok : les trois premières activités H5P réelles (`ci-fr-sons`,
-`cp-fr-syllabes`, `cp-fr-phonemes`) avaient été enregistrées sous des codes
-préfixés `demo-`, une licence et une provenance inventées faute de trace
-écrite du choix du propriétaire. Codes renommés sans préfixe — un contenu réel
-ne doit jamais porter `demo-`, qui l'exposerait au nettoyage de
-`python -m app.demo --reset` sans jamais le recréer, `catalog_activities.code`
-n'ayant qu'une contrainte d'unicité et aucune cascade par le code. Licence et
-source corrigées à `CC BY 4.0` / `https://lumi.education, fabriqué par nos
-soins`, la convention que `docs/contenus/a-telecharger.md` documentait déjà
-mais que la première dépose n'avait pas suivie. Le geste lui-même — copier le
-fichier, ouvrir l'activité, enregistrer le paquet, le déployer, vérifier —
-est maintenant une seule commande, `infrastructure/scripts/deployer_h5p.sh`,
-qui lit son fichier source n'importe où lisible depuis WSL (le dossier
-Téléchargements Windows en particulier) et fixe la licence une fois pour
-toutes plutôt que de la faire retaper, ou réinventer, à chaque dépôt.
+`HORS-11`, écrit d'abord sur le checkout de déploiement puis récupéré ici :
+`infrastructure/scripts/deployer_h5p.sh` enchaîne copie, `creer`, `register`,
+`deploy` et `check` pour un paquet H5P en une seule commande, licence et
+source fixées une fois pour toutes (`CC BY 4.0`,
+`https://lumi.education, fabriqué par nos soins`) plutôt qu'à réinventer à
+chaque dépôt. Le script détecte lui-même `docker-compose.dev.yml` (ce
+worktree) ou `docker-compose.yml` (le déploiement), pour marcher dans les deux
+checkouts sans modification. Convention de code changée en chemin : plus de
+préfixe `demo-` pour du contenu réel et déployé, qui serait sinon supprimé par
+`python -m app.demo --reset` sans jamais être recréé — les trois activités
+d'écoute du détour du 20 août, renommées côté déploiement en conséquence.
+
+### Phase 10, évaluation par paliers
+
+| ID | Travail | Dépendances | Statut | Preuve |
+|---|---|---|---|---|
+| PAL-01 | Moteur de paliers, graphe de prérequis lu à la demande | HORS-12 | Terminé | `app/referential/graph.py`, `test_assessment_tiers.py` |
+| PAL-02 | Examen servi par palier plutôt que toute la classe d'un coup | PAL-01 | Terminé | `assessment/tiers.py`, `assessment/service.py`, `authored/service.py` |
+| PAL-03 | Diagnostic généralisé sur le graphe complet | PAL-01 | Terminé | `diagnostic/service.py` partagé, marche à un saut confirmée correcte (ADR-021) |
+| PAL-04 | Boucle de bout en bout, retest après remédiation | PAL-02, PAL-03 | Terminé | `test_assessment_tiers.py`, 4 tests d'intégration |
+| PAL-05 | Clôturer l'étape 14 | PAL-04 | Terminé | ADR-021, documentation réécrite, 2545 tests, séquence API CI |
 
 ### Prochaine tâche
 
-Ouvrir l’étape 14, notifications. La page « Ce qui a changé » livrée par
-`DASH-03` en est la présentation provisoire et devra s’y raccorder.
+Étape 15, cours d’escalade de compétences, reste en brouillon jusqu’à son
+ouverture — c’est la brique qui enseigne, annoncée par le propriétaire comme
+l’étape suivante. La page « Ce qui a changé » livrée par `DASH-03` reste la
+présentation provisoire des notifications, reportées à l’étape 16.

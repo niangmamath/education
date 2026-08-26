@@ -143,7 +143,7 @@ async def _add_child(
     await db.commit()
 
     if child_status == CHILD_STATUS_ACTIVE:
-        await assessment.give_to(db, parent_id, child)
+        await assessment.give_to(db, child)
         await db.commit()
 
     await db.refresh(child)
@@ -244,7 +244,7 @@ async def activate_child(
     if child.status != CHILD_STATUS_ACTIVE:
         child.status = CHILD_STATUS_ACTIVE
 
-    await assessment.give_to(db, parent.id, child)
+    await assessment.give_to(db, child)
     await db.commit()
     await db.refresh(child)
 
@@ -314,7 +314,7 @@ async def set_child_level(
     child.level_code = payload.level_code
     await db.commit()
 
-    await assessment.give_to(db, parent.id, child)
+    await assessment.give_to(db, child)
     await db.commit()
     await db.refresh(child)
     return child
@@ -367,7 +367,7 @@ async def promote_child(
     child.level_code = following
     await db.commit()
 
-    await assessment.give_to(db, parent.id, child)
+    await assessment.give_to(db, child)
     await db.commit()
     await db.refresh(child)
     return child

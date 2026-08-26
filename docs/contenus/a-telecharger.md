@@ -131,14 +131,15 @@ experiments/h5p-spike/player/runtime/content/   ← les bibliothèques (la comma
 
 ## Un paquet nouveau : une seule commande
 
-`infrastructure/scripts/deployer_h5p.sh` enchaîne tout ce dont un paquet a
-besoin pour devenir jouable : copie du fichier vers l'arbre versionné, ouverture
-de l'activité, enregistrement du paquet, déploiement. La licence et la source
-sont fixées une fois pour toutes dans le script (`CC BY 4.0`,
+besoin pour devenir jouable : copie du fichier vers l'arbre versionné,
+ouverture de l'activité, enregistrement du paquet, déploiement. La licence et
+la source sont fixées une fois pour toutes dans le script (`CC BY 4.0`,
 `https://lumi.education, fabriqué par nos soins`) — plus besoin de les
 retaper, ni de risquer d'en inventer une différente à chaque dépôt.
 
-Depuis la racine du dépôt, la pile Docker démarrée :
+Depuis la racine du dépôt, la pile Docker démarrée (l'un ou l'autre checkout :
+le script détecte lui-même s'il tourne sur `docker-compose.dev.yml`, le
+worktree de développement, ou sur `docker-compose.yml`, le déploiement) :
 
 ```bash
 infrastructure/scripts/deployer_h5p.sh \

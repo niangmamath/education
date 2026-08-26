@@ -5,13 +5,21 @@ sans lui demander quelque chose, la plateforme ne sait rien et n'a rien à
 proposer. L'examen le lui demande — mais ce qu'on demande à un CI et ce qu'on
 demande à un CM2 n'ont rien à voir, d'où six examens et non un.
 
-**Il ne porte que sur la classe déclarée**, vingt-sept questions, trois par
-compétence de ce niveau. C'est court exprès pour une classe : un examen qui
+**Il ne porte que sur la classe déclarée**, vingt-sept questions en tout, trois
+par compétence de ce niveau. C'est court exprès pour une classe : un examen qui
 balaierait aussi les cinq classes d'en dessous ferait plus de cent soixante
 questions à un CM2, et un enfant ne le finirait pas. La descente vers les
 classes antérieures est le travail du diagnostic, pas celui de l'examen : quand
 une compétence n'est pas acquise et que son prérequis n'a **jamais été
 observé**, la plateforme le dit et propose de le travailler.
+
+**Ce module ne décrit que le contenu, jamais la façon dont il est servi.**
+Depuis l'étape 14, les vingt-sept questions d'une classe ne sont plus données
+en une seule fois : `app.assessment.tiers` décide, à chaque lecture, quel
+palier de compétences est prêt à être testé, et `app.authored.service` n'en
+sert que les questions. Ce fichier reste la banque entière d'une classe ; la
+politique de service vit ailleurs, et c'est délibéré — un contenu ne devrait
+pas savoir comment il est distribué.
 
 **Trois questions et non une.** Une seule question par compétence ne peut
 rendre qu'un verdict binaire — acquis ou pas — et le propriétaire a demandé

@@ -58,7 +58,8 @@ qu'elle est le prérequis qui bloque toute remédiation sur `cp-fr-syllabes` pui
 ne propose rien pour ses deux dépendantes, quel que soit le contenu déposé sur
 elles. Vérifié en le constatant : un enfant CP en échec sur les deux ne recevait
 aucune remédiation tant que `ci-fr-sons` restait sans activité ; `son-ci-fr-sons`
-le corrige.
+le corrige (sans préfixe `demo-` : c'est du contenu réel et déployé, pas une
+donnée de démonstration jetable).
 
 Attention à ne pas confondre `ci-fr-sons` avec `ci-fr-lettres` (« Reconnaître les
 lettres de l'alphabet ») : celle-ci a bien sa fiche, est purement visuelle, et

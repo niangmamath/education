@@ -28,7 +28,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import ConflictException, NotFoundException
 from app.models.assignment import ASSIGNMENT_OPEN_STATUSES, Assignment
 from app.models.attempt import Attempt
-from app.models.catalog import AUTHORED_KINDS, Activity, AuthoredQuestion
+from app.models.catalog import (
+    AUTHORED_KINDS,
+    Activity,
+    ActivityQuestion,
+    AuthoredQuestion,
+)
 from app.models.identity import Child
 
 QUESTION_UNKNOWN_MESSAGE = "Cette question n’appartient pas à cette activité"
@@ -42,6 +47,7 @@ async def questions_of(
     *,
     draw: int | None = None,
     seed: str | None = None,
+    competency_codes: Sequence[str] | None = None,
 ) -> Sequence[AuthoredQuestion]:
     """Every question of an authored activity, or a stable subset of them.
 
@@ -56,11 +62,27 @@ async def questions_of(
     module's decision; it stays with whoever calls it, exactly as the module
     docstring says of everything else that separates a sheet from the
     assessment.
+
+    `competency_codes`, left at its default, leaves the bank untouched — every
+    caller but one. The assessment (étape 14) passes the codes of the palier
+    due right now, through the same attribution `catalog_activity_questions`
+    already carries per question (ADR-019). A sitting therefore serves only
+    the questions of the competencies actually due, out of the one bank
+    authored for the whole class.
     """
+    query = select(AuthoredQuestion).where(AuthoredQuestion.activity_id == activity_id)
+    if competency_codes is not None:
+        query = (
+            query.join(
+                ActivityQuestion,
+                (ActivityQuestion.activity_id == AuthoredQuestion.activity_id)
+                & (ActivityQuestion.question_ref == AuthoredQuestion.question_ref),
+            )
+            .where(ActivityQuestion.competency_code.in_(competency_codes))
+            .distinct()
+        )
     rows = await db.scalars(
-        select(AuthoredQuestion)
-        .where(AuthoredQuestion.activity_id == activity_id)
-        .order_by(AuthoredQuestion.position, AuthoredQuestion.question_ref)
+        query.order_by(AuthoredQuestion.position, AuthoredQuestion.question_ref)
     )
     bank = rows.all()
     if draw is None or draw >= len(bank):

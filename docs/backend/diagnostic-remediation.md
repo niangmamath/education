@@ -202,7 +202,7 @@ Voir ADR-015.
 - **Aucun diagnostic médical, psychologique ou comportemental.** Ce qui est
   nommé est une compétence lue à partir de réponses, rien d'autre.
 - **Aucune assignation par la plateforme.** Elle propose, le parent donne.
-- **Aucune notification** : c'est l'étape 14.
+- **Aucune notification** : c'est l'étape 16.
 - **Aucun classement, aucune cohorte, aucun percentile.** Le score ne compare à
   personne, et il n'existe aucune route qui compare deux enfants.
 - **Aucune IA générative de diagnostic**, hors périmètre du projet par décision.

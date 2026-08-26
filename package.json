@@ -26,9 +26,9 @@
     "install:all": "pnpm install --recursive",
     "db:migrate": "pnpm --filter apps/api db:migrate",
     "db:upgrade": "pnpm --filter apps/api db:upgrade",
-    "docker:up": "docker-compose -f infrastructure/docker/docker-compose.yml up -d",
-    "docker:down": "docker-compose -f infrastructure/docker/docker-compose.yml down",
-    "docker:build": "docker-compose -f infrastructure/docker/docker-compose.yml build"
+    "docker:up": "docker compose -f docker-compose.dev.yml up -d",
+    "docker:down": "docker compose -f docker-compose.dev.yml down",
+    "docker:build": "docker compose -f docker-compose.dev.yml build"
   },
   "devDependencies": {
     "turbo": "^2.3.0",

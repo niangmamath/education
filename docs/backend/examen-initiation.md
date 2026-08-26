@@ -49,11 +49,16 @@ pour laquelle la correction est de ce côté-ci.
 
 ## La seule chose que la plateforme assigne
 
-L'examen est donné **à l'activation du profil**, par la plateforme. C'est le seul
-endroit où elle assigne quoi que ce soit, et l'exception est argumentée plutôt
-que supposée : un diagnostic qui attend qu'un parent y pense est un diagnostic
-qui n'a pas lieu, et tout ce qui vient après n'a rien pour travailler tant qu'il
-n'a pas eu lieu.
+L'examen est donné **à l'activation du profil, puis à nouveau chaque fois
+qu'un palier de compétences est franchi** (étape 14, 25 août 2026) : `GET
+/api/v1/me/assessment` appelle `give_to` avant de répondre, silencieusement,
+et ne crée une nouvelle affectation que si un palier reste à tester. C'est le
+seul endroit où la plateforme assigne quoi que ce soit d'elle-même, et
+l'exception est argumentée plutôt que supposée : un diagnostic qui attend
+qu'un parent y pense est un diagnostic qui n'a pas lieu, et tout ce qui vient
+après n'a rien pour travailler tant qu'il n'a pas eu lieu. Étendre
+l'exception à chaque palier plutôt qu'à la seule activation, c'est la même
+raison appliquée une fois de plus, pas une nouvelle décision.
 
 La remédiation, elle, reste ce qu'elle était : proposée, jamais donnée.
 
@@ -74,18 +79,53 @@ qu'elle n'a pas dit qu'elle avait fini.
 
 ## Ce qu'il produit
 
-Vingt-sept questions par classe, trois par compétence de la classe déclarée —
-neuf compétences, trois par matière (français, mathématiques, anglais). Trois
-questions et non une : `app.attempts.rules.read_counts` peut alors rendre une
-compétence « partielle » (deux bonnes réponses sur trois) plutôt que de
-trancher sur un seul coup de dé. À la clôture de la tentative, les règles de
-l'étape 10 lisent les réponses et écrivent un résultat par compétence ; le
-diagnostic de l'étape 12 en tire des lacunes, des reports et des propositions.
+Vingt-sept questions par classe en tout, trois par compétence de la classe
+déclarée — neuf compétences, trois par matière (français, mathématiques,
+anglais). Trois questions et non une : `app.attempts.rules.read_counts` peut
+alors rendre une compétence « partielle » (deux bonnes réponses sur trois)
+plutôt que de trancher sur un seul coup de dé.
 
-Concrètement, sur le jeu de démonstration : Léa passe l'examen et la plateforme
-en sort **douze compétences observées, trois lacunes à travailler, quatre
-reportées derrière leur prérequis, trois remédiations proposées** — dont aucune
-sur les compétences reportées.
+**Ces vingt-sept questions ne sont plus servies en une fois** (étape 14, 25
+août 2026). Voir « Servi par palier, jamais la classe entière » ci-dessous.
+À la clôture de chaque tentative, les règles de l'étape 10 lisent les
+réponses et écrivent un résultat par compétence ; le diagnostic de l'étape 12
+en tire des lacunes, des reports et des propositions.
+
+Concrètement, sur le jeu de démonstration : Léa passe le premier palier de
+l'examen et la plateforme en sort **trois compétences observées, une lacune à
+travailler, deux reportées derrière leur prérequis, une remédiation
+proposée** — dont aucune sur les compétences reportées.
+
+## Servi par palier, jamais la classe entière
+
+C'est la correction du 25 août 2026, et elle porte sur la **politique de
+service**, pas sur le contenu : les vingt-sept questions d'une classe restent
+la même banque, écrite une fois dans `app.demo.examens`.
+
+Ce qui change : `app.assessment.tiers.next_sitting` décide, à chaque lecture,
+quelles compétences de la classe sont **prêtes** — celles dont tout
+prérequis, à l'intérieur de la même classe, est déjà maîtrisé — et n'ont pas
+encore été testées. `app.authored.service.questions_of` ne sert que les
+questions de ces compétences-là. Une enfant qui découvre sa classe voit
+d'abord les compétences qui n'ont besoin de rien d'autre pour être
+abordées ; le palier suivant n'apparaît qu'une fois le premier dégagé.
+
+**Un palier reste borné à la classe déclarée** : la descente vers une classe
+antérieure jamais testée reste le travail réactif du diagnostic
+(`unobserved-prerequisite`, voir `classes-et-passage.md`), pas un balayage
+systématique du bas du graphe à chaque nouvelle classe. Voir l'ADR-021 pour
+la décision et l'alternative écartée.
+
+**Une compétence qui valide à 100 % ne redemande rien.** Elle sort du champ
+des compétences « à tester » dès la lecture suivante, et l'enfant est
+simplement avancée au palier suivant — il n'y a rien à corriger, donc rien
+n'est proposé.
+
+**Une lacune ne redonne pas de nouvelle tentative sur cette compétence.**
+Elle passe au diagnostic et à la remédiation (`diagnostic-remediation.md`),
+qui vise le vrai prérequis en cause ; la fiche complétée produit sa propre
+lecture, prise en compte à la prochaine ouverture de l'examen exactement
+comme n'importe quelle autre tentative.
 
 ## Ce que l'examen ne fait pas
 
@@ -93,8 +133,9 @@ sur les compétences reportées.
   CE1 » : il dit ce qui est acquis et ce qui ne l'est pas, compétence par
   compétence. Ranger un enfant dans un niveau serait une conclusion d'une autre
   nature, et personne ne l'a demandée.
-- **Aucune reprise.** On le passe une fois. Le repasser serait une réévaluation,
-  et la réévaluation se fait par les activités, pas en refaisant le test d'entrée.
+- **Aucune reprise d'une compétence déjà testée.** Une compétence maîtrisée
+  ou en lacune ne repasse pas dans un palier suivant ; la reprendre est le
+  travail de la remédiation, pas d'une nouvelle sitting d'examen.
 - **Aucun son, aucune image.** Les questions de phonologie se lisent, ce qui est
   un pis-aller assumé : à l'oral, elles seraient meilleures. C'est la première
   chose à améliorer si l'examen doit servir en vrai.
