@@ -24,6 +24,15 @@ const EMPTY: FormState = { error: null };
  * ou si la page n'avait pas fini de se recharger. C'est ainsi qu'un défaut
  * d'adresse — une route appelée sans son préfixe — a pu passer pour une
  * manipulation ratée.
+ *
+ * **Le menu de correction se remonte à chaque classe reçue**, via `key` sur le
+ * `<select>`. Sans elle, une correction réussie change bien la classe — le
+ * badge au-dessus le montre — mais le menu, non contrôlé, reste figé sur la
+ * classe qu'affichait la page à son premier chargement : Next.js met à jour
+ * l'arbre par-dessus le même `<select>` plutôt que de le recréer, et React
+ * n'applique `defaultValue` qu'au montage. Un parent qui corrige deux fois de
+ * suite voit alors sa première correction « revenir » dans le menu, alors
+ * qu'elle a bien été enregistrée.
  */
 export function LevelControls({
   childId,
@@ -100,6 +109,7 @@ export function LevelControls({
               {levelCode ? 'Corriger la classe' : 'Déclarer la classe'}
             </label>
             <select
+              key={levelCode ?? 'aucune'}
               id={`classe-${childId}`}
               name="level_code"
               className="form-select"
