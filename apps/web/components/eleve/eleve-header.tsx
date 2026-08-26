@@ -15,7 +15,7 @@ export function EleveHeader({ displayName }: { displayName: string }) {
         <div className="d-flex align-items-center gap-2">
           <span className="small text-secondary d-none d-sm-inline">{displayName}</span>
           <Link href="/aide" className="btn btn-outline-secondary btn-sm">Besoin d’aide ?</Link>
-          <SignOutButton label="Quitter" />
+          <SignOutButton label="Quitter" redirectTo="/connexion/eleve" />
         </div>
       </div>
     </header>
