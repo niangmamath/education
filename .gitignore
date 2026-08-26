@@ -258,6 +258,12 @@ dump.rdb.bak
 docker-compose.override.yml
 .docker/
 
+# Pile isolée du worktree de développement (StudentConnect-dev), locale à ce
+# checkout et jamais partagée : une fusion sur main ne doit plus jamais la
+# renommer ni la confondre avec docker-compose.yml, qui reste la référence du
+# checkout de déploiement.
+docker-compose.dev.yml
+
 # Local Docker volumes
 *.vol
 volumes/
