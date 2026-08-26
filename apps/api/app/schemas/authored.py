@@ -57,6 +57,23 @@ class FichePublic(BaseModel):
     questions: list[AuthoredQuestionPublic] = Field(default_factory=list)
 
 
+class CoursePublic(BaseModel):
+    """A course, as a child meets it (étape 15).
+
+    Same shape as a sheet — `guidance` is the lesson, read before any
+    question — because a course is authored the same way. What differs is
+    policy, carried elsewhere: answering a course's questions never touches
+    a competency reading, unlike a sheet's.
+    """
+
+    assignment_id: uuid.UUID
+    activity_code: str
+    title: str
+    guidance: str | None
+    duration_minutes: int
+    questions: list[AuthoredQuestionPublic] = Field(default_factory=list)
+
+
 class AnswerFeedback(BaseModel):
     """What a sheet says back once a question has been answered.
 

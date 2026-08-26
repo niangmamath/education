@@ -27,7 +27,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ConflictException, NotFoundException
 from app.models.assignment import ASSIGNMENT_OPEN_STATUSES, Assignment
-from app.models.attempt import Attempt
 from app.models.catalog import (
     AUTHORED_KINDS,
     Activity,
@@ -38,7 +37,7 @@ from app.models.identity import Child
 
 QUESTION_UNKNOWN_MESSAGE = "Cette question n’appartient pas à cette activité"
 ANSWER_UNKNOWN_MESSAGE = "Cette réponse n’est pas proposée"
-SHEET_UNKNOWN_MESSAGE = "Cette activité n’est pas la tienne"
+AUTHORED_ACTIVITY_UNKNOWN_MESSAGE = "Cette activité n’est pas la tienne"
 
 
 async def questions_of(
@@ -90,16 +89,22 @@ async def questions_of(
     return random.Random(seed).sample(bank, draw)
 
 
-async def open_sheet_for(
+async def open_authored_activity_for(
     db: AsyncSession, child: Child, assignment_id: uuid.UUID
 ) -> tuple[Assignment, Activity] | None:
     """The authored activity behind an assignment, if it is this child's and open.
 
+    Shared by both routes this platform writes questions for — the sheet's and,
+    since étape 15, the course's — because the check is the same either way:
+    does this assignment belong to this child, is it open, and does it point at
+    something written here at all. Which of the authored kinds it actually is
+    stays for the caller to check against its own.
+
     Returns nothing rather than raising when the assignment belongs to someone
     else, does not exist, or points at an activity the platform did not write.
-    All three are the same answer to the caller — there is no sheet here — and
-    telling them apart in a response would say whether somebody else's assignment
-    exists.
+    All three are the same answer to the caller — there is nothing to read here
+    — and telling them apart in a response would say whether somebody else's
+    assignment exists.
     """
     assignment = await db.scalar(
         select(Assignment).where(
@@ -119,22 +124,28 @@ async def open_sheet_for(
 
 
 async def grade(
-    db: AsyncSession, attempt: Attempt, question_ref: str, chosen: int
+    db: AsyncSession, assignment_id: uuid.UUID, question_ref: str, chosen: int
 ) -> tuple[str, bool, str | None]:
     """Say what was answered, whether it was right, and what to tell her.
 
     Returns the text of the chosen answer, its correctness, and the question's
-    explanation if it has one — so the response recorded afterwards holds
-    something a parent can read rather than an index only this table can
-    interpret, and the child gets the sentence that turns a repair into teaching.
+    explanation if it has one — so a sheet's caller can record something a
+    parent can read rather than an index only this table can interpret, and
+    the child gets the sentence that turns a repair into teaching.
 
     The explanation is the question's own and is the same whatever was answered:
     a sheet explains what is true, it does not comment on the child.
 
-    A question that does not belong to the activity behind this attempt is
+    Takes the assignment directly rather than an attempt: a sheet's answer is
+    recorded against one (its attempt exists to produce the reading that
+    closes the repair), but a course's on-the-fly check (étape 15) is
+    deliberately not — nothing here needs to know which of the two is
+    calling, or whether an attempt exists at all.
+
+    A question that does not belong to the activity behind this assignment is
     refused. An answer has to be an answer to something.
     """
-    assignment = await db.get(Assignment, attempt.assignment_id)
+    assignment = await db.get(Assignment, assignment_id)
     if assignment is None:
         raise NotFoundException(message=QUESTION_UNKNOWN_MESSAGE)
 

@@ -1,6 +1,6 @@
 # Registre des Décisions d'Architecture (ADR Register)
 
-> **Dernière mise à jour : 25 août 2026**
+> **Dernière mise à jour : 26 août 2026**
 > **Statut : à jour, reconstruit depuis les fichiers d'ADR**
 
 Ce document est le **registre central** de toutes les Architecture Decision Records (ADR) du projet StudentConnect. Chaque ADR documente une décision architecturale structurante prise par l'équipe.
@@ -18,7 +18,7 @@ Ce document est le **registre central** de toutes les Architecture Decision Reco
 
 ## Structure des dossiers
 
-Les vingt-deux ADR existent toutes en fichier ; ce registre les résume et ne
+Les vingt-trois ADR existent toutes en fichier ; ce registre les résume et ne
 les remplace pas.
 
 ```
@@ -45,7 +45,8 @@ docs/
 │   ├── ADR-018-six-classes-cumulatives.md      # Six classes cumulatives, un examen par classe
 │   ├── ADR-019-anglais-et-trois-questions-par-competence.md # Anglais, prérequis inter-matières
 │   ├── ADR-020-rotation-des-questions-de-fiche.md # Rotation des questions de fiche
-│   └── ADR-021-evaluation-par-paliers.md       # Évaluation par paliers, bornée à la classe
+│   ├── ADR-021-evaluation-par-paliers.md       # Évaluation par paliers, bornée à la classe
+│   └── ADR-022-cours-donne-non-bloquant.md     # Cours donné automatiquement, jamais une porte
 └── architecture/
     └── decision-register.md                   # Ce fichier
 ```
@@ -440,17 +441,34 @@ docs/
 
 ---
 
+### ADR-022 : Cours donné automatiquement, jamais une porte
+
+| Champ | Valeur |
+|-------|--------|
+| **Titre** | Le cours est donné automatiquement, jamais une porte |
+| **Statut** | ✅ **Accepted** |
+| **Date** | 26 août 2026 |
+| **Auteur** | Équipe StudentConnect |
+| **Décision** | Un cours (nouveau type `course`) est donné par la plateforme dès qu'une compétence est due, comme l'examen, mais ne bloque jamais son accès ; répondre à ses questions ne produit aucune lecture de compétence |
+| **Fichier** | [docs/adr/ADR-022-cours-donne-non-bloquant.md](../adr/ADR-022-cours-donne-non-bloquant.md) |
+| **Dépendances** | ADR-014, ADR-017, ADR-021 |
+| **Impact** | Produit, Backend |
+
+**Résumé** : Décisions confirmées par le propriétaire le 26 août 2026, avant construction — même démarche qu'à l'ouverture des étapes 07, 08 et 14. Étape 15 : `app.course.service.give_to` partage le `due` déjà calculé par `app.assessment.tiers.next_sitting`, un seul point d'appel touché (`assessment.service.give_to`). Un cours partage la plomberie authored des fiches (`Activity.guidance`, `authored_questions`) mais sa vérification ne passe jamais par `attempts` — `app.authored.service.grade` prend désormais un `assignment_id` plutôt qu'une `Attempt`. Correction en chemin : `quick_repairs` exclut désormais explicitement `assessment` et `course`, sans plus dépendre de la seule bande de durée — et sans restreindre les réparations aux seules fiches natives, qui ont toujours pu être en H5P ou PhET.
+
+---
+
 ## Statistiques
 
 | Statut | Count |
 |--------|-------|
-| ✅ Accepted | 21 |
+| ✅ Accepted | 22 |
 | ⚠️ Proposed | 1 |
 | ⏳ À créer | 0 |
 | ❌ Deprecated | 0 |
 | ⛔ Rejected | 0 |
 | 🔄 Superseeded | 0 |
-| **Total** | **22** |
+| **Total** | **23** |
 
 Une seule ADR reste ouverte, ADR-000 sur la licence du projet. ADR-012 est
 acceptée **sous conditions**, comptée ici parmi les acceptées. Ses huit conditions
@@ -464,7 +482,7 @@ aucune n'est plus entièrement à faire.
 
 1. **Vérifier** qu'aucune décision existante ne couvre déjà le sujet
 2. **Discuter** avec l'équipe avant de rédiger
-3. **Suivre la forme des ADR existantes** : statut, date, décision, conséquences. Aucun template séparé n'est maintenu, les vingt-deux fichiers en tiennent lieu
+3. **Suivre la forme des ADR existantes** : statut, date, décision, conséquences. Aucun template séparé n'est maintenu, les vingt-trois fichiers en tiennent lieu
 4. **Numérotation** : Utiliser le prochain numéro disponible
 5. **Statut initial** : `Proposed`
 6. **Créer un PR** avec le nouvel ADR

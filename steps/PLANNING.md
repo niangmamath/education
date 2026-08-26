@@ -264,9 +264,26 @@ d'écoute du détour du 20 août, renommées côté déploiement en conséquence
 | HORS-13 | Commutateur d'onglets Parent/Élève sur les pages de connexion | PAL-05 | Terminé | `connexion-tabs.tsx`, vérifié en navigateur réel, PR #70 |
 | HORS-14 | La déconnexion renvoie vers la connexion de son propre espace | HORS-13 | Terminé | `SignOutButton.redirectTo`, vérifié en navigateur réel, PR #71 |
 
+### Phase 11, cours d'escalade de compétences
+
+| ID | Travail | Dépendances | Statut | Preuve |
+|---|---|---|---|---|
+| COU-01 | Modèle du cours | PAL-05 | Terminé | Migration `0017`, `ACTIVITY_KIND_COURSE` dans `AUTHORED_KINDS` |
+| COU-02 | Service de composition avec l'examen | COU-01 | Terminé | `app/course/service.py`, un seul point d'appel touché |
+| COU-03 | API du cours | COU-02 | Terminé | `app/api/v1/cours.py`, vérification sans `Attempt` |
+| COU-04 | Boucle de bout en bout et contenu pilote | COU-03 | Terminé | Deux cours pilotes, 6 tests, vérifié sur la pile vivante |
+| COU-05 | Clôturer l'étape 15 | COU-04 | Terminé | ADR-022, 2552 tests, séquence API CI, Pull Request unique |
+
+`COU-02` étend d'un cran l'exception déjà en vigueur pour l'examen
+(ADR-014, ADR-021) : le cours est donné automatiquement, mais décision du
+propriétaire, ce n'est jamais une porte — l'examen reste accessible sans
+être passé par le cours. `COU-03` garantit « aucune conséquence sur la
+maîtrise » par l'absence d'écriture plutôt que par une convention : la
+vérification d'un cours ne crée jamais de tentative.
+
 ### Prochaine tâche
 
-Étape 15, cours d’escalade de compétences, reste en brouillon jusqu’à son
-ouverture — c’est la brique qui enseigne, annoncée par le propriétaire comme
-l’étape suivante. La page « Ce qui a changé » livrée par `DASH-03` reste la
-présentation provisoire des notifications, reportées à l’étape 16.
+Étapes 16 à 18 (notifications, sécurité et exploitation, validation et
+livraison du MVP) restent en brouillon. La page « Ce qui a changé » livrée
+par `DASH-03` reste la présentation provisoire des notifications, reportées
+à l’étape 16.

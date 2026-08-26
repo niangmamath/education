@@ -1818,8 +1818,104 @@ tentative de vérification en navigateur pendant HORS-13. Corrigé par l'ajout
 du bloc d'initialisation standard de nvm à `~/.bashrc` ; un nouveau terminal
 utilise désormais le Node Linux (`v22.23.2`) sans action supplémentaire.
 
+## Étape 15, cours d'escalade de compétences, clôturée
+
+Travaux menés sur la branche `feat/etape-15-cours-escalade`. Ouverte et
+clôturée le 26 août 2026 : la brique qui enseigne, annoncée par le
+propriétaire le 25 août 2026 comme suite directe de l'évaluation par
+paliers (étape 14). Deux décisions structurantes soumises et tranchées par
+le propriétaire avant construction, même démarche qu'à l'ouverture des
+étapes 07, 08 et 14. Rapport :
+`steps/15_cours_escalade_competences/rapport_2026-08-26_1600_cloture_etape_15.md`.
+
+### 15.1, modèle du cours, terminée
+
+- [x] `ACTIVITY_KIND_COURSE` rejoint `assessment` et `remediation` dans
+      `AUTHORED_KINDS` : un cours partage la plomberie authorée (leçon dans
+      `Activity.guidance`, questions dans `authored_questions`), sans
+      nouvelle table.
+- [x] Migration `0017_course_kind`, réversible, élargit la seule contrainte
+      `CHECK` sur `catalog_activities.kind`.
+
+### 15.2, service de composition, terminée
+
+- [x] **Don automatique, non bloquant** — décision du propriétaire : comme
+      l'examen, le cours est donné par la plateforme dès qu'une compétence
+      est due, extension d'un cran de l'exception déjà en vigueur (ADR-014,
+      étendue par ADR-021). Ce n'est pas une porte : l'examen reste
+      accessible sans être passé par le cours.
+- [x] `app/course/service.py`, nouveau : `course_for` et `give_to`.
+      `app/assessment/service.py:give_to` calcule `due` une seule fois et
+      le partage — **un seul point d'appel touché**, les cinq sites
+      existants héritent du don de cours sans modification.
+- [x] Un code de `due` déjà testé sort de `next_sitting` par construction :
+      le cours ne réapparaît donc jamais après le premier examen de cette
+      compétence.
+
+### 15.3, API du cours, terminée
+
+- [x] **Leçon native avec vérification à la volée, sans conséquence sur la
+      maîtrise** — décision du propriétaire. `app/api/v1/cours.py`, deux
+      routes sur le modèle des fiches : la vérification **ne passe jamais
+      par un `Attempt`**, elle appelle `app.authored.service.grade`
+      directement contre l'affectation.
+- [x] `grade` prend désormais un `assignment_id` plutôt qu'une `Attempt`,
+      dont elle n'utilisait que ce champ ; ses trois appelants (fiches,
+      examen, script de démonstration) mis à jour, comportement inchangé.
+      `open_sheet_for` renommée `open_authored_activity_for`.
+- [x] Achèvement du cours par la route générique déjà construite en 09.3,
+      sans modification.
+
+### 15.4, boucle de bout en bout et contenu pilote, terminée
+
+- [x] Deux cours natifs pilotes (`ci-fr-lettres`, `ci-ma-denombrer`), sur
+      des compétences déjà couvertes par une fiche : la boucle complète
+      (cours, examen, en cas d'échec la fiche existante, retest) est
+      démontrable de bout en bout sans attendre la couverture des
+      cinquante-quatre compétences.
+- [x] Six tests d'intégration (`test_course_tiers.py`), contre un
+      référentiel et un examen réels.
+- [x] Vérifié en direct sur la pile Docker de ce worktree, enfant de
+      démonstration CI : cours et examen donnés ensemble, lecture, réponse
+      et achèvement du cours sans effet sur `GET /api/v1/me/progress`.
+
+### Deux défauts trouvés par la suite de tests complète, corrigés
+
+- [x] **`quick_repairs` restreint à tort au seul type `remediation`.** Une
+      première version du filtre anti-collision aurait empêché de proposer
+      une réparation en H5P ou PhET, contrairement à sa vocation d'origine
+      — révélé immédiatement par `test_diagnostic_api.py`. Corrigé en
+      excluant seulement `assessment` et `course`.
+- [x] **`GET /catalog/kinds` et le filtre de `GET /catalog/activities`
+      n'excluaient que `assessment`** de ce qu'un parent peut parcourir. Un
+      cours, donné automatiquement et jamais parcouru, rejoint
+      l'exclusion.
+
+### 15.5, documentation et clôture, terminée
+
+- [x] ADR-022, le cours est donné automatiquement, jamais une porte.
+- [x] `docs/backend/cours-escalade.md` créé ; `examen-initiation.md`,
+      `fiches-remediation.md` et `diagnostic-remediation.md` référencent la
+      nouvelle brique.
+- [x] `docs/architecture/decision-register.md` mis à jour, 23 ADR.
+- [x] Séquence complète de l'API CI rejouée en local, 2552 tests réussis.
+- [x] `steps/MANIFESTE.md` régénéré.
+
+### Résultats techniques de l'étape 15
+
+```text
+Ruff       : vert, format inclus
+Mypy       : vert sur 96 fichiers
+Alembic    : 0017_course_kind (head), réversible, aucune dérive détectée
+Pytest     : 2552 tests réussis, 7 nouveaux
+API vivante: cours et examen donnés ensemble, examen passable sans le cours,
+             réponse et achèvement du cours sans effet sur la progression
+```
+
+Deux tests préexistants de `test_health.py::TestCORS` échouent, sans lien
+avec cette étape — signalé depuis l'étape 14, hors périmètre.
+
 ## Prochaine action
 
-Étape 15, cours d'escalade de compétences — la brique qui enseigne,
-toujours en brouillon. Ensuite, étapes 16 à 18 (notifications, sécurité et
-exploitation, validation et livraison du MVP).
+Étapes 16 à 18 (notifications, sécurité et exploitation, validation et
+livraison du MVP) restent en brouillon.

@@ -43,9 +43,10 @@ from app.core.config import settings
 from app.core.db import AsyncSessionFactory, sync_database_url
 from app.core.exceptions import ConflictException, NotFoundException
 from app.core.security import generate_family_code, hash_password, hash_pin
-from app.demo import dataset, examens, fiches, referentiel
+from app.demo import cours, dataset, examens, fiches, referentiel
 from app.models.catalog import (
     ACTIVITY_KIND_ASSESSMENT,
+    ACTIVITY_KIND_COURSE,
     ACTIVITY_KIND_H5P,
     ACTIVITY_KIND_REMEDIATION,
     ACTIVITY_STATUS_PUBLISHED,
@@ -186,6 +187,7 @@ async def build(spike: Path, families: bool = True) -> None:
     """
     _referential()
     _fiches()
+    _cours()
     _examens()
     packaged = _packages(spike)
 
@@ -356,6 +358,65 @@ def _fiches() -> None:
                         competency_code=dataset.H5P_DEMO_COMPETENCY,
                     )
                 )
+            session.commit()
+    finally:
+        engine.dispose()
+
+
+def _cours() -> None:
+    """The two pilot courses, given automatically alongside their palier's exam.
+
+    Unlike a sheet, a course carries no attribution of its questions in
+    `catalog_activity_questions`: nothing here is ever graded through an
+    attempt, so there is no reading for an attribution to feed.
+    """
+    engine = create_engine(sync_database_url())
+    try:
+        with Session(engine) as session:
+            for course in cours.COURSES:
+                activity = session.scalar(
+                    select(Activity).where(Activity.code == course["code"])
+                )
+                if activity is None:
+                    activity = Activity(
+                        code=course["code"],
+                        title=course["title"],
+                        kind=ACTIVITY_KIND_COURSE,
+                        status=ACTIVITY_STATUS_PUBLISHED,
+                        duration_minutes=course["minutes"],
+                        guidance=course["guidance"],
+                    )
+                    session.add(activity)
+                    session.flush()
+                    session.add(
+                        ActivityCompetency(
+                            activity_id=activity.id,
+                            competency_code=course["competency"],
+                        )
+                    )
+
+                existing = {
+                    row.question_ref
+                    for row in session.scalars(
+                        select(AuthoredQuestion).where(
+                            AuthoredQuestion.activity_id == activity.id
+                        )
+                    )
+                }
+                for position, question in enumerate(course["questions"], start=1):
+                    if question["ref"] in existing:
+                        continue
+                    session.add(
+                        AuthoredQuestion(
+                            activity_id=activity.id,
+                            position=position,
+                            question_ref=question["ref"],
+                            prompt=question["prompt"],
+                            choices=question["choices"],
+                            correct_index=question["correct"],
+                            explanation=question["explanation"],
+                        )
+                    )
             session.commit()
     finally:
         engine.dispose()
@@ -592,7 +653,9 @@ def _pending_assessment() -> Act[uuid.UUID]:
 def _answer(attempt_id: uuid.UUID, question_ref: str, chosen: int) -> Act[None]:
     async def act(db: AsyncSession, parent: Parent, child: Child) -> None:
         attempt = await attempts.own_attempt(db, child, attempt_id)
-        answer, correct, _ = await authored.grade(db, attempt, question_ref, chosen)
+        answer, correct, _ = await authored.grade(
+            db, attempt.assignment_id, question_ref, chosen
+        )
         await attempts.record_response(
             db,
             child,
@@ -639,6 +702,7 @@ def _content_report(packaged: list[str]) -> None:
     print(f"  Compétences   : {len(referentiel.COMPETENCIES)}")
     print(f"  Examens       : {len(examens.EXAMS)}, un par classe")
     print(f"  Remédiations  : {len(fiches.FICHES)} fiches")
+    print(f"  Cours         : {len(cours.COURSES)} pilotes (étape 15)")
     if packaged:
         print(f"  Jouable       : {', '.join(packaged)}")
     else:

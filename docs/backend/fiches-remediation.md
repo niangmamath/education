@@ -121,3 +121,8 @@ ici.
 - **Se réévaluer toutes seules.** Une fiche produit des lectures comme n'importe
   quelle activité ; c'est le diagnostic qui décide ensuite si la lacune est
   résorbée, et rien ici ne l'anticipe.
+
+Une fiche reste **réactive** : proposée après un échec constaté. Ce qui
+enseigne avant qu'une compétence ne soit jamais testée est le cours de
+l'étape 15, voir `cours-escalade.md` — activité authorée du même genre, mais
+dont la vérification ne produit délibérément aucune lecture.

@@ -44,6 +44,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.assessment import tiers
+from app.course import service as course_service
 from app.models.assignment import (
     ASSIGNMENT_OPEN_STATUSES,
     Assignment,
@@ -84,7 +85,8 @@ async def assessment_for(db: AsyncSession, level_code: str | None) -> Activity |
 
 
 async def give_to(db: AsyncSession, child: Child) -> None:
-    """Give a child the palier of her class's assessment that is due now.
+    """Give a child the palier of her class's assessment that is due now,
+    and the courses behind it (étape 15).
 
     Silent whenever there is nothing to give: no class declared, no
     assessment published for it, a palier already waiting for her, or every
@@ -93,11 +95,25 @@ async def give_to(db: AsyncSession, child: Child) -> None:
     new to propose — those are the parent's or the child's acts, and the
     assessment is ours.
 
-    The idempotence check is deliberately about *open* assignments, the same
-    shape `assignments.service.assign_activity` already uses, rather than
-    "a row exists at all": the whole point of a palier is that this activity
-    is re-given, as a new row, once its previous sitting is completed.
+    `due` is computed once and shared with `course.service.give_to`, so a
+    course reaches a child at the same moment as the assessment behind the
+    same competency — never before, since nothing is due before it, and
+    never as a gate in front of it, since giving one is unconditional on the
+    other. Courses are given even when an assessment for this palier is
+    already open: `due` reads the same either way, since nothing has been
+    tested yet.
+
+    The idempotence check for the assessment itself is deliberately about
+    *open* assignments, the same shape `assignments.service.assign_activity`
+    already uses, rather than "a row exists at all": the whole point of a
+    palier is that this activity is re-given, as a new row, once its
+    previous sitting is completed.
     """
+    due = await tiers.next_sitting(db, child)
+    await course_service.give_to(db, child, due)
+    if not due:
+        return
+
     assessment = await assessment_for(db, child.level_code)
     if assessment is None:
         return
@@ -110,10 +126,6 @@ async def give_to(db: AsyncSession, child: Child) -> None:
         )
     )
     if already_open is not None:
-        return
-
-    due = await tiers.next_sitting(db, child)
-    if not due:
         return
 
     db.add(

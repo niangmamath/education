@@ -22,6 +22,7 @@ from sqlalchemy.orm import Session
 
 from app.core.db import sync_database_url
 from app.models.catalog import (
+    ACTIVITY_KIND_COURSE,
     ACTIVITY_KIND_H5P,
     ACTIVITY_KIND_PHET,
     ACTIVITY_STATUS_ARCHIVED,
@@ -133,6 +134,11 @@ class TestActivity:
         ):
             build_activity(session, status=status)
 
+        session.commit()
+
+    def test_the_course_kind_is_accepted(self, session: Session) -> None:
+        """Étape 15: a third authored kind, alongside assessment and remediation."""
+        build_activity(session, kind=ACTIVITY_KIND_COURSE, guidance="Une leçon.")
         session.commit()
 
 
