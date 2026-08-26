@@ -234,15 +234,20 @@ export async function loginChild(_: FormState, formData: FormData): Promise<Form
  * The API is told first so the session leaves Redis; the cookie is cleared even
  * if that call fails, because a cookie nobody can use is better than a signed-in
  * look with nothing behind it.
+ *
+ * `destination` is bound at each `SignOutButton`, never guessed here: by the
+ * time this runs the cookie is already gone, so re-asking the API "which space
+ * was this" would be asking a session that no longer answers. The caller
+ * already knows which header it is.
  */
-export async function logout(): Promise<void> {
+export async function logout(destination: string): Promise<void> {
   const store = await cookies();
   const token = store.get(SESSION_COOKIE)?.value;
   if (token) {
     await apiWithToken('/auth/logout', token, { method: 'POST' }).catch(() => null);
   }
   store.delete(SESSION_COOKIE);
-  redirect('/');
+  redirect(destination);
 }
 
 /**

@@ -15,7 +15,7 @@ export function ParentHeader({ displayName }: { displayName: string }) {
         <div className="d-flex align-items-center gap-2">
           <span className="small text-secondary d-none d-sm-inline">{displayName}</span>
           <Link href="/aide" className="btn btn-outline-secondary btn-sm">Aide</Link>
-          <SignOutButton label="Se déconnecter" />
+          <SignOutButton label="Se déconnecter" redirectTo="/connexion" />
         </div>
       </div>
     </header>
