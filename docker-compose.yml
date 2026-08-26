@@ -1,9 +1,4 @@
-name: studentconnect-dev
-
-# Second stack, entièrement isolé de celui du dossier StudentConnect (branche
-# deploy-ngrok, démo en cours) : réseau, volumes et noms de conteneurs propres
-# à ce projet Compose, ports hôtes distincts. Ne pas fusionner avec
-# docker-compose.yml, qui reste la référence pour le dossier de démo.
+name: studentconnect
 
 services:
   postgres:
@@ -13,8 +8,11 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    # Bound to the loopback only, like Redis and MinIO already are: a developer
+    # can run the checks and the migrations from the machine instead of only
+    # inside the container, and nothing outside it can reach the database.
     ports:
-      - "127.0.0.1:${POSTGRES_PORT:-5434}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -23,14 +21,14 @@ services:
       timeout: 5s
       retries: 20
       start_period: 10s
-    networks: [studentconnect_dev_network]
+    networks: [studentconnect_network]
 
   redis:
     image: redis:7-alpine
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"]
     ports:
-      - "127.0.0.1:${REDIS_PORT:-6380}:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -38,7 +36,7 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
-    networks: [studentconnect_dev_network]
+    networks: [studentconnect_network]
 
   storage:
     image: minio/minio:latest
@@ -48,8 +46,8 @@ services:
       MINIO_ROOT_USER: ${S3_ACCESS_KEY}
       MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY}
     ports:
-      - "127.0.0.1:${S3_PORT:-9002}:9000"
-      - "127.0.0.1:${S3_CONSOLE_PORT:-9003}:9001"
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
     volumes:
       - storage_data:/data
     healthcheck:
@@ -58,7 +56,7 @@ services:
       timeout: 5s
       retries: 20
       start_period: 10s
-    networks: [studentconnect_dev_network]
+    networks: [studentconnect_network]
 
   storage-init:
     image: minio/mc:latest
@@ -77,7 +75,7 @@ services:
     entrypoint: ["/bin/sh", "/scripts/create_minio_buckets.sh"]
     volumes:
       - ./infrastructure/scripts/create_minio_buckets.sh:/scripts/create_minio_buckets.sh:ro
-    networks: [studentconnect_dev_network]
+    networks: [studentconnect_network]
 
   api:
     build:
@@ -86,10 +84,14 @@ services:
     restart: unless-stopped
     env_file: [.env]
     ports:
-      - "127.0.0.1:${API_PORT:-8100}:8000"
+      - "127.0.0.1:${API_PORT:-8000}:8000"
     volumes:
       - ./apps/api:/app
       - content_runtime:/srv/content
+      # Read-only, and only in this development compose: the vetted H5P package
+      # and the offline-prepared libraries are project artefacts the API lays
+      # out, never rebuilds. ADR-012 condition 3 asks that they be frozen, and
+      # mounting them read-only is what that means at runtime.
       - ./experiments/h5p-spike:/opt/h5p-spike:ro
     depends_on:
       postgres:
@@ -105,27 +107,37 @@ services:
       timeout: 5s
       retries: 20
       start_period: 20s
-    networks: [studentconnect_dev_network]
+    networks: [studentconnect_network]
 
   content:
     image: nginx:1.27-alpine
     restart: unless-stopped
     environment:
-      WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:3100}
+      # L'origine autorisée à afficher un contenu dans un cadre. Derrière un
+      # tunnel, posez-y l'adresse publique du site.
+      WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:3000}
     ports:
-      - "127.0.0.1:${CONTENT_PORT:-8181}:80"
+      - "127.0.0.1:${CONTENT_PORT:-8081}:80"
     volumes:
+      # Un gabarit, pas une configuration : l'image nginx développe les
+      # variables d'environnement des fichiers de `templates/` au démarrage.
+      # `frame-ancestors` doit nommer l'origine réelle du site, qui n'est pas la
+      # même sur un portable et derrière un tunnel.
       - ./infrastructure/nginx/content-origin.conf.template:/etc/nginx/templates/default.conf.template:ro
+      # Read-only: the origin serves what the API laid out, and can add nothing.
       - content_runtime:/srv/content:ro
     depends_on:
       api:
         condition: service_healthy
     healthcheck:
+      # `127.0.0.1` and not `localhost`: inside the container the name resolves
+      # to `::1` first, and nginx listens on IPv4 only, so the probe was refused
+      # and the origin reported itself unhealthy while serving perfectly.
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1/health"]
       interval: 10s
       timeout: 5s
       retries: 10
-    networks: [studentconnect_dev_network]
+    networks: [studentconnect_network]
 
   worker:
     build:
@@ -143,19 +155,19 @@ services:
       storage-init:
         condition: service_completed_successfully
     command: ["celery", "-A", "app.workers.celery_app:celery_app", "worker", "--loglevel=INFO"]
-    networks: [studentconnect_dev_network]
+    networks: [studentconnect_network]
 
 networks:
-  studentconnect_dev_network:
-    name: studentconnect_dev_network
+  studentconnect_network:
+    name: studentconnect_network
     driver: bridge
 
 volumes:
   postgres_data:
-    name: studentconnect_dev_postgres_data
+    name: studentconnect_postgres_data
   redis_data:
-    name: studentconnect_dev_redis_data
+    name: studentconnect_redis_data
   storage_data:
-    name: studentconnect_dev_storage_data
+    name: studentconnect_storage_data
   content_runtime:
-    name: studentconnect_dev_content_runtime
+    name: studentconnect_content_runtime

@@ -93,6 +93,20 @@ CONTENT_ORIGIN_URL=https://VOTRE-CONTENU.ngrok-free.app
 WEB_ORIGIN=https://VOTRE-WEB.ngrok-free.app
 ```
 
+Et deux autres, cette fois pour durcir ce qui change de nature dès que la pile
+n'est plus jointe qu'en local :
+
+```dotenv
+DEBUG=false
+SESSION_COOKIE_SECURE=true
+```
+
+`DEBUG=false` évite qu'une erreur 500 renvoie le message d'exception brut à
+quiconque la déclenche — utile pour déboguer en local, pas pour un inconnu sur
+le tunnel. `SESSION_COOKIE_SECURE=true` marque le cookie de session `Secure` ;
+sans elle, la valeur suit `ENVIRONMENT` et reste désactivée, ce qui n'est un
+problème que le jour où quelqu'un d'autre que vous peut atteindre la pile.
+
 `CONTENT_ORIGIN_URL` part dans l'iframe, donc dans le navigateur : elle doit être
 celle que le navigateur peut joindre, pas `localhost`.
 

@@ -32,7 +32,6 @@ from app.core.exceptions import (
     AuthorizationException,
     ConflictException,
     NotFoundException,
-    RateLimitException,
 )
 from app.core.lockout import clear_failures, is_locked, register_failure
 from app.core.security import (
@@ -68,7 +67,6 @@ router = APIRouter()
 # one: a different answer per cause would tell an attacker which pseudonyms
 # exist behind a family code.
 INVALID_CREDENTIALS_MESSAGE = "Identifiants invalides"
-LOCKED_MESSAGE = "Trop de tentatives, réessayez dans quelques minutes"
 PSEUDONYM_TAKEN_MESSAGE = "Ce pseudonyme est déjà utilisé dans cette famille"
 UNKNOWN_FAMILY_CODE_MESSAGE = "Code famille inconnu"
 PENDING_MESSAGE = "Profil en attente d'activation par le parent"
@@ -517,8 +515,15 @@ async def login_child(
     # Checked before the PIN is verified: once the allowance is spent, even the
     # right PIN must wait, otherwise the lockout would only slow an attacker
     # down rather than stop them.
+    #
+    # Raised as the same exception as a wrong PIN, not as a distinct
+    # `RateLimitException`: an unknown code or pseudonym never locks (it
+    # always takes the `child is None` branch above), so a distinct
+    # status/message here would let an attacker confirm a pseudonym exists
+    # behind a family code just by submitting enough wrong PINs and watching
+    # for the response to change.
     if await is_locked(client, child.id, settings.CHILD_PIN_MAX_ATTEMPTS):
-        raise RateLimitException(message=LOCKED_MESSAGE)
+        raise AuthenticationException(message=INVALID_CREDENTIALS_MESSAGE)
 
     if not verify_pin(pin, child.pin_hash):
         await register_failure(client, child.id, settings.CHILD_PIN_LOCKOUT_SECONDS)

@@ -691,7 +691,7 @@ class TestProfileLifecycle:
         child_id = create_child(client, chosen).json()["id"]
         for _ in range(settings.CHILD_PIN_MAX_ATTEMPTS):
             child_login(client, parent.family_code, chosen, pin=WRONG_PIN)
-        assert child_login(client, parent.family_code, chosen).status_code == 429
+        assert child_login(client, parent.family_code, chosen).status_code == 401
 
         use_session(client, parent.token)
         client.put(f"{CHILDREN_URL}/{child_id}/pin", json={"pin": OTHER_PIN})
@@ -1051,8 +1051,8 @@ class TestPinLockout:
 
         response = child_login(client, parent.family_code, chosen, pin=WRONG_PIN)
 
-        assert response.status_code == 429
-        assert response.json()["error"]["code"] == "RATE_LIMIT_EXCEEDED"
+        assert response.status_code == 401
+        assert response.json()["error"]["code"] == "AUTHENTICATION_ERROR"
 
     def test_the_lockout_holds_against_the_right_pin(
         self, client: TestClient, locked_child: tuple[ParentAccount, str, str]
@@ -1062,8 +1062,21 @@ class TestPinLockout:
 
         response = child_login(client, parent.family_code, chosen)
 
-        assert response.status_code == 429
+        assert response.status_code == 401
         assert settings.SESSION_COOKIE_NAME not in response.cookies
+
+    def test_a_locked_pseudonym_answers_exactly_like_an_unknown_one(
+        self, client: TestClient, locked_child: tuple[ParentAccount, str, str]
+    ) -> None:
+        """A distinct status here would let an attacker confirm a pseudonym
+        exists behind a family code just by exhausting the lockout."""
+        parent, chosen, _ = locked_child
+
+        locked = child_login(client, parent.family_code, chosen, pin=WRONG_PIN)
+        unknown = child_login(client, parent.family_code, pseudonym(), pin=WRONG_PIN)
+
+        assert locked.status_code == unknown.status_code == 401
+        assert locked.json() == unknown.json()
 
     def test_the_counter_expires_on_its_own(
         self,

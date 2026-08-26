@@ -131,7 +131,6 @@ experiments/h5p-spike/player/runtime/content/   ← les bibliothèques (la comma
 
 ## Un paquet nouveau : une seule commande
 
-`infrastructure/scripts/deployer_h5p.sh` enchaîne tout ce dont un paquet a
 besoin pour devenir jouable : copie du fichier vers l'arbre versionné,
 ouverture de l'activité, enregistrement du paquet, déploiement. La licence et
 la source sont fixées une fois pour toutes dans le script (`CC BY 4.0`,

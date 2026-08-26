@@ -21,6 +21,7 @@ from sqlalchemy import Engine, create_engine, text
 
 from app.core.config import settings
 from app.core.db import DATABASE_URL
+from app.core.lockout import failure_key
 from app.core.security import (
     FAMILY_CODE_ALPHABET,
     FAMILY_CODE_LENGTH,
@@ -251,6 +252,74 @@ class TestLogin:
         assert wrong_password.status_code == 401
         assert unknown_email.status_code == 401
         assert wrong_password.json() == unknown_email.json()
+
+
+class TestLoginLockout:
+    """A password is stronger than a PIN, but nothing else caps repeated guesses."""
+
+    @pytest.fixture
+    def locked_parent(
+        self, client: TestClient, email: str, redis_client: sync_redis.Redis
+    ) -> Iterator[str]:
+        parent_id = register(client, email).json()["id"]
+
+        for _ in range(settings.PARENT_LOGIN_MAX_ATTEMPTS):
+            attempt = login(client, email, password=WRONG_PASSWORD)
+            assert attempt.status_code == 401
+
+        yield parent_id
+        redis_client.delete(failure_key(uuid.UUID(parent_id), scope="parent-login"))
+
+    def test_the_allowance_spent_the_login_is_refused(
+        self, client: TestClient, email: str, locked_parent: str
+    ) -> None:
+        response = login(client, email, password=WRONG_PASSWORD)
+
+        assert response.status_code == 401
+        assert response.json()["error"]["code"] == "AUTHENTICATION_ERROR"
+
+    def test_the_lockout_holds_against_the_right_password(
+        self, client: TestClient, email: str, locked_parent: str
+    ) -> None:
+        """Otherwise the cap would only slow an attacker instead of stopping them."""
+        response = login(client, email)
+
+        assert response.status_code == 401
+        assert settings.SESSION_COOKIE_NAME not in response.cookies
+
+    def test_a_locked_account_answers_exactly_like_an_unknown_email(
+        self, client: TestClient, email: str, locked_parent: str
+    ) -> None:
+        """A distinct status here would let an attacker confirm the email is
+        registered just by exhausting the lockout — the same oracle
+        `INVALID_CREDENTIALS_MESSAGE` already denies them on a plain wrong
+        password."""
+        locked = login(client, email, password=WRONG_PASSWORD)
+        unknown_email = login(client, f"absent-{uuid.uuid4().hex}@{TEST_EMAIL_DOMAIN}")
+
+        assert locked.status_code == unknown_email.status_code == 401
+        assert locked.json() == unknown_email.json()
+
+    def test_the_counter_expires_on_its_own(
+        self, redis_client: sync_redis.Redis, locked_parent: str
+    ) -> None:
+        ttl = redis_client.ttl(
+            failure_key(uuid.UUID(locked_parent), scope="parent-login")
+        )
+
+        assert 0 < ttl <= settings.PARENT_LOGIN_LOCKOUT_SECONDS
+
+    def test_a_successful_login_clears_the_counter(
+        self, client: TestClient, email: str, redis_client: sync_redis.Redis
+    ) -> None:
+        parent_id = register(client, email).json()["id"]
+        failed = login(client, email, password=WRONG_PASSWORD)
+        assert failed.status_code == 401
+
+        assert login(client, email).status_code == 200
+
+        key = failure_key(uuid.UUID(parent_id), scope="parent-login")
+        assert redis_client.exists(key) == 0
 
 
 class TestSessionAccess:
