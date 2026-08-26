@@ -1,15 +1,23 @@
 /**
  * What has changed, derived from what the platform already knows.
  *
+ * **Only events belong here.** A gap is a *state*: it holds until the child
+ * works on it, so listing it under "what changed" would leave the same three
+ * lines sitting there for weeks, and each of them is already counted on the
+ * child's card above. States go where they can be acted on — the child's page —
+ * and this list keeps to things that happened, each with the date it happened.
+ *
+ * They also age out. A list that never empties stops being read.
+ *
  * The step asks for notifications "without misleading automation", and the
  * honest reading of that is severe: **nothing is delivered anywhere**. No email
  * leaves, no push is sent, nothing is stored, and there is no read state — so
  * there is no unread badge either, because a badge would claim a state nobody
  * keeps.
  *
- * What exists is a reading of facts the parent could have found by opening three
- * pages: an activity finished, a difficulty confirmed, an activity waiting for a
- * long time. Computing it here rather than in the API is deliberate too — a
+ * What exists is a reading of facts the parent could have found by opening the
+ * other pages: an activity finished, an activity waiting a long time. Computing
+ * it here rather than in the API is deliberate too — a
  * notification model, with its delivery, its channels and its read state, is
  * step 14's subject, and inventing half of it now would leave that step
  * arguing with a half-built one.
@@ -18,11 +26,11 @@
  * many words rather than letting a bell icon imply otherwise.
  */
 
-import type { ChildProfile, Diagnostic, ParentAssignment } from './types';
+import type { ChildProfile, ParentAssignment } from './types';
 
 export type Notification = {
   id: string;
-  kind: 'finished' | 'attention' | 'waiting';
+  kind: 'finished' | 'waiting';
   childId: string;
   childName: string;
   title: string;
@@ -34,10 +42,12 @@ export type Notification = {
 /** An activity owed for longer than this is worth mentioning, not chasing. */
 const WAITING_DAYS = 7;
 
+/** Past this, it is history rather than news, and history has its own pages. */
+const RECENT_DAYS = 30;
+
 export function notificationsFor(
   children: ChildProfile[],
   assignments: ParentAssignment[],
-  diagnostics: { child: ChildProfile; diagnostic: Diagnostic | null }[],
 ): Notification[] {
   const names = new Map(children.map((child) => [child.id, child.display_name]));
   const notifications: Notification[] = [];
@@ -53,7 +63,7 @@ export function notificationsFor(
         childId: assignment.child_id,
         childName: name,
         title: `${name} a terminé « ${assignment.activity.title} »`,
-        detail: 'Le détail de ce qu’elle a montré est sur sa page.',
+        detail: 'Le détail de ce que cette activité a montré est sur sa page.',
         at: assignment.completed_at,
         href: `/parent/enfants/${assignment.child_id}`,
       });
@@ -74,33 +84,22 @@ export function notificationsFor(
     }
   }
 
-  for (const { child, diagnostic } of diagnostics) {
-    if (!diagnostic) continue;
-    // Only what the platform would actually propose working on. A gap deferred
-    // behind a prerequisite is real and shown on the child's page, but raising
-    // it here would push a parent towards the competency we chose not to work
-    // on yet.
-    for (const gap of diagnostic.localized_gaps.filter((row) => row.blocked_by === null)) {
-      notifications.push({
-        id: `attention:${child.id}:${gap.competency_code}`,
-        kind: 'attention',
-        childId: child.id,
-        childName: child.display_name,
-        title: `Point d’attention pour ${child.display_name} : ${
-          gap.competency_label ?? gap.competency_code
-        }`,
-        detail: gap.explanation,
-        at: gap.last_seen_at,
-        href: `/parent/enfants/${child.id}`,
-      });
-    }
-  }
 
-  return notifications.sort((a, b) => b.at.localeCompare(a.at));
+  return notifications
+    .filter((notification) => within(notification.at, RECENT_DAYS))
+    .sort((a, b) => b.at.localeCompare(a.at));
 }
 
 function olderThan(iso: string, days: number): boolean {
   const at = Date.parse(iso);
   if (Number.isNaN(at)) return false;
   return Date.now() - at > days * 24 * 60 * 60 * 1000;
+}
+
+function within(iso: string, days: number): boolean {
+  const at = Date.parse(iso);
+  // An unreadable date is kept rather than dropped: losing a real event over a
+  // parsing failure is worse than showing one line too many.
+  if (Number.isNaN(at)) return true;
+  return Date.now() - at <= days * 24 * 60 * 60 * 1000;
 }

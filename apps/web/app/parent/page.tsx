@@ -42,14 +42,7 @@ export default async function ParentHomePage() {
     ...active.map((child) => api<Diagnostic>(`/children/${child.id}/diagnostic`)),
   ]);
 
-  const notifications = notificationsFor(
-    active,
-    assignments.ok ? assignments.data : [],
-    diagnostics.map((result, index) => ({
-      child: active[index],
-      diagnostic: result.ok ? result.data : null,
-    })),
-  );
+  const notifications = notificationsFor(active, assignments.ok ? assignments.data : []);
 
   const masteredTotal = diagnostics.reduce(
     (sum, result) => sum + (result.ok ? (result.data.health?.mastered ?? 0) : 0),

@@ -3,7 +3,7 @@ import { requireParent } from '../../../lib/session';
 import { InterfaceState } from '../../../components/ui/interface-state';
 import { NotificationList } from '../../../components/parent/notification-list';
 import { notificationsFor } from '../../../lib/notifications';
-import type { ChildProfile, Diagnostic, ParentAssignment } from '../../../lib/types';
+import type { ChildProfile, ParentAssignment } from '../../../lib/types';
 
 export const metadata = { title: 'Ce qui a changé' };
 
@@ -34,19 +34,12 @@ export default async function NotificationsPage() {
   }
 
   const active = children.data.filter((child) => child.status === 'active');
-  const [assignments, ...diagnostics] = await Promise.all([
-    api<ParentAssignment[]>('/assignments'),
-    ...active.map((child) => api<Diagnostic>(`/children/${child.id}/diagnostic`)),
-  ]);
+  // Only the assignments: what changed is made of events, and a diagnostic
+  // describes a state. Fetching one per child to derive nothing from it would
+  // be work done for a list that no longer shows it.
+  const assignments = await api<ParentAssignment[]>('/assignments');
 
-  const notifications = notificationsFor(
-    active,
-    assignments.ok ? assignments.data : [],
-    diagnostics.map((result, index) => ({
-      child: active[index],
-      diagnostic: result.ok ? result.data : null,
-    })),
-  );
+  const notifications = notificationsFor(active, assignments.ok ? assignments.data : []);
 
   return (
     <>

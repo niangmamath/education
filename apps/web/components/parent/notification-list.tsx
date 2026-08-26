@@ -1,16 +1,14 @@
 import Link from 'next/link';
-import { AlertTriangle, CheckCircle2, Clock3 } from 'lucide-react';
+import { CheckCircle2, Clock3 } from 'lucide-react';
 import type { Notification } from '../../lib/notifications';
 
 const ICONS = {
   finished: CheckCircle2,
-  attention: AlertTriangle,
   waiting: Clock3,
 } as const;
 
 const TONES = {
   finished: 'text-success',
-  attention: 'text-warning-emphasis',
   waiting: 'text-secondary',
 } as const;
 
@@ -25,7 +23,8 @@ export function NotificationList({ notifications }: { notifications: Notificatio
   if (notifications.length === 0) {
     return (
       <p className="text-secondary mb-0">
-        Rien de nouveau depuis votre dernière visite.
+        Rien de nouveau. Les points d’attention, eux, sont sur la page de chaque
+        enfant.
       </p>
     );
   }
