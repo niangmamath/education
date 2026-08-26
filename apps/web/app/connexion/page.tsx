@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import { ConnexionTabs } from '../../components/auth/connexion-tabs';
 import { ParentLoginForm } from '../../components/auth/parent-login-form';
 
 export const metadata = {
@@ -35,15 +36,11 @@ export default async function ConnexionParentPage({
       <div className="row g-5 justify-content-center align-items-start">
         <div className="col-lg-5 col-xl-4">
           <p className="sc-oeilleton sc-oeilleton-indigo">Connexion</p>
+          <ConnexionTabs />
           <h1 className="mb-3">Espace parent</h1>
-          <p className="text-secondary">
+          <p className="text-secondary mb-0">
             Vous y trouvez le diagnostic de chaque enfant, la règle qui l’a
             produit, et les remédiations que la plateforme vous propose.
-          </p>
-          <p className="sc-marge mb-0">
-            Votre enfant ne se connecte pas ici.{' '}
-            <Link href="/connexion/eleve">Sa page est celle-là</Link>, avec son
-            pseudo et le code de la famille.
           </p>
         </div>
 
