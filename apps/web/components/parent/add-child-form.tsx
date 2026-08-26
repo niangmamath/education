@@ -97,7 +97,7 @@ export function AddChildForm({ levels }: { levels: LevelChoice[] }) {
           </option>
           {levels.map((level) => (
             <option key={level.code} value={level.code}>
-              {level.label}
+              {level.code.toUpperCase()}
             </option>
           ))}
         </select>

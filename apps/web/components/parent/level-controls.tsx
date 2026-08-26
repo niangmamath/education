@@ -24,16 +24,29 @@ const EMPTY: FormState = { error: null };
  * ou si la page n'avait pas fini de se recharger. C'est ainsi qu'un défaut
  * d'adresse — une route appelée sans son préfixe — a pu passer pour une
  * manipulation ratée.
+ *
+ * **Le menu de correction se remonte à chaque classe reçue**, via `key` sur le
+ * `<select>`. Sans elle, une correction réussie change bien la classe — le
+ * badge au-dessus le montre — mais le menu, non contrôlé, reste figé sur la
+ * classe qu'affichait la page à son premier chargement : Next.js met à jour
+ * l'arbre par-dessus le même `<select>` plutôt que de le recréer, et React
+ * n'applique `defaultValue` qu'au montage. Un parent qui corrige deux fois de
+ * suite voit alors sa première correction « revenir » dans le menu, alors
+ * qu'elle a bien été enregistrée.
+ *
+ * **Le sigle seul, jamais le libellé complet.** Une classe se dit « CI », « CP »,
+ * comme à l'école ; l'expliquer à chaque mention (« Cours d'initiation ») a été
+ * jugé trop long à l'usage. Le référentiel porte toujours le libellé complet,
+ * pour d'autres écrans qui en auront besoin — ce composant ne le lit
+ * simplement pas.
  */
 export function LevelControls({
   childId,
   levelCode,
-  levelLabel,
   levels,
 }: {
   childId: string;
   levelCode: string | null;
-  levelLabel: string | null;
   levels: LevelChoice[];
 }) {
   const [declared, declare, declaring] = useActionState(
@@ -57,7 +70,7 @@ export function LevelControls({
         {levelCode ? (
           <p className="h5 d-flex align-items-center gap-2 mb-3">
             <GraduationCap size={18} aria-hidden="true" />
-            {levelLabel ?? levelCode}
+            {levelCode.toUpperCase()}
           </p>
         ) : (
           <div className="sc-etat-ecran sc-etat-ecran-travail p-3 mb-3">
@@ -78,7 +91,7 @@ export function LevelControls({
         {following ? (
           <form action={promote} className="mb-4">
             <button type="submit" className="btn btn-outline-primary" disabled={promoting}>
-              {promoting ? 'Un instant…' : `Passer en ${following.label}`}
+              {promoting ? 'Un instant…' : `Passer en ${following.code.toUpperCase()}`}
               <ArrowUpRight size={18} aria-hidden="true" className="ms-2" />
             </button>
             <p className="text-secondary small mt-2 mb-0">
@@ -100,6 +113,7 @@ export function LevelControls({
               {levelCode ? 'Corriger la classe' : 'Déclarer la classe'}
             </label>
             <select
+              key={levelCode ?? 'aucune'}
               id={`classe-${childId}`}
               name="level_code"
               className="form-select"
@@ -111,7 +125,7 @@ export function LevelControls({
               </option>
               {levels.map((level) => (
                 <option key={level.code} value={level.code}>
-                  {level.label}
+                  {level.code.toUpperCase()}
                 </option>
               ))}
             </select>

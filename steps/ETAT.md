@@ -1779,6 +1779,45 @@ avec cette étape : ils supposent l'origine `http://localhost:3000`, alors que
 ce worktree isolé sert sur le port `3100` (`.env`). Signalé, non corrigé —
 hors périmètre de l'étape 14.
 
+## Travaux hors étape après la clôture de l'étape 14
+
+Deux corrections d'ergonomie demandées par le propriétaire juste après la
+clôture de l'étape 14, le 25 août 2026, menées hors étape comme HORS-01 à
+HORS-12.
+
+- [x] **`HORS-13`, un commutateur d'onglets Parent/Élève sur les pages de
+      connexion.** Le propriétaire a signalé que « Se connecter » (en-tête) et
+      « Je suis un élève » (hero) menaient à deux pages qui ne se
+      ressemblaient pas. Les formulaires restent chacun sur sa propre adresse
+      (`/connexion`, `/connexion/eleve`) : les partager avait cassé le
+      remplissage automatique du navigateur (le mot de passe du parent posé
+      dans le champ du code famille de l'enfant), documenté dans le
+      commentaire de `ParentLoginForm`. Nouveau composant
+      `apps/web/components/auth/connexion-tabs.tsx`, un commutateur qui ne
+      fait que naviguer entre les deux adresses, affiché en haut des deux
+      pages avec l'onglet actif mis en évidence. Le lien « créer un compte »
+      de chaque page reste inchangé, juste sous son formulaire. Vérifié en
+      navigateur réel (Playwright, Chromium headless) : bascule et retour,
+      onglet actif correct sur chaque page, aucune erreur console. PR #70.
+- [x] **`HORS-14`, la déconnexion renvoie vers la connexion de son propre
+      espace.** `logout` renvoyait toujours vers l'accueil, quel que soit
+      l'espace quitté. `SignOutButton` porte désormais sa destination
+      (`redirectTo`), liée à l'action serveur : l'espace Parent renvoie vers
+      `/connexion`, l'espace Élève vers `/connexion/eleve` — déclarée à
+      l'endroit qui sait déjà de quel espace il s'agit, plutôt que redemandée
+      à une session sur le point d'être détruite. Vérifié de bout en bout en
+      navigateur réel avec de vraies sessions Parent et Élève créées via
+      l'API. PR #71.
+
+Ce même 25 août 2026, une incohérence d'environnement a aussi été trouvée et
+corrigée à cette occasion, sans rapport avec le code du produit :
+`~/.bashrc` du propriétaire ne chargeait jamais `nvm`, si bien qu'un terminal
+Ubuntu (WSL) normal retombait sur les binaires Node/pnpm de Windows importés
+par l'interopérabilité WSL — c'est ce qui avait fait échouer une première
+tentative de vérification en navigateur pendant HORS-13. Corrigé par l'ajout
+du bloc d'initialisation standard de nvm à `~/.bashrc` ; un nouveau terminal
+utilise désormais le Node Linux (`v22.23.2`) sans action supplémentaire.
+
 ## Prochaine action
 
 Étape 15, cours d'escalade de compétences — la brique qui enseigne,
