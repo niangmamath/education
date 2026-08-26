@@ -66,6 +66,13 @@
   passage est décidé par le parent, jamais automatique. Un prérequis jamais
   observé produit une hypothèse de remédiation plutôt qu'un constat d'échec
   (ADR-018).
+- L'examen d'entrée n'est plus servi d'un coup depuis l'étape 14 : il sert un
+  palier de compétences prêtes à la fois — celles dont tout prérequis, à
+  l'intérieur de la même classe, est déjà maîtrisé — et redonne le palier
+  suivant à chaque lecture une fois le précédent maîtrisé. Un palier reste
+  borné à la classe déclarée ; la descente vers une classe antérieure reste
+  réactive, déclenchée par un échec, jamais un balayage systématique du bas du
+  graphe (ADR-021).
 - Trois matières : français, mathématiques, anglais, apprises en parallèle sauf
   à deux endroits où le prérequis traverse la matière : résoudre un problème de
   mathématiques suppose de comprendre son énoncé en français, et lire ou écrire

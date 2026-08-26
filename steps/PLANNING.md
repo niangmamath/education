@@ -257,6 +257,13 @@ d'écoute du détour du 20 août, renommées côté déploiement en conséquence
 | PAL-04 | Boucle de bout en bout, retest après remédiation | PAL-02, PAL-03 | Terminé | `test_assessment_tiers.py`, 4 tests d'intégration |
 | PAL-05 | Clôturer l'étape 14 | PAL-04 | Terminé | ADR-021, documentation réécrite, 2545 tests, séquence API CI |
 
+### Phase 10 bis, travaux hors étape du 25 août 2026
+
+| ID | Travail | Dépendances | Statut | Preuve |
+|---|---|---|---|---|
+| HORS-13 | Commutateur d'onglets Parent/Élève sur les pages de connexion | PAL-05 | Terminé | `connexion-tabs.tsx`, vérifié en navigateur réel, PR #70 |
+| HORS-14 | La déconnexion renvoie vers la connexion de son propre espace | HORS-13 | Terminé | `SignOutButton.redirectTo`, vérifié en navigateur réel, PR #71 |
+
 ### Prochaine tâche
 
 Étape 15, cours d’escalade de compétences, reste en brouillon jusqu’à son
