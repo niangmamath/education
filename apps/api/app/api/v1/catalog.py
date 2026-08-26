@@ -15,7 +15,7 @@ learns that an activity plays `H5P.TrueFalse 1.8`, never where the file sits.
 
 from __future__ import annotations
 
-from typing import Annotated, Any
+from typing import Annotated, Any, Final
 
 from fastapi import APIRouter, Query
 from sqlalchemy import Select, func, select
@@ -25,6 +25,7 @@ from app.api.deps import CurrentSession, DbSession
 from app.core.exceptions import NotFoundException
 from app.models.catalog import (
     ACTIVITY_KIND_ASSESSMENT,
+    ACTIVITY_KIND_COURSE,
     ACTIVITY_KINDS,
     ACTIVITY_STATUS_PUBLISHED,
     Activity,
@@ -106,16 +107,17 @@ async def read_activity(code: str, session: CurrentSession, db: DbSession) -> An
     return _public(row)
 
 
+# Neither is browsed and neither is given by a parent's hand: the platform
+# hands both to a child itself, the assessment once at activation and again
+# at each palier, the course alongside it (étape 15). Offering either as a
+# filter would invite a parent to look for something they cannot use.
+_NOT_BROWSABLE: Final = (ACTIVITY_KIND_ASSESSMENT, ACTIVITY_KIND_COURSE)
+
+
 @router.get("/kinds", response_model=list[str])
 async def list_kinds(session: CurrentSession) -> list[str]:
-    """The kinds the catalogue offers, so a client need not hard-code them.
-
-    An initiation assessment is a kind an activity may have, and it is
-    deliberately not one of these: nobody browses for it and nobody gives it —
-    the platform hands it to a child once, at activation. Offering it as a filter
-    would invite a parent to look for something they cannot use.
-    """
-    return [kind for kind in ACTIVITY_KINDS if kind != ACTIVITY_KIND_ASSESSMENT]
+    """The kinds the catalogue offers, so a client need not hard-code them."""
+    return [kind for kind in ACTIVITY_KINDS if kind not in _NOT_BROWSABLE]
 
 
 def _filtered(
@@ -124,10 +126,12 @@ def _filtered(
     kind: str | None,
     max_duration: int | None,
 ) -> Select[Any]:
-    """Published, never an assessment, then whatever the caller asked to narrow.
+    """Published, never an assessment or a course, then whatever the caller
+    asked to narrow.
 
-    The assessment is excluded here rather than left to a filter: the catalogue
-    is what a parent chooses from, and an assessment is not hers to choose.
+    Both are excluded here rather than left to a filter: the catalogue is
+    what a parent chooses from, and neither is hers to choose — the platform
+    hands both to a child itself (see `_NOT_BROWSABLE`).
 
     The competency filter joins rather than sub-selects, and the count above
     counts distinct activities: an activity working on two competencies is one
@@ -135,7 +139,7 @@ def _filtered(
     """
     statement = statement.where(
         Activity.status == ACTIVITY_STATUS_PUBLISHED,
-        Activity.kind != ACTIVITY_KIND_ASSESSMENT,
+        Activity.kind.not_in(_NOT_BROWSABLE),
     )
     if competency is not None:
         statement = statement.join(

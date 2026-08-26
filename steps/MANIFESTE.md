@@ -12,7 +12,7 @@ Régénérer après toute création, suppression ou renommage de fiche :
 cd steps && find . -type f -name '*.md' ! -name 'MANIFESTE.md' ! -name 'rapport_*.md' -printf '%P\n' | LC_ALL=C sort | while read -r f; do printf -- '- `%s`  `%s`\n' "$f" "$(sha256sum "$f" | cut -c1-12)"; done
 ```
 
-Nombre de fiches : 99
+Nombre de fiches : 104
 
 - `01_gouvernance_et_audit/01_verifier_depot_vide.md`  `0397b9fe23e4`
 - `01_gouvernance_et_audit/02_creer_fichiers_racine.md`  `e0bae8ab81a1`
@@ -88,7 +88,12 @@ Nombre de fiches : 99
 - `14_evaluation_par_paliers/04_boucle_de_bout_en_bout.md`  `51667738ea50`
 - `14_evaluation_par_paliers/05_documentation_dette_cloture.md`  `9d6f9172af87`
 - `14_evaluation_par_paliers/README.md`  `90f437e8b60e`
-- `15_cours_escalade_competences/README.md`  `566be6db67db`
+- `15_cours_escalade_competences/01_modele_du_cours.md`  `2bdd140bda0d`
+- `15_cours_escalade_competences/02_service_de_composition.md`  `c0185e16dcfd`
+- `15_cours_escalade_competences/03_api_du_cours.md`  `abafe90a6717`
+- `15_cours_escalade_competences/04_boucle_et_contenu_pilote.md`  `b7d309a4624e`
+- `15_cours_escalade_competences/05_documentation_cloture.md`  `8a78d3b106cd`
+- `15_cours_escalade_competences/README.md`  `ce0f307741a3`
 - `16_notifications/01_modeles_preferences.md`  `4ec2b5da22a7`
 - `16_notifications/02_evenements_notifications.md`  `d6e33777a3c9`
 - `16_notifications/03_api_notifications.md`  `608ae2599aef`
@@ -107,9 +112,9 @@ Nombre de fiches : 99
 - `18_validation_mvp_livraison/README.md`  `87bcc20f4dd2`
 - `AGENTS.md`  `d3620f0f65bb`
 - `DECISIONS_FINALES.md`  `25b6b25b4db1`
-- `ETAT.md`  `e3c3b61aa184`
+- `ETAT.md`  `bdb5e063a0b8`
 - `MODELE_RAPPORT.md`  `d391f4da239a`
-- `PLANNING.md`  `d0eb1230cafc`
+- `PLANNING.md`  `ad18be13ddd7`
 - `PROMPT_GENERAL.md`  `d9ff17c723a2`
 - `RAPPORTS_REGLES.md`  `9c07f684b281`
 - `README.md`  `afd8cf95e4b3`

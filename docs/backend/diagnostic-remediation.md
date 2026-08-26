@@ -113,9 +113,15 @@ cela : zéro dirait que le travail s'est mal passé, alors qu'il n'a pas eu lieu
 ## Quick Repairs
 
 Une activité **publiée**, travaillant la compétence, et durant **de 3 à 7
-minutes**. Hors de cette bande, elle n'est pas proposée, si bien assortie
-soit-elle : proposer vingt minutes comme réparation rapide rendrait la promesse
-fausse.
+minutes** — de n'importe quel type jouable : une fiche native aussi bien
+qu'un exercice H5P importé ou une simulation PhET, sans qu'aucun média ne
+soit favorisé. Hors de cette bande, elle n'est pas proposée, si bien
+assortie soit-elle : proposer vingt minutes comme réparation rapide rendrait
+la promesse fausse. Deux types sont exclus explicitement depuis l'étape 15,
+et non laissés à la seule bande de durée : un examen n'est par nature jamais
+une réparation, et un cours (`cours-escalade.md`) est déjà donné
+automatiquement dès qu'il est dû — le reproposer comme réparation
+contredirait qu'il n'est pas quelque chose qu'un parent propose.
 
 Une seule activité par compétence. Un enfant qui regarde ce qu'elle peut faire a
 besoin de quelque chose à faire, pas d'un catalogue ; et en proposer trois

@@ -39,6 +39,8 @@ from app.models.assignment import (
     Assignment,
 )
 from app.models.catalog import (
+    ACTIVITY_KIND_ASSESSMENT,
+    ACTIVITY_KIND_COURSE,
     ACTIVITY_STATUS_PUBLISHED,
     Activity,
     ActivityCompetency,
@@ -49,6 +51,15 @@ from app.schemas.diagnostic import Recommendation
 # product's numbers rather than this file's.
 QUICK_REPAIR_MIN_MINUTES: Final = 3
 QUICK_REPAIR_MAX_MINUTES: Final = 7
+
+# A repair may be any short published activity that works on the competency —
+# a native sheet as much as an imported H5P exercise or a PhET simulation;
+# nothing here favours one medium. Two kinds are excluded on purpose rather
+# than left to the duration band alone: an assessment is never a repair by
+# nature, and a course (étape 15) is already given automatically the moment
+# it is due — recommending it a second time as a "repair" would contradict
+# that it is not something a parent proposes.
+_NOT_A_REPAIR: Final = (ACTIVITY_KIND_ASSESSMENT, ACTIVITY_KIND_COURSE)
 
 PROOF = (
     "La preuve finale est la lecture de la tentative : réponses évaluées, règle "
@@ -81,6 +92,7 @@ async def quick_repairs(
             .join(Activity, Activity.id == ActivityCompetency.activity_id)
             .where(
                 ActivityCompetency.competency_code.in_(competency_codes),
+                Activity.kind.not_in(_NOT_A_REPAIR),
                 Activity.status == ACTIVITY_STATUS_PUBLISHED,
                 Activity.duration_minutes >= QUICK_REPAIR_MIN_MINUTES,
                 Activity.duration_minutes <= QUICK_REPAIR_MAX_MINUTES,

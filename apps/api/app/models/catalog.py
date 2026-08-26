@@ -54,18 +54,32 @@ ACTIVITY_KIND_ASSESSMENT: Final = "assessment"
 # repairs proves nothing. It also teaches before it asks, which no imported
 # question bank does.
 ACTIVITY_KIND_REMEDIATION: Final = "remediation"
+# A course, written here for the same rattachement reason ADR-017 already
+# gives — and for one more: it teaches a competency **before** it is ever
+# tested, not after a gap is found. Étape 15. Given automatically alongside
+# the next palier's assessment, never a gate in front of it: a child may sit
+# that assessment without ever opening the course behind it.
+ACTIVITY_KIND_COURSE: Final = "course"
 ACTIVITY_KINDS: Final = (
     ACTIVITY_KIND_H5P,
     ACTIVITY_KIND_PHET,
     ACTIVITY_KIND_VIDEO,
     ACTIVITY_KIND_ASSESSMENT,
     ACTIVITY_KIND_REMEDIATION,
+    ACTIVITY_KIND_COURSE,
 )
 
 # The kinds this platform writes itself. They share one machinery: questions in
-# `authored_questions`, attribution in `catalog_activity_questions`, grading on
-# the server. What separates them is policy, not plumbing.
-AUTHORED_KINDS: Final = (ACTIVITY_KIND_ASSESSMENT, ACTIVITY_KIND_REMEDIATION)
+# `authored_questions`, grading on the server. What separates them is policy,
+# not plumbing. A course's questions carry no attribution in
+# `catalog_activity_questions` and are never graded through an `Attempt`: they
+# check understanding on the fly and must never produce a competency reading,
+# unlike the other two kinds (étape 15, décision du propriétaire).
+AUTHORED_KINDS: Final = (
+    ACTIVITY_KIND_ASSESSMENT,
+    ACTIVITY_KIND_REMEDIATION,
+    ACTIVITY_KIND_COURSE,
+)
 
 # An activity is prepared, then may be served, then stops being offered without
 # ever disappearing: results of steps 10 to 12 will keep pointing at it.
@@ -92,7 +106,7 @@ class Activity(Base):
     __table_args__ = (
         UniqueConstraint("code", name="uq_catalog_activities_code"),
         CheckConstraint(
-            "kind IN ('h5p', 'phet', 'video', 'assessment', 'remediation')",
+            "kind IN ('h5p', 'phet', 'video', 'assessment', 'remediation', 'course')",
             name="ck_catalog_activities_kind",
         ),
         CheckConstraint(

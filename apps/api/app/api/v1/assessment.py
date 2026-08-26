@@ -101,7 +101,7 @@ async def answer_question(
     # The explanation is deliberately dropped: an assessment does not teach as
     # it measures, and a route that returned one would make the exam walkable.
     answer, correct, _ = await authored.grade(
-        db, attempt, payload.question_ref, payload.chosen_index
+        db, attempt.assignment_id, payload.question_ref, payload.chosen_index
     )
     recorded = await attempts.record_response(
         db,

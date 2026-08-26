@@ -56,9 +56,9 @@ async def read_my_fiche(
     explanation either: an explanation given before the question is asked is the
     answer, written out.
     """
-    found = await service.open_sheet_for(db, child, assignment_id)
+    found = await service.open_authored_activity_for(db, child, assignment_id)
     if found is None:
-        raise NotFoundException(message=service.SHEET_UNKNOWN_MESSAGE)
+        raise NotFoundException(message=service.AUTHORED_ACTIVITY_UNKNOWN_MESSAGE)
 
     assignment, activity = found
     if activity.kind != ACTIVITY_KIND_REMEDIATION:
@@ -118,7 +118,7 @@ async def answer_sheet_question(
         raise ConflictException(message=NOT_A_SHEET_MESSAGE)
 
     answer, correct, explanation = await service.grade(
-        db, attempt, payload.question_ref, payload.chosen_index
+        db, attempt.assignment_id, payload.question_ref, payload.chosen_index
     )
     await attempts.record_response(
         db,

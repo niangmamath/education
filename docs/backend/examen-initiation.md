@@ -60,7 +60,11 @@ après n'a rien pour travailler tant qu'il n'a pas eu lieu. Étendre
 l'exception à chaque palier plutôt qu'à la seule activation, c'est la même
 raison appliquée une fois de plus, pas une nouvelle décision.
 
-La remédiation, elle, reste ce qu'elle était : proposée, jamais donnée.
+**Étape 15 étend l'exception une fois de plus, pas la même façon.** Le cours
+du palier est donné à la même lecture que l'examen (voir
+`cours-escalade.md`), mais ne le bloque pas : passer l'examen sans avoir
+ouvert le cours reste possible. La remédiation, elle, reste ce qu'elle
+était : proposée, jamais donnée.
 
 ## Ce qu'un enfant voit
 
