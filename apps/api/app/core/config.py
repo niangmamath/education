@@ -151,6 +151,26 @@ class Settings(BaseSettings):
             return f"http://{value}"
         return value
 
+    @field_validator("DATABASE_URL")
+    @classmethod
+    def require_async_driver(cls, value: str) -> str:
+        """Accept the plain URL a managed database hands out, not only ours.
+
+        `engine = create_async_engine(DATABASE_URL, ...)` runs at import time
+        in `app/core/db.py`, so a URL with no driver — or the sync one Alembic
+        borrows via `sync_database_url` — fails before a single request is
+        served: "The asyncio extension requires an async driver". Render's
+        `fromDatabase: connectionString` hands back exactly that plain form,
+        having no way to know this application needs asyncpg specifically.
+        """
+        if value.startswith("postgresql+asyncpg://"):
+            return value
+        if value.startswith("postgresql+psycopg2://"):
+            return value.replace("postgresql+psycopg2://", "postgresql+asyncpg://", 1)
+        if value.startswith("postgresql://"):
+            return value.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return value
+
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
     def parse_cors_origins(cls, value: Any) -> Any:
