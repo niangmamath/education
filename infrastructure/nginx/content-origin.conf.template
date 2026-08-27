@@ -72,12 +72,19 @@ server {
         # `${API_INTERNAL_HOST}` and not a literal `api:8000`: that name is
         # Docker Compose's service name for the API, and nothing else calls
         # it that on a platform like Render, where the API's own private
-        # hostname is whatever its service is named there. A static
-        # `proxy_pass` resolves its host once, at startup — not through the
-        # `resolver` above, which only helps a host held in a variable — so
-        # the wrong name here does not fail a request, it refuses to start
-        # nginx at all.
-        proxy_pass http://${API_INTERNAL_HOST}/api/v1/internal/content-access;
+        # hostname is whatever its service is named there.
+        #
+        # `set` before `proxy_pass`, and not a `proxy_pass` straight to the
+        # substituted address, on purpose: a host nginx reads directly off a
+        # `proxy_pass` line is resolved once, at startup, through the
+        # system's own resolver — not through `resolver` above. On Render
+        # that lookup failed outright even with the right name in it
+        # (`host not found in upstream`), where the same name reached through
+        # a variable — deferred to request time, through `resolver` — works.
+        # One request paying for a DNS lookup it will not need again for
+        # thirty seconds costs nothing next to a service that cannot start.
+        set $api_upstream http://${API_INTERNAL_HOST};
+        proxy_pass $api_upstream/api/v1/internal/content-access;
         proxy_pass_request_body off;
         proxy_set_header Content-Length "";
         # The whole original URI, ticket and all. An `auth_request` subrequest
