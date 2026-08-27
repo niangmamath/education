@@ -125,6 +125,11 @@ server {
     location ~ ^/t/[^/]+/(?:content|libraries)/ {
         auth_request /_ticket;
         auth_request_set $content_url $upstream_http_x_content_url;
+        # The bucket is reachable over HTTPS wherever the signed URL names a
+        # public endpoint (Render's own storage, a real S3-compatible
+        # provider) rather than a local one; SNI is what lets that TLS
+        # handshake pick the right certificate.
+        proxy_ssl_server_name on;
         proxy_pass $content_url;
     }
 
