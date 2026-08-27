@@ -16,6 +16,7 @@ from app.core.db import dispose_engine
 from app.core.exceptions import setup_exception_handlers
 from app.core.logging import setup_logging
 from app.core.middleware import setup_middleware
+from app.api.v1 import internal
 from app.core.routing import api_router
 
 # Setup logging before application starts
@@ -66,6 +67,11 @@ setup_middleware(app)
 
 # Include API router
 app.include_router(api_router, prefix=settings.API_V1_PREFIX)
+
+# Unprefixed: the content origin's nginx proxies `/t/<ticket>/…` unchanged to
+# these routes, so they live at that same path rather than under
+# API_V1_PREFIX. See app/api/v1/internal.py and app/core/routing.py.
+app.include_router(internal.router, tags=["internal"])
 
 
 # Health check endpoints (outside of versioned API)

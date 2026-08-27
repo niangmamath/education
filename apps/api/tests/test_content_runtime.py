@@ -1,8 +1,9 @@
 """Laying a content out, and the ticket that lets it be fetched.
 
 The runtime sits on its own origin, so no session cookie reaches it. What
-replaces the cookie is tested here: a ticket that opens exactly one content, for
-a while, and the endpoint the content origin asks before serving a byte.
+replaces the cookie is tested here: a ticket that opens exactly one content,
+for a while, and the routes the content origin's nginx proxies a ticketed
+request to, which check it and stream the bytes back themselves.
 
 The deployment side is tested against a stand-in bucket rather than a shared
 disk — the runtime bucket exists precisely because the API and the content
@@ -17,8 +18,9 @@ import json
 import uuid
 import zipfile
 from collections.abc import Iterator
+from io import BytesIO
 from pathlib import Path
-from typing import Any
+from typing import Any, BinaryIO
 
 import pytest
 import redis.asyncio as redis
@@ -38,7 +40,6 @@ from app.core.config import settings
 from app.core.security import hash_session_token
 from app.main import app
 
-ACCESS_URL = "/api/v1/internal/content-access"
 DIGEST = "a" * 64
 OTHER_DIGEST = "b" * 64
 SIGNED_BASE = "https://signed.test"
@@ -47,9 +48,9 @@ SIGNED_BASE = "https://signed.test"
 class FakeStore:
     """A stand-in bucket that remembers what it was asked to hold.
 
-    `presign` never reaches a real network: it names the key and the TTL it was
-    asked for, which is exactly enough for a test to check that nginx would have
-    been handed a URL for the one object a ticket actually opens.
+    `get_object` is what the ticketed routes read from; `presign` stays here
+    for interface completeness even though nothing calls it since those routes
+    stopped hanging a signed URL back to nginx.
     """
 
     def __init__(self) -> None:
@@ -82,6 +83,11 @@ class FakeStore:
     def get(self, key: str, path: Path) -> None:
         path.write_bytes(self.objects[key])
 
+    def get_object(self, key: str) -> tuple[str, BinaryIO]:
+        if key not in self.objects:
+            raise FileNotFoundError(key)
+        return "application/octet-stream", BytesIO(self.objects[key])
+
     def presign(self, key: str, expires_in: int, *, internal: bool = False) -> str:
         return f"{SIGNED_BASE}/{key}?exp={expires_in}"
 
@@ -99,8 +105,11 @@ async def client_redis() -> Any:
 
 
 @pytest.fixture
-def client() -> Iterator[TestClient]:
-    app.dependency_overrides[content_store] = FakeStore
+def client(store: FakeStore) -> Iterator[TestClient]:
+    # The same instance as the `store` fixture, not a fresh one per request:
+    # a test that seeds an object on `store` needs the route it calls to see
+    # that same bucket.
+    app.dependency_overrides[content_store] = lambda: store
     try:
         with TestClient(app) as test_client:
             yield test_client
@@ -276,7 +285,7 @@ class TestTickets:
 
 
 class TestWhatTheOriginAsks:
-    """The endpoint nginx calls before serving a byte.
+    """The routes nginx proxies a ticketed request to, unchanged and unprefixed.
 
     The ticket is a **path segment**. It used to be a query parameter, and that
     was wrong for a reason worth keeping: the H5P player builds asset URLs by
@@ -285,119 +294,92 @@ class TestWhatTheOriginAsks:
     caught it because these tests wrote the URI by hand, and a hand writes the
     URI the design expects rather than the one the player produces.
 
-    An allowed request now also carries `X-Content-Url`, a link `FakeStore`
-    signs for the exact key it was asked about — the assertions below check
-    that key, not a real signature, the same way `FakeStore.presign` never
-    touches a real bucket.
+    These routes used to only say yes or no, handing nginx a signed URL to
+    fetch the bytes itself. nginx could never resolve that bucket's address on
+    Render — real DNS does not back it there, only an `/etc/hosts` entry, and
+    nginx's dynamic resolver never consults that file. The API fetches the
+    bytes itself now and nginx proxies to the API instead, an address it has
+    always been able to reach — so these tests check bytes in the response,
+    not a header naming somewhere else to find them.
     """
 
-    async def test_a_valid_ticket_for_that_content_is_allowed(
-        self, client: TestClient, client_redis: Any
+    async def test_a_valid_ticket_for_that_content_returns_its_bytes(
+        self, client: TestClient, client_redis: Any, store: FakeStore
     ) -> None:
+        store.objects[f"content/{DIGEST}/h5p.json"] = b'{"title": "Essai"}'
         token = await mint_ticket(client_redis, uuid.uuid4(), DIGEST)
 
-        response = client.get(
-            ACCESS_URL,
-            headers={"X-Original-URI": f"/t/{token}/content/{DIGEST}/h5p.json"},
-        )
+        response = client.get(f"/t/{token}/content/{DIGEST}/h5p.json")
 
-        assert response.status_code == 204
-        assert response.headers["x-content-url"] == (
-            f"{SIGNED_BASE}/content/{DIGEST}/h5p.json?exp=60"
-        )
+        assert response.status_code == 200
+        assert response.content == b'{"title": "Essai"}'
         await revoke_ticket(client_redis, token)
 
     async def test_a_library_needs_only_a_valid_ticket(
-        self, client: TestClient, client_redis: Any
+        self, client: TestClient, client_redis: Any, store: FakeStore
     ) -> None:
-        """Libraries are shared by every content, so no digest is checked —
-        and the key signed carries no digest either."""
+        """Libraries are shared by every content, so no digest is checked."""
+        store.objects["libraries/H5P.TrueFalse-1.8/x.js"] = b"// une bibliotheque"
         token = await mint_ticket(client_redis, uuid.uuid4(), DIGEST)
 
-        response = client.get(
-            ACCESS_URL,
-            headers={"X-Original-URI": f"/t/{token}/libraries/H5P.TrueFalse-1.8/x.js"},
-        )
+        response = client.get(f"/t/{token}/libraries/H5P.TrueFalse-1.8/x.js")
 
-        assert response.status_code == 204
-        assert response.headers["x-content-url"] == (
-            f"{SIGNED_BASE}/libraries/H5P.TrueFalse-1.8/x.js?exp=60"
-        )
+        assert response.status_code == 200
+        assert response.content == b"// une bibliotheque"
         await revoke_ticket(client_redis, token)
 
     async def test_a_deep_asset_path_is_allowed(
-        self, client: TestClient, client_redis: Any
+        self, client: TestClient, client_redis: Any, store: FakeStore
     ) -> None:
         """What the player actually asks for, not what a hand would write."""
+        store.objects[f"content/{DIGEST}/content/images/a.png"] = b"\x89PNG"
         token = await mint_ticket(client_redis, uuid.uuid4(), DIGEST)
 
-        response = client.get(
-            ACCESS_URL,
-            headers={
-                "X-Original-URI": f"/t/{token}/content/{DIGEST}/content/images/a.png"
-            },
-        )
+        response = client.get(f"/t/{token}/content/{DIGEST}/content/images/a.png")
 
-        assert response.status_code == 204
-        assert response.headers["x-content-url"] == (
-            f"{SIGNED_BASE}/content/{DIGEST}/content/images/a.png?exp=60"
-        )
+        assert response.status_code == 200
+        assert response.content == b"\x89PNG"
         await revoke_ticket(client_redis, token)
 
     async def test_a_ticket_for_another_content_is_refused(
-        self, client: TestClient, client_redis: Any
+        self, client: TestClient, client_redis: Any, store: FakeStore
     ) -> None:
         """One ticket opens one content, and nothing helps guess a second."""
+        store.objects[f"content/{OTHER_DIGEST}/h5p.json"] = b"{}"
         token = await mint_ticket(client_redis, uuid.uuid4(), DIGEST)
 
-        response = client.get(
-            ACCESS_URL,
-            headers={"X-Original-URI": f"/t/{token}/content/{OTHER_DIGEST}/h5p.json"},
-        )
+        response = client.get(f"/t/{token}/content/{OTHER_DIGEST}/h5p.json")
 
         assert response.status_code == 403
-        assert "x-content-url" not in response.headers
         await revoke_ticket(client_redis, token)
 
-    def test_a_path_without_a_ticket_segment_is_refused(
+    def test_a_path_without_a_ticket_segment_is_not_this_route(
         self, client: TestClient
     ) -> None:
         """The old shape, and any other: not a different way in, no way in."""
-        response = client.get(
-            ACCESS_URL, headers={"X-Original-URI": f"/content/{DIGEST}/h5p.json"}
-        )
+        response = client.get(f"/content/{DIGEST}/h5p.json")
+
+        assert response.status_code == 404
+
+    def test_an_invented_ticket_is_refused(
+        self, client: TestClient, store: FakeStore
+    ) -> None:
+        store.objects[f"content/{DIGEST}/h5p.json"] = b"{}"
+
+        response = client.get(f"/t/invente/content/{DIGEST}/h5p.json")
 
         assert response.status_code == 403
 
-    def test_a_request_with_no_uri_at_all_is_refused(self, client: TestClient) -> None:
-        assert client.get(ACCESS_URL).status_code == 403
-
-    def test_an_invented_ticket_is_refused(self, client: TestClient) -> None:
-        response = client.get(
-            ACCESS_URL,
-            headers={"X-Original-URI": f"/t/invente/content/{DIGEST}/x"},
-        )
-
-        assert response.status_code == 403
-
-    async def test_the_answer_carries_nothing_but_its_status(
+    async def test_a_missing_object_is_not_found_rather_than_crashing(
         self, client: TestClient, client_redis: Any
     ) -> None:
-        """nginx has no use for a body, and one that explained itself would
-        explain itself to whoever asked."""
+        """A ticket can be valid for a content the bucket does not (or no
+        longer) hold; that is a missing file, not a broken server."""
         token = await mint_ticket(client_redis, uuid.uuid4(), DIGEST)
 
-        allowed = client.get(
-            ACCESS_URL,
-            headers={"X-Original-URI": f"/t/{token}/content/{DIGEST}/x"},
-        )
-        refused = client.get(
-            ACCESS_URL,
-            headers={"X-Original-URI": f"/t/x/content/{DIGEST}/x"},
-        )
+        response = client.get(f"/t/{token}/content/{DIGEST}/absent.json")
 
-        assert allowed.content == b""
-        assert b"ticket" not in refused.content.lower()
+        assert response.status_code == 404
         await revoke_ticket(client_redis, token)
 
 

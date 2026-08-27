@@ -16,7 +16,6 @@ from app.api.v1 import (
     cours,
     diagnostic,
     fiches,
-    internal,
     progress,
     public,
     referential,
@@ -40,8 +39,13 @@ api_router.include_router(cours.router, tags=["cours"])
 api_router.include_router(xapi.router, tags=["xapi"])
 api_router.include_router(progress.router, tags=["progress"])
 api_router.include_router(diagnostic.router, tags=["diagnostic"])
-api_router.include_router(internal.router, tags=["internal"])
 api_router.include_router(public.router, tags=["public"])
+
+# `internal` is not here on purpose: its routes serve a content's bytes at
+# `/t/<ticket>/…`, the exact path nginx already computed — mounted unprefixed
+# directly on `app` in main.py, not under `/api/v1`, so nginx can proxy that
+# path unchanged instead of every deploy target having to know to insert a
+# prefix nginx never had a reason to know about.
 
 
 # Sub-routers added as their step implements them:

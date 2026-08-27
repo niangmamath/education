@@ -11,19 +11,17 @@
 # misbehaves must not be able to read the application's cookies, and the browser
 # is what enforces that — provided the two are genuinely not the same site.
 #
-# Nothing here is public. Every request for a content is checked, before a byte
-# is served, against a ticket the API minted for one child doing one activity.
-# The check is `auth_request`, so nginx never learns who anyone is; it asks and
-# obeys.
-#
-# **This origin no longer reads the deployed content from a local disk.** A
-# disk shared between this service and the API's is exactly the thing most
-# multi-service platforms (Render among them) refuse to offer — a persistent
-# disk there is reachable by one service only. The deployed content instead
-# lives in a private bucket, and what `_ticket` returns for an allowed request
-# is not just "yes": it is a URL, signed for that exact file, valid for a
-# minute. This location proxies to it and never sees the bucket's own
-# credentials. The player bundle is the one exception — it carries no ticket
+# **This origin no longer reads the deployed content from a local disk, and no
+# longer talks to the bucket that holds it either.** A disk shared between this
+# service and the API's is exactly the thing most multi-service platforms
+# (Render among them) refuse to offer, so the deployed content moved to a
+# private bucket — and on Render, that bucket's private address exists only as
+# an `/etc/hosts` entry, which nginx's dynamic resolver never consults, by
+# design, on any platform. So every ticketed request is proxied to the API
+# instead: it checks the ticket and streams the bytes itself, reaching the
+# bucket the same way `register`/`deploy` always have. One more hop, to an
+# address this origin has always been able to reach, rather than one it never
+# reliably could. The player bundle is the one exception — it carries no ticket
 # and is useless without a content, so it ships baked into this image instead
 # (`infrastructure/nginx/Dockerfile`), and is still served from local disk.
 
@@ -38,8 +36,7 @@ server {
     # (`15-local-resolvers.envsh`), which reads whatever nameserver the
     # platform already put in `/etc/resolv.conf` and exports it before this
     # template is rendered — Docker Compose's embedded DNS locally, whatever
-    # Render's private network provides there, and so on. One line that never
-    # needs a platform-specific value hardcoded into it.
+    # Render's public DNS resolver is there, and so on.
     resolver ${NGINX_LOCAL_RESOLVERS} valid=30s;
 
     # No cookie of this origin is ever set, and none of the application's can
@@ -62,45 +59,6 @@ server {
     autoindex off;
     charset utf-8;
 
-    # The API answers 204 when the ticket in the path opens what is being asked
-    # for, and 403 otherwise; a 204 also carries `X-Content-Url`, a signed link
-    # to the exact object requested. nginx caches nothing of it: a ticket
-    # revoked when the child finishes must stop working at once, and a new URL
-    # is minted on every single request.
-    location = /_ticket {
-        internal;
-        # `${API_ORIGIN}` carries its own scheme (`http://api:8000` locally,
-        # `https://studentconnect-api.onrender.com` on Render) rather than one
-        # hardcoded here, because the two platforms do not even agree on
-        # which is right.
-        #
-        # A public address, not the API's private one, on Render — a second
-        # correction. The private address looked right, and even resolving it
-        # dynamically through `resolver` (the fix for the *first* failure,
-        # `host not found in upstream` on a `proxy_pass` read straight off the
-        # line) still failed: that address is reassigned on every redeploy of
-        # the API, and by the time this content origin's own build had
-        # finished, the API had redeployed again and the address baked into
-        # this image no longer named anything. A public hostname does not
-        # move under a service the same way.
-        #
-        # `set` before `proxy_pass`, not a `proxy_pass` straight to the
-        # substituted address, is still what makes resolution happen at
-        # request time through `resolver` above instead of once at startup
-        # through the system resolver.
-        set $api_upstream ${API_ORIGIN};
-        proxy_ssl_server_name on;
-        proxy_pass $api_upstream/api/v1/internal/content-access;
-        proxy_pass_request_body off;
-        proxy_set_header Content-Length "";
-        # The whole original URI, ticket and all. An `auth_request` subrequest
-        # has its own variable cache, so anything the protected location
-        # computed would arrive empty here; the API parses the URI instead,
-        # which is one place instead of two and cannot be got subtly wrong in a
-        # configuration file.
-        proxy_set_header X-Original-URI $request_uri;
-    }
-
     # The player page and its bundle carry no content of their own and need no
     # ticket; they are baked into this image at build time, the same "frozen
     # artefact" ADR-012's third condition asks of the libraries, just for
@@ -113,24 +71,19 @@ server {
     # `/t/<ticket>/content/<empreinte>/…` and `/t/<ticket>/libraries/…`.
     #
     # The ticket is in the **path** and not in the query, and that is a
-    # correction. A player composes an asset URL by joining path segments; a
-    # query string is not one, so it was dropped the moment the player asked for
-    # anything of its own, and every asset arrived without a ticket. A path
-    # prefix survives that joining by construction — the platform no longer has
-    # to control every URL the player invents.
+    # correction kept from an earlier design. A player composes an asset URL by
+    # joining path segments; a query string is not one, so it was dropped the
+    # moment the player asked for anything of its own, and every asset arrived
+    # without a ticket. A path prefix survives that joining by construction —
+    # the platform no longer has to control every URL the player invents.
     #
-    # Once the ticket is accepted, the request is not served from disk: it is
-    # forwarded to the signed URL `_ticket` handed back in `X-Content-Url`,
-    # captured here and used as the whole of what is proxied to.
+    # The whole path is forwarded unchanged: the API's own routes match this
+    # exact shape (`app/api/v1/internal.py`), so there is nothing here to
+    # rewrite, only somewhere to send it.
     location ~ ^/t/[^/]+/(?:content|libraries)/ {
-        auth_request /_ticket;
-        auth_request_set $content_url $upstream_http_x_content_url;
-        # The bucket is reachable over HTTPS wherever the signed URL names a
-        # public endpoint (Render's own storage, a real S3-compatible
-        # provider) rather than a local one; SNI is what lets that TLS
-        # handshake pick the right certificate.
+        set $api_upstream ${API_ORIGIN};
         proxy_ssl_server_name on;
-        proxy_pass $content_url;
+        proxy_pass $api_upstream;
     }
 
     # The same trees without a ticket are not a different way in: they are not a

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import mimetypes
 from pathlib import Path
-from typing import Any, Protocol
+from typing import IO, Any, Protocol
 
 import boto3
 from botocore.exceptions import ClientError
@@ -46,6 +46,8 @@ class ObjectStore(Protocol):
     def presign(self, key: str, expires_in: int, *, internal: bool = False) -> str: ...
 
     def get(self, key: str, path: Path) -> None: ...
+
+    def get_object(self, key: str) -> tuple[str, IO[bytes]]: ...
 
 
 class S3ObjectStore:
@@ -120,6 +122,24 @@ class S3ObjectStore:
         """
         with path.open("wb") as handle:
             self._client.download_fileobj(self.bucket, key, handle)
+
+    def get_object(self, key: str) -> tuple[str, IO[bytes]]:
+        """The object's content type and a readable stream of its bytes.
+
+        Reached from `app/api/v1/internal.py`: the content origin's nginx asks
+        the API for a content's bytes rather than the bucket directly, because
+        the bucket's private address is one nginx can never resolve — see that
+        module's own docstring for why not.
+        """
+        try:
+            response = self._client.get_object(Bucket=self.bucket, Key=key)
+        except ClientError as error:
+            if error.response.get("Error", {}).get("Code") in ("404", "NoSuchKey"):
+                raise FileNotFoundError(key) from error
+            raise
+        content_type = response.get("ContentType") or "application/octet-stream"
+        body: IO[bytes] = response["Body"]
+        return content_type, body
 
     def presign(self, key: str, expires_in: int, *, internal: bool = False) -> str:
         """A link that opens this object, for a short while and for no other.
