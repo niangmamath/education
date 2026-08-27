@@ -19,21 +19,26 @@
 # payer un fournisseur managé (Cloudflare R2, Backblaze B2...), qui n'aurait
 # demandé aucun disque ici mais une facture séparée.
 #
-# **Trois réglages restent à faire à la main après l'import du blueprint**,
+# **Quatre réglages restent à faire à la main après l'import du blueprint**,
 # faute d'un mécanisme Render pour les dériver automatiquement :
 #   1. `WEB_ORIGIN` sur `studentconnect-content` : l'adresse publique réelle
 #      de `studentconnect-web` une fois assignée (Render ne permet pas de la
 #      référencer dynamiquement depuis un autre service).
-#   2. Les identifiants du stockage (`MINIO_ROOT_USER`/`MINIO_ROOT_PASSWORD`
+#   2. `CONTENT_ORIGIN_URL` sur `studentconnect-api` : l'adresse publique
+#      réelle de `studentconnect-content`. Oubliée une première fois — sans
+#      elle, l'API renvoie au navigateur d'un enfant l'adresse par défaut du
+#      code (`http://localhost:8081`), et le contenu H5P échoue avec
+#      « localhost a refusé de se connecter ».
+#   3. Les identifiants du stockage (`MINIO_ROOT_USER`/`MINIO_ROOT_PASSWORD`
 #      sur `studentconnect-storage`, `S3_ACCESS_KEY`/`S3_SECRET_KEY` sur
 #      `studentconnect-api`) : à poser aux **mêmes valeurs** des deux côtés,
 #      Render ne permettant pas à un service de lire la variable d'un autre.
-#   3. Une fois l'API et le stockage en service, un paquet H5P se déploie
-#      toujours par la commande dédiée, jamais par ce blueprint (ADR-012,
-#      condition 4 : aucun CLI H5P dans le chemin de production) :
-#        render exec -s studentconnect-api -- python -m app.catalog deploy-runtime ...
-#        render exec -s studentconnect-api -- python -m app.catalog register ...
-#        render exec -s studentconnect-api -- python -m app.catalog deploy ...
+#   4. Un paquet H5P se déploie toujours par la commande dédiée, jamais par
+#      ce blueprint (ADR-012, condition 4 : aucun CLI H5P dans le chemin de
+#      production) — via le Shell d'un service qui l'offre :
+#        python -m app.catalog deploy-runtime ...
+#        python -m app.catalog register ...
+#        python -m app.catalog deploy ...
 #
 # **Écrit sans compte Render, corrigé avec un vrai compte.** Une première
 # version, écrite à partir de la seule documentation, a buté sur deux
@@ -165,6 +170,15 @@ services:
         value: studentconnect-private-evidence
       - key: S3_BUCKET_THUMBNAILS
         value: studentconnect-thumbnails
+      # L'URL que l'API compose dans `play_url`, renvoyée au navigateur pour
+      # ouvrir l'iframe d'un contenu (app/api/v1/assignments.py). Jamais
+      # câblée ici : sans elle, la valeur par défaut du code
+      # (http://localhost:8081) part telle quelle jusqu'au navigateur d'un
+      # vrai enfant, qui essaie alors de joindre sa propre machine —
+      # « localhost a refusé de se connecter ». À poser à la main, l'adresse
+      # publique réelle de studentconnect-content, comme WEB_ORIGIN plus bas.
+      - key: CONTENT_ORIGIN_URL
+        sync: false
 
   # L'origine de contenu, ADR-012 condition 5. Son image embarque le lecteur
   # H5P à la construction (infrastructure/nginx/Dockerfile) : rien de local à
