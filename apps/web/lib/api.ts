@@ -18,7 +18,18 @@
 
 import { cookies } from 'next/headers';
 
-const API_URL = process.env.API_URL ?? 'http://localhost:8000';
+/**
+ * A cross-service reference on Render (and platforms like it) gives a bare
+ * `host:port` — a service on a private network isn't necessarily HTTP, so
+ * there is no scheme to hand back. `fetch` needs a full URL, so a bare
+ * address is completed here rather than asked of every deployment that
+ * wires `API_URL` up to another service.
+ */
+function withScheme(url: string): string {
+  return url.includes('://') ? url : `http://${url}`;
+}
+
+export const API_URL = withScheme(process.env.API_URL ?? 'http://localhost:8000');
 const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME ?? 'studentconnect_session';
 
 export type ApiResult<T> =

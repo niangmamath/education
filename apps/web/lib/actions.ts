@@ -17,15 +17,13 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
-import { SESSION_COOKIE, apiWithToken } from './api';
+import { API_URL, SESSION_COOKIE, apiWithToken } from './api';
 import type {
   AnswerFeedback,
   AppliedRemediation,
   Attempt,
   ChildAssignment,
 } from './types';
-
-const API_URL = process.env.API_URL ?? 'http://localhost:8000';
 
 export type FormState = { error: string | null };
 

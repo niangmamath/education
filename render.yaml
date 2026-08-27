@@ -172,6 +172,15 @@ services:
       # d'afficher un contenu dans l'espace Élève. Voir l'en-tête du fichier.
       - key: WEB_ORIGIN
         sync: false
+      # L'adresse privée de l'API sur le réseau Render, `host:port` sans
+      # schéma — le gabarit nginx y ajoute `http://` lui-même. Premier essai :
+      # un nom « api » codé en dur, qui n'existe que sous Docker Compose, a
+      # empêché nginx de démarrer entièrement (`host not found in upstream`).
+      - key: API_INTERNAL_HOST
+        fromService:
+          name: studentconnect-api
+          type: web
+          property: hostport
       # Déclenche le script officiel de l'image nginx qui lit le résolveur DNS
       # déjà configuré par Render et l'expose en `NGINX_LOCAL_RESOLVERS`, dont
       # le gabarit a besoin pour `proxy_pass` vers une URL signée. Aucune

@@ -69,7 +69,15 @@ server {
     # is minted on every single request.
     location = /_ticket {
         internal;
-        proxy_pass http://api:8000/api/v1/internal/content-access;
+        # `${API_INTERNAL_HOST}` and not a literal `api:8000`: that name is
+        # Docker Compose's service name for the API, and nothing else calls
+        # it that on a platform like Render, where the API's own private
+        # hostname is whatever its service is named there. A static
+        # `proxy_pass` resolves its host once, at startup — not through the
+        # `resolver` above, which only helps a host held in a variable — so
+        # the wrong name here does not fail a request, it refuses to start
+        # nginx at all.
+        proxy_pass http://${API_INTERNAL_HOST}/api/v1/internal/content-access;
         proxy_pass_request_body off;
         proxy_set_header Content-Length "";
         # The whole original URI, ticket and all. An `auth_request` subrequest
