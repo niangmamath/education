@@ -7,5 +7,10 @@ COPY requirements.txt requirements-step03.txt ./
 RUN python -m pip install --upgrade pip \
     && python -m pip install -r requirements.txt -r requirements-step03.txt
 COPY . .
+RUN chmod +x docker-entrypoint.sh
 EXPOSE 8000
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# A single executable, not a shell one-liner chained with `&&`: some deploy
+# targets pass a `dockerCommand` override through their own splitting logic
+# before it reaches a shell, and a multi-word chained string is not
+# guaranteed to survive that untouched. A bare path cannot be mis-split.
+CMD ["./docker-entrypoint.sh"]
