@@ -204,7 +204,13 @@ services:
     runtime: node
     plan: free
     rootDir: .
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @studentconnect/web run build
+    # `corepack enable` tried to replace the `pnpm` Render's Node
+    # environment already provides at a path that turned out to be
+    # read-only there (`EROFS: read-only file system, unlink '/usr/bin/pnpm'`)
+    # — Render provisions the version named by `packageManager` in
+    # package.json on its own, so activating corepack by hand was not just
+    # unnecessary, it broke the build outright.
+    buildCommand: pnpm install --frozen-lockfile && pnpm --filter @studentconnect/web run build
     startCommand: pnpm --filter @studentconnect/web run start
     envVars:
       # Lu par le serveur Next et jamais par le navigateur : `API_URL` n'est pas
