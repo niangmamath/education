@@ -19,8 +19,11 @@
 # payer un fournisseur managé (Cloudflare R2, Backblaze B2...), qui n'aurait
 # demandé aucun disque ici mais une facture séparée.
 #
-# **Six réglages restent à faire à la main après l'import du blueprint**,
-# faute d'un mécanisme Render pour les dériver automatiquement :
+# **Cinq réglages restent à faire à la main après l'import du blueprint**,
+# faute d'un mécanisme Render pour les dériver automatiquement. `S3_ENDPOINT_URL`
+# / `S3_PUBLIC_ENDPOINT_URL` n'en font plus partie : voir pourquoi dans le
+# commentaire de `studentconnect-storage` plus bas, un aller-retour qui vaut
+# d'être lu avant de toucher à nouveau ces deux services.
 #   1. `WEB_ORIGIN` sur `studentconnect-content` : l'adresse publique réelle
 #      de `studentconnect-web` une fois assignée (Render ne permet pas de la
 #      référencer dynamiquement depuis un autre service).
@@ -31,20 +34,14 @@
 #      « localhost a refusé de se connecter ».
 #   3. `API_ORIGIN` sur `studentconnect-content` : l'adresse publique réelle
 #      de `studentconnect-api`. L'adresse *privée*, câblée via `fromService`
-#      dans un essai précédent, se réassigne à chaque redéploiement de
-#      l'API — elle a fini par ne plus rien nommer une fois l'API
-#      reconstruite après le déploiement de l'origine de contenu.
-#   4. `S3_ENDPOINT_URL` et `S3_PUBLIC_ENDPOINT_URL` sur `studentconnect-api` :
-#      l'adresse publique réelle de `studentconnect-storage`. Même
-#      mésaventure que le point 3, avec le stockage cette fois — sa
-#      première version était un service privé (`pserv`), dont l'adresse
-#      s'est aussi réassignée à chaque redéploiement ; il est devenu public
-#      pour cette raison même (voir son commentaire plus bas).
-#   5. Les identifiants du stockage (`MINIO_ROOT_USER`/`MINIO_ROOT_PASSWORD`
+#      dans un essai précédent, a fini par ne plus rien nommer pour nginx —
+#      contrairement au stockage plus bas, ici l'adresse publique a
+#      effectivement réglé le problème et est restée.
+#   4. Les identifiants du stockage (`MINIO_ROOT_USER`/`MINIO_ROOT_PASSWORD`
 #      sur `studentconnect-storage`, `S3_ACCESS_KEY`/`S3_SECRET_KEY` sur
 #      `studentconnect-api`) : à poser aux **mêmes valeurs** des deux côtés,
 #      Render ne permettant pas à un service de lire la variable d'un autre.
-#   6. Un paquet H5P se déploie toujours par la commande dédiée, jamais par
+#   5. Un paquet H5P se déploie toujours par la commande dédiée, jamais par
 #      ce blueprint (ADR-012, condition 4 : aucun CLI H5P dans le chemin de
 #      production) — via le Shell d'un service qui l'offre :
 #        python -m app.catalog deploy-runtime ...
@@ -84,31 +81,28 @@ services:
 
   # Stockage objet auto-hébergé : les paquets H5P vérifiés et le runtime
   # déployé (bibliothèques, contenus) vivent ici plutôt que sur un disque
-  # partagé avec l'origine de contenu.
+  # partagé avec l'origine de contenu. Un service privé : seuls l'API et
+  # l'origine de contenu ont besoin de lui parler.
   #
-  # Un service **public** (`type: web`), pas privé — deuxième correction sur
-  # ce service. Un `pserv` semblait le bon choix, rien d'autre que l'API et
-  # l'origine de contenu n'ayant besoin de lui parler ; mais son adresse
-  # privée se réassigne à chaque redéploiement du service, et une fois
-  # storage reconstruit après le correctif de port qui suit, l'adresse
-  # câblée dans l'API ne nommait plus rien (« could not be resolved »).
-  # Rendre le stockage public lui donne l'adresse stable des autres
-  # services — exactement le compromis qu'AWS S3, Cloudflare R2 et tout
-  # stockage S3 managé font déjà : un point d'accès joignable de partout,
-  # protégé par les identifiants plutôt que par l'isolation réseau. Rien
-  # n'y est lisible sans la bonne clé.
+  # Un essai est passé par un service **public** ici, pour la même raison
+  # que `API_ORIGIN` plus bas : une adresse stable. Mauvais diagnostic —
+  # l'API a toujours atteint ce service en privé sans problème pour
+  # `register`/`deploy`/`deploy-runtime`, et le rendre public a cassé
+  # `PutObject` (« 403 Forbidden ») : MinIO vérifie sa signature contre l'en-
+  # tête `Host` exact reçu, que l'edge HTTPS de Render réécrit en chemin —
+  # une couche qu'on ne contrôle pas, contrairement à un nginx qu'on
+  # configurerait soi-même. Revenu privé.
   #
   # Une image construite plutôt que `minio/minio:latest` telle quelle, sur
   # constat : Render attend qu'un service écoute exactement sur le `$PORT`
   # qu'il assigne, et l'image publiée l'ignore, liée en dur sur 9000
   # (« Port scan timeout reached, no open ports detected »). Le Dockerfile
   # remplace l'entrée de l'image par un script qui lit `$PORT`.
-  - type: web
+  - type: pserv
     name: studentconnect-storage
     runtime: docker
     dockerfilePath: ./infrastructure/minio/Dockerfile
     dockerContext: ./infrastructure/minio
-    healthCheckPath: /minio/health/live
     plan: starter
     disk:
       name: storage-data
@@ -159,17 +153,26 @@ services:
       # entrer, et la liste reste vide.
       - key: CORS_ORIGINS
         value: "[]"
-      # L'adresse publique de studentconnect-storage, schéma compris. Son
-      # adresse *privée*, câblée ici via `fromService` dans un essai
-      # précédent, s'est réassignée au premier redéploiement du stockage
-      # (le correctif de port qui suit) et n'a plus jamais nommé la bonne
-      # instance depuis — le stockage est maintenant public pour cette
-      # raison même (voir son commentaire plus haut), donc il n'y a plus
-      # qu'une seule adresse à poser, identique aux deux variables.
+      # Adresse privée du stockage, sans schéma (`host:port` seul, ce que
+      # `fromService` donne) : `S3_ENDPOINT_URL` l'accepte tel quel et
+      # complète `http://` lui-même (app/core/config.py). C'est la forme qui
+      # a marché de bout en bout pour `register`/`deploy`/`deploy-runtime` —
+      # voir le commentaire du service `studentconnect-storage` sur pourquoi
+      # la version publique, essayée entre-temps, a été abandonnée.
       - key: S3_ENDPOINT_URL
-        sync: false
+        fromService:
+          name: studentconnect-storage
+          type: pserv
+          property: hostport
+      # Personne d'autre que l'API et l'origine de contenu, tous deux sur ce
+      # même réseau privé, n'atteint jamais le stockage : il n'y a pas de
+      # second endpoint « public » à distinguer ici, contrairement au
+      # développement local où MinIO est aussi joignable depuis un navigateur.
       - key: S3_PUBLIC_ENDPOINT_URL
-        sync: false
+        fromService:
+          name: studentconnect-storage
+          type: pserv
+          property: hostport
       - key: S3_REGION
         value: us-east-1
       - key: S3_ACCESS_KEY
