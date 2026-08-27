@@ -69,21 +69,27 @@ server {
     # is minted on every single request.
     location = /_ticket {
         internal;
-        # `${API_INTERNAL_HOST}` and not a literal `api:8000`: that name is
-        # Docker Compose's service name for the API, and nothing else calls
-        # it that on a platform like Render, where the API's own private
-        # hostname is whatever its service is named there.
+        # `${API_ORIGIN}` carries its own scheme (`http://api:8000` locally,
+        # `https://studentconnect-api.onrender.com` on Render) rather than one
+        # hardcoded here, because the two platforms do not even agree on
+        # which is right.
         #
-        # `set` before `proxy_pass`, and not a `proxy_pass` straight to the
-        # substituted address, on purpose: a host nginx reads directly off a
-        # `proxy_pass` line is resolved once, at startup, through the
-        # system's own resolver — not through `resolver` above. On Render
-        # that lookup failed outright even with the right name in it
-        # (`host not found in upstream`), where the same name reached through
-        # a variable — deferred to request time, through `resolver` — works.
-        # One request paying for a DNS lookup it will not need again for
-        # thirty seconds costs nothing next to a service that cannot start.
-        set $api_upstream http://${API_INTERNAL_HOST};
+        # A public address, not the API's private one, on Render — a second
+        # correction. The private address looked right, and even resolving it
+        # dynamically through `resolver` (the fix for the *first* failure,
+        # `host not found in upstream` on a `proxy_pass` read straight off the
+        # line) still failed: that address is reassigned on every redeploy of
+        # the API, and by the time this content origin's own build had
+        # finished, the API had redeployed again and the address baked into
+        # this image no longer named anything. A public hostname does not
+        # move under a service the same way.
+        #
+        # `set` before `proxy_pass`, not a `proxy_pass` straight to the
+        # substituted address, is still what makes resolution happen at
+        # request time through `resolver` above instead of once at startup
+        # through the system resolver.
+        set $api_upstream ${API_ORIGIN};
+        proxy_ssl_server_name on;
         proxy_pass $api_upstream/api/v1/internal/content-access;
         proxy_pass_request_body off;
         proxy_set_header Content-Length "";

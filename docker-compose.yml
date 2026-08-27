@@ -117,12 +117,12 @@ services:
       # L'origine autorisée à afficher un contenu dans un cadre. Derrière un
       # tunnel, posez-y l'adresse publique du site.
       WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:3000}
-      # Le nom du service API sur ce réseau. En dur pendant un temps
-      # (« api:8000 », qui n'existe que sous ce nom-là avec Docker Compose) —
-      # au premier essai sur Render, un `proxy_pass` statique vers ce nom
-      # littéral a refusé de démarrer nginx entièrement, faute d'hôte
-      # « api » sur son réseau. Rendu configurable pour cette raison.
-      API_INTERNAL_HOST: api:8000
+      # L'adresse complète (avec schéma) où joindre l'API. En dur pendant un
+      # temps (« api:8000 », qui n'existe que sous Docker Compose) — sur
+      # Render, ni ce nom ni l'adresse privée de l'API (réassignée à chaque
+      # redéploiement de l'API) n'ont tenu ; son adresse publique, stable,
+      # est ce qui fonctionne là-bas. Rendu configurable pour cette raison.
+      API_ORIGIN: http://api:8000
       # Déclenche le script officiel de l'image nginx qui lit le résolveur DNS
       # déjà configuré par la plateforme (`/etc/resolv.conf`) et l'expose en
       # `NGINX_LOCAL_RESOLVERS`, utilisé par le gabarit. Fonctionne à l'identique
