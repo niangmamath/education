@@ -7,23 +7,31 @@
 # Ce qui a changé depuis la première version de ce blueprint : l'origine de
 # contenu n'était pas déployée ici, faute de pouvoir partager un disque avec
 # l'API — Render, comme la plupart des hébergeurs multi-services, attache un
-# disque persistant à un seul service (vérifié sur render.com/docs/disks).
-# Le déploiement écrit désormais dans un bucket (`app/content/deploy.py`), et
-# l'origine de contenu récupère chaque fichier par une URL que l'API signe à
-# la demande (`app/api/v1/internal.py`) — plus aucun disque à partager.
+# disque persistant à un seul service (vérifié sur render.com/docs/disks). Le
+# déploiement écrit désormais dans un bucket (`app/content/deploy.py`).
 #
-# **Ce que ce choix coûte, honnêtement** : MinIO a besoin d'un disque pour
-# lui-même, et un disque Render n'existe que sur un service payant. Ce
-# blueprint n'est donc plus entièrement gratuit dès que `studentconnect-storage`
-# est inclus — c'est le prix d'héberger soi-même le stockage plutôt que de
-# payer un fournisseur managé (Cloudflare R2, Backblaze B2...), qui n'aurait
-# demandé aucun disque ici mais une facture séparée.
+# **L'origine de contenu ne parle plus du tout au stockage**, ni directement
+# ni par une URL signée — seulement à l'API (`app/api/v1/internal.py`), qui
+# vérifie le ticket et sert les octets elle-même. Une première version faisait
+# le contraire (nginx recevait une URL signée et allait chercher le fichier
+# lui-même) ; ça s'est heurté à une limite de nginx documentée comme
+# délibérée, pas à un réglage manquant : `resolver`, le seul moyen de résoudre
+# un hôte porté par une variable — ce qu'une URL signée, différente à chaque
+# requête, oblige à être — ne consulte jamais `/etc/hosts`. Si Render résout
+# ses noms privés par ce mécanisme plutôt qu'un vrai serveur DNS, aucune
+# configuration nginx ne peut joindre le stockage ainsi. L'API, elle, a
+# toujours atteint le même stockage sans problème : Python consulte
+# `/etc/hosts` avant le DNS, nginx jamais.
 #
-# **Cinq réglages restent à faire à la main après l'import du blueprint**,
-# faute d'un mécanisme Render pour les dériver automatiquement. `S3_ENDPOINT_URL`
-# / `S3_PUBLIC_ENDPOINT_URL` n'en font plus partie : voir pourquoi dans le
-# commentaire de `studentconnect-storage` plus bas, un aller-retour qui vaut
-# d'être lu avant de toucher à nouveau ces deux services.
+# **Ce que le stockage auto-hébergé coûte, honnêtement** : MinIO a besoin d'un
+# disque pour lui-même, et un disque Render n'existe que sur un service payant.
+# Ce blueprint n'est donc plus entièrement gratuit dès que
+# `studentconnect-storage` est inclus — c'est le prix d'héberger soi-même le
+# stockage plutôt que de payer un fournisseur managé (Cloudflare R2, Backblaze
+# B2...), qui n'aurait demandé aucun disque ici mais une facture séparée.
+#
+# **Quatre réglages restent à faire à la main après l'import du blueprint**,
+# faute d'un mécanisme Render pour les dériver automatiquement :
 #   1. `WEB_ORIGIN` sur `studentconnect-content` : l'adresse publique réelle
 #      de `studentconnect-web` une fois assignée (Render ne permet pas de la
 #      référencer dynamiquement depuis un autre service).
@@ -33,20 +41,19 @@
 #      code (`http://localhost:8081`), et le contenu H5P échoue avec
 #      « localhost a refusé de se connecter ».
 #   3. `API_ORIGIN` sur `studentconnect-content` : l'adresse publique réelle
-#      de `studentconnect-api`. L'adresse *privée*, câblée via `fromService`
-#      dans un essai précédent, a fini par ne plus rien nommer pour nginx —
-#      contrairement au stockage plus bas, ici l'adresse publique a
-#      effectivement réglé le problème et est restée.
+#      de `studentconnect-api`, dont nginx a désormais seul besoin pour tout
+#      contenu ticketé.
 #   4. Les identifiants du stockage (`MINIO_ROOT_USER`/`MINIO_ROOT_PASSWORD`
 #      sur `studentconnect-storage`, `S3_ACCESS_KEY`/`S3_SECRET_KEY` sur
 #      `studentconnect-api`) : à poser aux **mêmes valeurs** des deux côtés,
 #      Render ne permettant pas à un service de lire la variable d'un autre.
-#   5. Un paquet H5P se déploie toujours par la commande dédiée, jamais par
-#      ce blueprint (ADR-012, condition 4 : aucun CLI H5P dans le chemin de
-#      production) — via le Shell d'un service qui l'offre :
-#        python -m app.catalog deploy-runtime ...
-#        python -m app.catalog register ...
-#        python -m app.catalog deploy ...
+#
+# Un paquet H5P se déploie toujours par la commande dédiée, jamais par ce
+# blueprint (ADR-012, condition 4 : aucun CLI H5P dans le chemin de
+# production) — via le Shell d'un service qui l'offre :
+#   python -m app.catalog deploy-runtime ...
+#   python -m app.catalog register ...
+#   python -m app.catalog deploy ...
 #
 # **Écrit sans compte Render, corrigé avec un vrai compte.** Une première
 # version, écrite à partir de la seule documentation, a buté sur deux
