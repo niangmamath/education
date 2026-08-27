@@ -215,10 +215,16 @@ services:
     envVars:
       # Lu par le serveur Next et jamais par le navigateur : `API_URL` n'est pas
       # `NEXT_PUBLIC_`, et c'est la décision d'ADR-016.
+      #
+      # L'adresse privée (`fromService: hostport`) semblait la bonne
+      # approche — c'est ce qui relie l'API et le web sur le réseau interne
+      # de Render — mais `fetch()` depuis ce service échouait dessus alors
+      # que la même correction (résolution différée, `resolver` explicite)
+      # avait déjà réglé un problème très proche côté nginx. Plutôt que de
+      # chasser une troisième fois une résolution DNS interne capricieuse,
+      # l'adresse publique de l'API : un aller-retour par internet plutôt
+      # que le réseau privé, mais fiable, et toujours en HTTPS.
       - key: API_URL
-        fromService:
-          name: studentconnect-api
-          type: web
-          property: hostport
+        sync: false
       - key: NODE_ENV
         value: production
