@@ -1,23 +1,50 @@
 # Blueprint de démonstration StudentConnect.
 #
-# Ce qu'il déploie : l'API, le web, PostgreSQL et Redis. Tout le parcours
-# fonctionne — inscription, examen d'initiation, lecture par compétence,
-# diagnostic, remédiations proposées, tableaux de bord des deux espaces.
+# Ce qu'il déploie : l'API, le web, PostgreSQL, Redis, un stockage objet
+# auto-hébergé (MinIO) et l'origine de contenu H5P. Le parcours complet
+# fonctionne désormais, contenus H5P compris.
 #
-# Ce qu'il ne déploie PAS, et il faut le savoir avant de le lancer :
-# **l'origine de contenu**, donc les activités H5P ne se jouent pas ici.
+# Ce qui a changé depuis la première version de ce blueprint : l'origine de
+# contenu n'était pas déployée ici, faute de pouvoir partager un disque avec
+# l'API — Render, comme la plupart des hébergeurs multi-services, attache un
+# disque persistant à un seul service (vérifié sur render.com/docs/disks).
+# Le déploiement écrit désormais dans un bucket (`app/content/deploy.py`), et
+# l'origine de contenu récupère chaque fichier par une URL que l'API signe à
+# la demande (`app/api/v1/internal.py`) — plus aucun disque à partager.
 #
-# La raison n'est pas un oubli. En local, l'API écrit les contenus déployés dans
-# un volume et nginx les sert depuis ce même volume, en lecture seule ; c'est la
-# séparation d'origines qu'ADR-012 exige. Sur Render, un disque appartient à un
-# seul service : deux services ne peuvent pas partager ce volume. La bonne
-# solution est que l'origine de contenu lise les fichiers depuis le stockage
-# objet au lieu d'un disque, en gardant sa vérification de ticket — c'est un vrai
-# morceau de travail, pas un réglage à ajouter ici.
+# **Ce que ce choix coûte, honnêtement** : MinIO a besoin d'un disque pour
+# lui-même, et un disque Render n'existe que sur un service payant. Ce
+# blueprint n'est donc plus entièrement gratuit dès que `studentconnect-storage`
+# est inclus — c'est le prix d'héberger soi-même le stockage plutôt que de
+# payer un fournisseur managé (Cloudflare R2, Backblaze B2...), qui n'aurait
+# demandé aucun disque ici mais une facture séparée.
 #
-# L'examen d'initiation, lui, est écrit par la plateforme et ne dépend d'aucune
-# origine de contenu. C'est ce qui rend cette démonstration utile malgré tout :
-# un enfant inscrit ici passe son examen et repart avec un diagnostic complet.
+# **Trois réglages restent à faire à la main après l'import du blueprint**,
+# faute d'un mécanisme Render pour les dériver automatiquement :
+#   1. `WEB_ORIGIN` sur `studentconnect-content` : l'adresse publique réelle
+#      de `studentconnect-web` une fois assignée (Render ne permet pas de la
+#      référencer dynamiquement depuis un autre service).
+#   2. Les identifiants du stockage (`MINIO_ROOT_USER`/`MINIO_ROOT_PASSWORD`
+#      sur `studentconnect-storage`, `S3_ACCESS_KEY`/`S3_SECRET_KEY` sur
+#      `studentconnect-api`) : à poser aux **mêmes valeurs** des deux côtés,
+#      Render ne permettant pas à un service de lire la variable d'un autre.
+#   3. Une fois l'API et le stockage en service, un paquet H5P se déploie
+#      toujours par la commande dédiée, jamais par ce blueprint (ADR-012,
+#      condition 4 : aucun CLI H5P dans le chemin de production) :
+#        render exec -s studentconnect-api -- python -m app.catalog deploy-runtime ...
+#        render exec -s studentconnect-api -- python -m app.catalog register ...
+#        render exec -s studentconnect-api -- python -m app.catalog deploy ...
+#
+# **Non vérifié en conditions réelles** : ce blueprint est écrit à partir de
+# la documentation Render (blueprint-spec, private-network, disks) et vérifié
+# localement (le Dockerfile de l'origine de contenu construit et tourne, la
+# récupération signée fonctionne contre un MinIO réel) — mais jamais déployé
+# sur un compte Render, faute d'en avoir un à disposition ici. Un premier
+# import mérite d'être suivi de près.
+#
+# L'examen d'initiation, lui, ne dépend d'aucune origine de contenu : un
+# enfant inscrit passe son examen et repart avec un diagnostic complet même
+# si les trois réglages ci-dessus n'ont pas encore été faits.
 
 databases:
   - name: studentconnect-db
@@ -33,6 +60,31 @@ services:
     # une session perdue est une reconnexion, pas une donnée perdue.
     ipAllowList: []
 
+  # Stockage objet auto-hébergé : les paquets H5P vérifiés et le runtime
+  # déployé (bibliothèques, contenus) vivent ici plutôt que sur un disque
+  # partagé avec l'origine de contenu. Un service privé : rien d'autre que
+  # l'API et l'origine de contenu, sur le réseau privé de Render, n'a besoin
+  # de lui parler.
+  - type: pserv
+    name: studentconnect-storage
+    runtime: image
+    image:
+      url: minio/minio:latest
+    plan: starter
+    disk:
+      name: storage-data
+      mountPath: /data
+      sizeGB: 5
+    dockerCommand: server /data
+    envVars:
+      # À poser à la main après l'import, à la même valeur que
+      # S3_ACCESS_KEY / S3_SECRET_KEY sur studentconnect-api ci-dessous —
+      # Render ne permet pas à un service de lire la variable d'un autre.
+      - key: MINIO_ROOT_USER
+        sync: false
+      - key: MINIO_ROOT_PASSWORD
+        sync: false
+
   - type: web
     name: studentconnect-api
     runtime: docker
@@ -40,9 +92,14 @@ services:
     dockerfilePath: ./apps/api/Dockerfile.dev
     dockerContext: ./apps/api
     healthCheckPath: /health/live
-    # Les migrations tournent avant que le service ne serve : un schéma en retard
-    # sur le code est une panne, pas un délai.
-    dockerCommand: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    # Trois étapes avant de servir une requête : les buckets existent (rien
+    # d'équivalent au `storage-init` du compose local n'existe ici), le schéma
+    # est à jour, puis le serveur démarre. Un schéma en retard sur le code est
+    # une panne, pas un délai.
+    dockerCommand: >-
+      sh -c "python -m app.core.storage_init &&
+      alembic upgrade head &&
+      uvicorn app.main:app --host 0.0.0.0 --port $PORT"
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -64,6 +121,63 @@ services:
       # entrer, et la liste reste vide.
       - key: CORS_ORIGINS
         value: "[]"
+      # Adresse privée du stockage, sans schéma (`host:port` seul, ce que
+      # `fromService` peut donner) : `S3_ENDPOINT_URL` l'accepte tel quel et
+      # complète `http://` lui-même (app/core/config.py).
+      - key: S3_ENDPOINT_URL
+        fromService:
+          name: studentconnect-storage
+          type: pserv
+          property: hostport
+      # Personne d'autre que l'API et l'origine de contenu, tous deux sur ce
+      # même réseau privé, n'atteint jamais le stockage : il n'y a pas de
+      # second endpoint « public » à distinguer ici, contrairement au
+      # développement local où MinIO est aussi joignable depuis un navigateur.
+      - key: S3_PUBLIC_ENDPOINT_URL
+        fromService:
+          name: studentconnect-storage
+          type: pserv
+          property: hostport
+      - key: S3_REGION
+        value: us-east-1
+      - key: S3_ACCESS_KEY
+        sync: false
+      - key: S3_SECRET_KEY
+        sync: false
+      - key: S3_BUCKET_H5P_PACKAGES
+        value: studentconnect-h5p-packages
+      - key: S3_BUCKET_H5P_RUNTIME
+        value: studentconnect-h5p-runtime
+      - key: S3_BUCKET_MEDIA
+        value: studentconnect-media
+      - key: S3_BUCKET_PRIVATE_EVIDENCE
+        value: studentconnect-private-evidence
+      - key: S3_BUCKET_THUMBNAILS
+        value: studentconnect-thumbnails
+
+  # L'origine de contenu, ADR-012 condition 5. Son image embarque le lecteur
+  # H5P à la construction (infrastructure/nginx/Dockerfile) : rien de local à
+  # préparer sur cette machine, contrairement à l'ancienne version de ce
+  # service qui comptait sur un dossier du poste de développement.
+  - type: web
+    name: studentconnect-content
+    runtime: docker
+    plan: free
+    dockerfilePath: ./infrastructure/nginx/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      # L'adresse publique réelle de studentconnect-web, à poser après avoir
+      # vu l'URL que Render lui assigne — sans quoi `frame-ancestors` refuse
+      # d'afficher un contenu dans l'espace Élève. Voir l'en-tête du fichier.
+      - key: WEB_ORIGIN
+        sync: false
+      # Déclenche le script officiel de l'image nginx qui lit le résolveur DNS
+      # déjà configuré par Render et l'expose en `NGINX_LOCAL_RESOLVERS`, dont
+      # le gabarit a besoin pour `proxy_pass` vers une URL signée. Aucune
+      # valeur à deviner ici, contrairement à un `resolver` codé en dur.
+      - key: NGINX_ENTRYPOINT_LOCAL_RESOLVERS
+        value: "1"
 
   - type: web
     name: studentconnect-web

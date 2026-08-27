@@ -87,7 +87,6 @@ services:
       - "127.0.0.1:${API_PORT:-8000}:8000"
     volumes:
       - ./apps/api:/app
-      - content_runtime:/srv/content
       # Read-only, and only in this development compose: the vetted H5P package
       # and the offline-prepared libraries are project artefacts the API lays
       # out, never rebuilds. ADR-012 condition 3 asks that they be frozen, and
@@ -110,22 +109,21 @@ services:
     networks: [studentconnect_network]
 
   content:
-    image: nginx:1.27-alpine
+    build:
+      context: .
+      dockerfile: infrastructure/nginx/Dockerfile
     restart: unless-stopped
     environment:
       # L'origine autorisée à afficher un contenu dans un cadre. Derrière un
       # tunnel, posez-y l'adresse publique du site.
       WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:3000}
+      # Déclenche le script officiel de l'image nginx qui lit le résolveur DNS
+      # déjà configuré par la plateforme (`/etc/resolv.conf`) et l'expose en
+      # `NGINX_LOCAL_RESOLVERS`, utilisé par le gabarit. Fonctionne à l'identique
+      # sur Docker Compose, Render, ou ailleurs, sans valeur à deviner ici.
+      NGINX_ENTRYPOINT_LOCAL_RESOLVERS: 1
     ports:
       - "127.0.0.1:${CONTENT_PORT:-8081}:80"
-    volumes:
-      # Un gabarit, pas une configuration : l'image nginx développe les
-      # variables d'environnement des fichiers de `templates/` au démarrage.
-      # `frame-ancestors` doit nommer l'origine réelle du site, qui n'est pas la
-      # même sur un portable et derrière un tunnel.
-      - ./infrastructure/nginx/content-origin.conf.template:/etc/nginx/templates/default.conf.template:ro
-      # Read-only: the origin serves what the API laid out, and can add nothing.
-      - content_runtime:/srv/content:ro
     depends_on:
       api:
         condition: service_healthy
@@ -169,5 +167,3 @@ volumes:
     name: studentconnect_redis_data
   storage_data:
     name: studentconnect_storage_data
-  content_runtime:
-    name: studentconnect_content_runtime

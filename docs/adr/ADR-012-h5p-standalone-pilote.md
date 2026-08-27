@@ -1,11 +1,40 @@
 # ADR-012, H5P Standalone pour le pilote
 
 - Statut : Accepté sous conditions
-- Date : 13 août 2026, **amendée le 17 août 2026**
+- Date : 13 août 2026, amendée le 17 août 2026, **et le 27 août 2026**
 
 ## Décision
 
 Utiliser `h5p-standalone` comme base du lecteur H5P du pilote StudentConnect. Tout type non listé est refusé par défaut jusqu’à un test et une décision explicites.
+
+## Amendement du 27 août 2026, le runtime quitte le disque partagé
+
+La condition 5 exigeait une origine dédiée ; elle ne disait rien de comment
+l’API et cette origine se passeraient les fichiers, et un volume Docker
+partagé a fait l’affaire tant que les deux tournaient sur la même machine. Ça
+cesse de suffire dès qu’elles deviennent deux services séparés : la plupart
+des hébergeurs multi-services, Render compris, attachent un disque persistant
+à un seul service, jamais à deux. Documenté dans le dépôt : `render.yaml`
+renonçait explicitement à déployer l’origine de contenu pour cette raison.
+Vérifié indépendamment le 27 août 2026 dans la documentation officielle de
+Render (`render.com/docs/disks`) : « A persistent disk is accessible by only
+a single service instance […] You can’t access a service’s disk from any
+other service. »
+
+Le déploiement écrit désormais dans `S3_BUCKET_H5P_RUNTIME`, un coffre privé
+déjà provisionné mais inutilisé jusqu’ici, plutôt que sur un volume. Ce que
+l’origine de contenu demandait déjà — un ticket valide, par fichier, avant
+d’en servir un octet — ne change pas ; ce qui change est ce que la réponse
+contient : non plus « oui », mais une URL signée pour l’objet exact demandé,
+valable soixante secondes. nginx la relaie sans jamais voir les identifiants
+du coffre, et le navigateur ne voit ni l’un ni l’autre.
+
+Le lecteur (`player/`) reste une exception assumée : il ne porte pas de
+ticket et n’a rien à signer, donc il ne rejoint pas le coffre. Il est
+désormais embarqué dans l’image de l’origine de contenu à la construction
+(`infrastructure/nginx/Dockerfile`), plutôt que déposé sur un dossier local à
+préparer à la main sur chaque machine — un artefact figé au sens de la
+condition 3, versionné avec ce qui le sert.
 
 ## Amendement du 17 août 2026, huit types au lieu d’un
 
@@ -66,7 +95,7 @@ ADR acceptée. État au 15 août 2026, après la clôture de l’étape 11.
 | 2 | Quarantaine, extraction sécurisée, limites, MIME et antivirus | **Partielle** | 08.2 lit l’archive sans jamais l’extraire, refuse chemins remontants et absolus, plus de 500 entrées, les bombes de décompression et les fichiers de plus de 20 Mo. **Aucun antivirus**, faute de scanner dans l’environnement de stage |
 | 3 | Bibliothèques figées comme artefacts internes | Remplie | Déploiement `PRE-01`, avec inventaire des empreintes : un artefact que personne ne peut nommer n’est pas figé |
 | 4 | Aucun CLI H5P dans le chemin de production | Remplie | Ni éditeur ni CLI ; l’enregistrement est une commande du projet (08.2) |
-| 5 | Runtime isolé par iframe et origine dédiée à CSP restrictive | Remplie | Origine `content` servie par nginx, `PRE-01` |
+| 5 | Runtime isolé par iframe et origine dédiée à CSP restrictive | Remplie | Origine `content` servie par nginx, `PRE-01` ; depuis le 27 août 2026, `content/` et `libraries/` sont fetchés par nginx via une URL signée dans `S3_BUCKET_H5P_RUNTIME` plutôt qu'un disque partagé avec l'API — condition inchangée, mécanisme de service revu |
 | 6 | Endpoint xAPI authentifié et autorisé | Remplie | Étape 11, `POST /api/v1/me/xapi/statements`. Authentifié par la session Élève, autorisé par le ticket de contenu, tentative déduite du ticket et jamais nommée par le client. ADR-014 |
 | 7 | Date de réception serveur distincte du timestamp source | Remplie | `attempt_responses.recorded_at` (10.1) et, pour un événement, `xapi_statements.issued_at` — ce que la source prétend — à côté de `received_at`, horloge du serveur (11.1) |
 | 8 | Licence et provenance vérifiées avant publication | **Partielle** | Les champs existent et ne sortent jamais par HTTP ; rien ne les vérifie automatiquement |
@@ -77,3 +106,8 @@ Le MVP peut avancer sans serveur H5P complet. Restent dus avant une mise en
 production : l’antivirus de la condition 2 et la vérification de licence de la
 condition 8. Ce sont les deux dernières conditions partielles ; plus aucune n’est
 entièrement à faire.
+
+Le lecteur (`player/`) est désormais embarqué dans l’image de l’origine de
+contenu à la construction (`infrastructure/nginx/Dockerfile`) : plus de
+dossier local à préparer à la main, sur aucune machine. L’image se construit
+et tourne identiquement en local et sur un hébergement multi-service.

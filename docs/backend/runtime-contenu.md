@@ -43,7 +43,8 @@ Enfant ─── GET /me/activities/{id}/content ──▶ API
        ◀── play_url = origine/player/play.html?c=<empreinte>&t=<ticket>
        │
        └── iframe ──▶ origine de contenu ─── auth_request ──▶ API
-                                                              204 ou 403
+                                                              204 + URL signée, ou 403
+                                              ◀── proxy vers l'URL signée ──▶ coffre S3
 ```
 
 Le ticket ne porte **aucune identité** : il nomme une affectation et le contenu
@@ -56,36 +57,48 @@ obéit.
 
 | Requête | Réponse |
 |---|---|
-| ticket valide pour ce contenu | le fichier |
+| ticket valide pour ce contenu | `204` + `X-Content-Url`, une URL signée pour l'objet exact, 60 secondes ; nginx la relaie et sert ce qu'elle renvoie |
 | ticket valide pour **un autre** contenu | `403` |
 | ticket inventé, expiré, révoqué | `403` |
 | aucun ticket | `403` |
-| la page du lecteur, sans ticket | servie — elle ne contient rien |
+| la page du lecteur, sans ticket | servie depuis le disque local de l'origine — elle ne contient rien |
 
 Un ticket pour un autre contenu est refusé exactement comme un ticket absent :
 un ticket ouvre un contenu, et rien n'aide à en deviner un second.
 
 ## Le déploiement
 
-Un `.h5p` est une archive ; le lecteur veut un dossier. Le déploiement est
-l'étape entre les deux, et c'est **là que l'archive est enfin ouverte** — après
-avoir été vérifiée en 08.2, jamais avant.
+Un `.h5p` est une archive ; le lecteur veut des fichiers qu'il peut récupérer un
+par un. Le déploiement est l'étape entre les deux, et c'est **là que l'archive
+est enfin ouverte** — après avoir été vérifiée en 08.2, jamais avant.
 
 ```bash
-# une fois : les bibliothèques et le lecteur préparés hors ligne
+# une fois : les bibliothèques préparées hors ligne
 docker compose exec -T api python -m app.catalog deploy-runtime /tmp/prepared
 
 # par activité : le paquet vérifié
 docker compose exec -T api python -m app.catalog deploy demo-vrai-faux-01
 ```
 
-L'archive est **relue depuis le bucket**, jamais depuis une copie qui traînerait
-sur le disque : ce qui est servi doit être ce qui a été vérifié. Les contrôles de
-chemin de l'inspection sont rejoués à l'écriture — non par méfiance envers le
-premier contrôle, mais envers l'intervalle entre les deux.
+**Ceci écrivait autrefois sur un disque partagé avec l'origine de contenu.**
+Ça tenait tant que l'API et nginx étaient deux processus d'une même machine ;
+ça cesse de tenir dès qu'ils deviennent deux services séparés, un disque
+persistant sur la plupart des hébergeurs multi-services (Render compris)
+n'étant jamais accessible qu'à un seul service. Le déploiement écrit
+désormais dans `S3_BUCKET_H5P_RUNTIME`, un coffre privé, et l'origine de
+contenu récupère chaque fichier via une URL signée par l'API à chaque
+requête (`app/api/v1/internal.py`) — voir « Le ticket est un segment de
+chemin » plus bas, désormais mis à jour.
 
-L'empreinte nomme le dossier, `content/<empreinte>/`, donc redéployer les mêmes
-octets est idempotent et deux paquets différents ne peuvent pas se télescoper.
+L'archive est **relue depuis le bucket des paquets vérifiés**, jamais depuis
+une copie qui traînerait sur le disque : ce qui est servi doit être ce qui a
+été vérifié. Les contrôles de chemin de l'inspection sont rejoués à
+l'écriture — non par méfiance envers le premier contrôle, mais envers
+l'intervalle entre les deux.
+
+L'empreinte nomme le préfixe, `content/<empreinte>/`, donc redéployer les
+mêmes octets est idempotent et deux paquets différents ne peuvent pas se
+télescoper.
 
 Les **bibliothèques** sont préparées hors ligne, condition 3 d'ADR-012, et un
 inventaire de leurs empreintes est écrit à côté d'elles : un artefact que
@@ -94,15 +107,24 @@ personne ne peut nommer n'est pas figé.
 ## La disposition servie
 
 ```text
-/srv/content/
-├── player/          le bundle h5p-standalone, et notre page play.html
+S3_BUCKET_H5P_RUNTIME/
 ├── libraries/       les bibliothèques figées, partagées par tous les contenus
 ├── content/<empreinte>/   un paquet ouvert
 └── inventory.json   les empreintes des bibliothèques
+
+/srv/content/player/     le bundle h5p-standalone, et notre page play.html
+                          — seule partie encore locale à l'origine de contenu
 ```
 
-Le volume est monté **en lecture seule** dans l'origine de contenu : elle sert ce
-que l'API a déposé, et ne peut rien y ajouter.
+`content/` et `libraries/` vivent dans le coffre, jamais sur le disque de
+l'origine de contenu : elle ne les lit qu'à travers une URL signée par l'API,
+et ne peut donc rien y ajouter ni y lire directement.
+
+`player/` reste une exception assumée : il ne porte pas de ticket et n'a rien
+à signer, donc il ne rejoint pas le coffre. Il est embarqué dans l'image de
+l'origine de contenu à la construction (`infrastructure/nginx/Dockerfile`,
+qui télécharge `h5p-standalone` et y ajoute `play.html`), identiquement en
+local et en production — plus de dossier à préparer à la main.
 
 `play.html` est la seule partie de cette origine que nous ayons écrite, et la
 seule qui décide de ce qui en sort. Elle ne parle jamais à l'API et ne détient
@@ -136,6 +158,14 @@ tiers — exactement ce que les navigateurs suppriment.
 
 Les mêmes arbres sans segment de ticket rendent `404`. Ce n'est pas une autre
 porte : ce n'est pas une porte.
+
+**Le 27 août 2026**, ce que `_ticket` répond a changé sans que le sens de son
+verdict change : `204` veut toujours dire « ce ticket ouvre ce fichier »,
+mais elle porte désormais aussi une URL signée, valable une minute, pour
+l'objet exact demandé. nginx la relaie (`auth_request_set` puis `proxy_pass`
+vers la variable) et sert ce qu'elle renvoie ; il ne voit jamais les
+identifiants du coffre. La raison : le fichier ne vit plus sur le disque de
+l'origine de contenu, voir « Le déploiement ».
 
 Depuis l'étape 11, `play.html` **pose un identifiant sur chaque événement** qui
 n'en porte pas. C'est ce que le serveur lit pour reconnaître une

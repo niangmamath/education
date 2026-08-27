@@ -86,8 +86,9 @@ class Settings(BaseSettings):
 
     # Content runtime (ADR-012, condition 5: a runtime isolated behind its own
     # origin, so that a content cannot read the application's cookies). The API
-    # writes the deployed tree, the content origin serves it read-only.
-    CONTENT_RUNTIME_ROOT: str = "/srv/content"
+    # deploys into S3_BUCKET_H5P_RUNTIME above; the content origin fetches each
+    # file back through a URL this API signs per request (app/api/v1/internal.py)
+    # rather than a disk the two services would have to share.
     CONTENT_ORIGIN_URL: str = "http://localhost:8081"
 
     # Logging
@@ -133,6 +134,21 @@ class Settings(BaseSettings):
                 "SECRET_KEY must not be empty: generate one with "
                 'python3 -c "import secrets; print(secrets.token_urlsafe(48))"'
             )
+        return value
+
+    @field_validator("S3_ENDPOINT_URL", "S3_PUBLIC_ENDPOINT_URL")
+    @classmethod
+    def default_to_http(cls, value: str) -> str:
+        """Accept a bare `host:port`, not only a full URL.
+
+        Render's `fromService` gives a private-network address as `host:port`
+        alone, with no scheme to reference — a service on that network could
+        speak anything, not only HTTP. boto3 needs a full URL, so a bare
+        address is completed with `http://` here instead of every render.yaml
+        that wires two services together having to know to add it.
+        """
+        if "://" not in value:
+            return f"http://{value}"
         return value
 
     @field_validator("CORS_ORIGINS", mode="before")

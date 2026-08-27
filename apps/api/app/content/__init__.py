@@ -8,9 +8,9 @@ its place. See `docs/backend/runtime-contenu.md`.
 from app.content.deploy import (
     DeploymentRefused,
     DeploymentReport,
+    content_store,
     deploy_libraries,
     deploy_package,
-    deploy_player,
     deployed_contents,
     is_deployed,
 )
@@ -27,9 +27,9 @@ __all__ = [
     "ContentTicket",
     "DeploymentRefused",
     "DeploymentReport",
+    "content_store",
     "deploy_libraries",
     "deploy_package",
-    "deploy_player",
     "deployed_contents",
     "is_deployed",
     "mint_ticket",

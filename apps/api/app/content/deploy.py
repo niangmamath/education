@@ -1,8 +1,18 @@
 """Lay a vetted package out where the content origin can serve it.
 
-A `.h5p` is an archive, and the player needs a folder. Deployment is the step
-between the two, and it is where the archive is finally opened — after it has
-been inspected in 08.2, never before.
+A `.h5p` is an archive, and the player needs individual files it can fetch one
+at a time. Deployment is the step between the two, and it is where the archive
+is finally opened — after it has been inspected in 08.2, never before.
+
+**This used to write to a disk shared with the content origin.** That worked
+on a single machine, where the API and nginx are two processes with the same
+filesystem underneath them. It stops working the moment they become two
+separate services, because a platform that runs them that way — Render among
+others — attaches a persistent disk to exactly one service; the other cannot
+see it, whatever is on it. Deployment now puts each file in the private
+runtime bucket instead, and the content origin fetches it back through a
+signed URL minted per request (`app/api/v1/internal.py`). Nothing about the
+ticket that gates a request changes — only where the bytes it unlocks live.
 
 The extraction repeats the path checks the inspection already ran. That is not
 distrust of the earlier check but of the interval between them: the archive was
@@ -13,21 +23,28 @@ The libraries are laid out once and shared by every content. They come from a
 directory prepared offline, per ADR-012's third condition, and an inventory of
 their digests is written beside them: what is being served must be nameable, or
 "the libraries we froze" means nothing.
+
+The player bundle is not laid out here any more. It carries no ticket — it is
+useless without a content to play — so it ships baked into the content
+origin's own image (`infrastructure/nginx/Dockerfile`) instead of the runtime
+bucket: one artefact, versioned with the code that builds the image, needing
+no signed URL because nothing here would still be secret at that point.
 """
 
 from __future__ import annotations
 
 import hashlib
 import json
-import shutil
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Final
 
+from app.catalog.storage import ObjectStore, S3ObjectStore
+from app.core.config import settings
+
 CONTENT_ROOT: Final = "content"
 LIBRARIES_ROOT: Final = "libraries"
-PLAYER_ROOT: Final = "player"
 INVENTORY: Final = "inventory.json"
 
 # The same ceilings as the inspection of 08.2, repeated here on purpose.
@@ -47,19 +64,28 @@ class DeploymentReport:
     path: str
 
 
-def deploy_package(runtime_root: Path, package: Path, digest: str) -> DeploymentReport:
+def content_store() -> ObjectStore:
+    """The bucket the deployed runtime lives in.
+
+    A different bucket from the one packages wait in before they are vetted
+    (ADR-008): a package is what an operator has verified, a deployed content
+    is what the origin actually serves, and merging the two would let a change
+    meant for one silently reach the other.
+    """
+    return S3ObjectStore(bucket=settings.S3_BUCKET_H5P_RUNTIME)
+
+
+def deploy_package(store: ObjectStore, package: Path, digest: str) -> DeploymentReport:
     """Open one vetted package under `content/<digest>/`, and nowhere else.
 
-    The digest names the folder, so redeploying the same bytes is idempotent and
+    The digest names the prefix, so redeploying the same bytes is idempotent and
     two different packages can never collide.
     """
-    target = _content_path(runtime_root, digest)
-    if target.exists():
-        shutil.rmtree(target)
-    target.mkdir(parents=True)
+    prefix = _content_prefix(digest)
 
     files = 0
     written = 0
+    manifest_seen = False
     with zipfile.ZipFile(package) as archive:
         entries = archive.infolist()
         if len(entries) > MAX_ENTRIES:
@@ -74,25 +100,26 @@ def deploy_package(runtime_root: Path, package: Path, digest: str) -> Deployment
         for entry in entries:
             if entry.is_dir():
                 continue
-            destination = _safe_destination(target, entry.filename)
-            destination.parent.mkdir(parents=True, exist_ok=True)
-            with archive.open(entry) as source, destination.open("wb") as handle:
-                written += _copy(source, handle)
+            name = _safe_name(entry.filename)
+            if name == "h5p.json":
+                manifest_seen = True
+            data = archive.read(entry)
+            store.put_bytes(f"{prefix}/{name}", data)
             files += 1
+            written += len(data)
 
-    if not (target / "h5p.json").is_file():
-        shutil.rmtree(target)
+    if not manifest_seen:
+        # An object with no manifest is not a content: taking it back out is
+        # cheaper than teaching every reader of the bucket to recognise one.
+        store.remove_prefix(f"{prefix}/")
         raise DeploymentRefused("Le paquet déployé ne contient pas de « h5p.json ».")
 
     return DeploymentReport(
-        digest=digest,
-        files=files,
-        bytes_written=written,
-        path=f"{CONTENT_ROOT}/{digest}",
+        digest=digest, files=files, bytes_written=written, path=prefix
     )
 
 
-def deploy_libraries(runtime_root: Path, prepared: Path) -> dict[str, str]:
+def deploy_libraries(store: ObjectStore, prepared: Path) -> dict[str, str]:
     """Put the offline-prepared libraries in place and write down what they are.
 
     Returns the inventory: every file, by its digest. ADR-012 asks for libraries
@@ -101,18 +128,18 @@ def deploy_libraries(runtime_root: Path, prepared: Path) -> dict[str, str]:
     if not prepared.is_dir():
         raise DeploymentRefused(f"« {prepared} » n’est pas un dossier.")
 
-    target = runtime_root / LIBRARIES_ROOT
-    if target.exists():
-        shutil.rmtree(target)
-    shutil.copytree(prepared, target)
+    store.remove_prefix(f"{LIBRARIES_ROOT}/")
 
-    inventory = {
-        str(path.relative_to(target)): _digest(path)
-        for path in sorted(target.rglob("*"))
-        if path.is_file()
-    }
-    (runtime_root / INVENTORY).write_text(
-        json.dumps(inventory, indent=2, sort_keys=True), encoding="utf-8"
+    inventory: dict[str, str] = {}
+    for path in sorted(prepared.rglob("*")):
+        if not path.is_file():
+            continue
+        relative = path.relative_to(prepared).as_posix()
+        store.put(f"{LIBRARIES_ROOT}/{relative}", path)
+        inventory[relative] = _digest(path)
+
+    store.put_bytes(
+        INVENTORY, json.dumps(inventory, indent=2, sort_keys=True).encode("utf-8")
     )
     return inventory
 
@@ -142,6 +169,11 @@ def merge_libraries(prepared: Path, package: Path) -> LibraryImport:
     Pulling them out of the file the operator downloaded is therefore the whole
     of "preparing a library offline": there is nothing to fetch from the network,
     and nothing to build.
+
+    This works on the **local, offline** tree that `deploy_libraries` will later
+    upload, not on the runtime bucket itself: preparing a library is something an
+    operator does by hand, ahead of a deployment, and touching the live runtime
+    for it would let a half-prepared tree reach it.
 
     **Merged, never replaced.** `deploy_libraries` wipes the tree and copies a
     prepared folder over it, which is right for laying the whole thing out at
@@ -196,7 +228,7 @@ def merge_libraries(prepared: Path, package: Path) -> LibraryImport:
                 continue
 
             added.add(library)
-            destination = _safe_destination(prepared, entry.filename)
+            destination = _safe_local_destination(prepared, entry.filename)
             destination.parent.mkdir(parents=True, exist_ok=True)
             with archive.open(entry) as source, destination.open("wb") as handle:
                 _copy(source, handle)
@@ -220,47 +252,53 @@ def _library_folder_of(name: str) -> str | None:
     return head
 
 
-def deploy_player(runtime_root: Path, prepared: Path) -> int:
-    """Put the player bundle and our page in place.
-
-    The bundle is an external artefact prepared offline, like the libraries. The
-    page beside it is ours, versioned with the code, because it is the only part
-    of this origin that we wrote and the only one that decides what leaves it.
-    """
-    if not prepared.is_dir():
-        raise DeploymentRefused(f"« {prepared} » n’est pas un dossier.")
-
-    target = runtime_root / PLAYER_ROOT
-    if target.exists():
-        shutil.rmtree(target)
-    shutil.copytree(prepared, target)
-
-    page = Path(__file__).resolve().parent / "page" / "play.html"
-    shutil.copy2(page, target / "play.html")
-    return sum(1 for path in target.rglob("*") if path.is_file())
-
-
-def deployed_contents(runtime_root: Path) -> list[str]:
+def deployed_contents(store: ObjectStore) -> list[str]:
     """Every content digest currently laid out."""
-    root = runtime_root / CONTENT_ROOT
-    if not root.is_dir():
-        return []
-    return sorted(path.name for path in root.iterdir() if path.is_dir())
+    prefixes = store.list_prefixes(f"{CONTENT_ROOT}/")
+    return sorted(
+        prefix.removeprefix(f"{CONTENT_ROOT}/").rstrip("/") for prefix in prefixes
+    )
 
 
-def is_deployed(runtime_root: Path, digest: str) -> bool:
-    return (_content_path(runtime_root, digest) / "h5p.json").is_file()
+def is_deployed(store: ObjectStore, digest: str) -> bool:
+    return store.exists(f"{_content_prefix(digest)}/h5p.json")
 
 
-def _content_path(runtime_root: Path, digest: str) -> Path:
+def _content_prefix(digest: str) -> str:
     if not digest.isalnum() or len(digest) != 64:
-        # The digest becomes a directory name, so it is checked before it is one.
+        # The digest becomes part of an object key, so it is checked before it
+        # is used as one.
         raise DeploymentRefused(f"Empreinte invalide : « {digest} ».")
-    return runtime_root / CONTENT_ROOT / digest
+    return f"{CONTENT_ROOT}/{digest}"
 
 
-def _safe_destination(target: Path, name: str) -> Path:
-    """Where an entry may be written, refusing anything that leaves the folder."""
+def _safe_name(name: str) -> str:
+    """The key suffix an archive entry may be written under, refusing anything
+    that would leave its content's prefix.
+
+    A bucket key is a string with no filesystem underneath it to canonicalise —
+    there is no symlink to resolve and nothing to `resolve()` against, so what
+    protected a real directory (a final check against the target after
+    resolution) has no equivalent here. Rejecting a leading slash and any `..`
+    or empty segment is the whole of what is needed instead: a key built only
+    from segments that are neither of those cannot address anything outside the
+    prefix it is joined onto.
+    """
+    normalized = name.replace("\\", "/")
+    if normalized.startswith("/"):
+        raise DeploymentRefused(f"Chemin absolu dans l’archive : « {name} ».")
+    if any(part in ("", "..") for part in normalized.split("/")):
+        raise DeploymentRefused(f"Chemin remontant dans l’archive : « {name} ».")
+    return normalized
+
+
+def _safe_local_destination(target: Path, name: str) -> Path:
+    """Where an entry may be written on the local, offline library tree.
+
+    Unlike `_safe_name`, this does land on a real filesystem — `merge_libraries`
+    prepares a tree by hand, ahead of any deployment — so the same belt-and-braces
+    resolution check as before still applies.
+    """
     if name.startswith("/") or Path(name).is_absolute():
         raise DeploymentRefused(f"Chemin absolu dans l’archive : « {name} ».")
     if ".." in Path(name).parts:
@@ -268,7 +306,6 @@ def _safe_destination(target: Path, name: str) -> Path:
 
     destination = (target / name).resolve()
     if not destination.is_relative_to(target.resolve()):
-        # Belt and braces: whatever the name looked like, this is where it lands.
         raise DeploymentRefused(f"Entrée sortant du dossier cible : « {name} ».")
     return destination
 

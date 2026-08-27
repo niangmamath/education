@@ -35,7 +35,6 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from app.catalog.storage import S3ObjectStore
 from app.content import deploy as runtime
-from app.core.config import settings
 from app.core.db import DATABASE_URL, sync_database_url
 from app.models.catalog import (
     ACTIVITY_KIND_H5P,
@@ -116,10 +115,10 @@ def main(argv: list[str] | None = None) -> int:
 
     runtime_parser = verbs.add_parser(
         "deploy-runtime",
-        help="déployer les bibliothèques et le lecteur préparés hors ligne",
+        help="déployer les bibliothèques préparées hors ligne",
     )
     runtime_parser.add_argument(
-        "dossier", type=Path, help="dossier préparé contenant libraries/ et player/"
+        "dossier", type=Path, help="dossier préparé contenant content/ (bibliothèques)"
     )
 
     libraries_parser = verbs.add_parser(
@@ -376,12 +375,11 @@ def _deploy(activity_code: str, url: str) -> int:
     finally:
         engine.dispose()
 
-    root = Path(settings.CONTENT_RUNTIME_ROOT)
     with tempfile.TemporaryDirectory() as workspace:
         archive = Path(workspace) / "package.h5p"
         try:
             S3ObjectStore().get(object_key, archive)
-            report = runtime.deploy_package(root, archive, digest)
+            report = runtime.deploy_package(runtime.content_store(), archive, digest)
         except runtime.DeploymentRefused as refusal:
             print(str(refusal), file=sys.stderr)
             return EXIT_REFUSED
@@ -394,22 +392,25 @@ def _deploy(activity_code: str, url: str) -> int:
 
 
 def _deploy_runtime(prepared: Path) -> int:
-    """Put the offline-prepared libraries and player in place.
+    """Put the offline-prepared libraries in place.
 
     ADR-012, condition 3: the libraries are internal artefacts, prepared away
     from the platform and frozen. An inventory of their digests is written
     beside them, because an artefact nobody can name is not frozen.
+
+    The player is not laid out here any more: it carries no ticket and needs no
+    signed URL, so it ships baked into the content origin's own image instead
+    of the runtime bucket (`infrastructure/nginx/Dockerfile`).
     """
-    root = Path(settings.CONTENT_RUNTIME_ROOT)
     try:
-        inventory = runtime.deploy_libraries(root, prepared / "content")
-        players = runtime.deploy_player(root, prepared / "player")
+        inventory = runtime.deploy_libraries(
+            runtime.content_store(), prepared / "content"
+        )
     except runtime.DeploymentRefused as refusal:
         print(str(refusal), file=sys.stderr)
         return EXIT_REFUSED
 
     print(f"Bibliothèques : {len(inventory)} fichiers, inventaire écrit")
-    print(f"Lecteur       : {players} fichiers")
     return EXIT_OK
 
 

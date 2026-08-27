@@ -4,8 +4,11 @@ The runtime sits on its own origin, so no session cookie reaches it. What
 replaces the cookie is tested here: a ticket that opens exactly one content, for
 a while, and the endpoint the content origin asks before serving a byte.
 
-The deployment side is tested on a temporary directory rather than on the shared
-volume — what matters is that an archive lands where it should and nowhere else.
+The deployment side is tested against a stand-in bucket rather than a shared
+disk — the runtime bucket exists precisely because the API and the content
+origin can no longer count on sharing a filesystem, so what matters here is the
+order of operations against storage, not a real one (`RecordingStore` in
+`test_catalog_registration.py` is the same idea for the catalogue).
 """
 
 from __future__ import annotations
@@ -24,6 +27,7 @@ from fastapi.testclient import TestClient
 from app.content import deploy
 from app.content.deploy import (
     DeploymentRefused,
+    content_store,
     deploy_libraries,
     deploy_package,
     deployed_contents,
@@ -37,13 +41,54 @@ from app.main import app
 ACCESS_URL = "/api/v1/internal/content-access"
 DIGEST = "a" * 64
 OTHER_DIGEST = "b" * 64
+SIGNED_BASE = "https://signed.test"
+
+
+class FakeStore:
+    """A stand-in bucket that remembers what it was asked to hold.
+
+    `presign` never reaches a real network: it names the key and the TTL it was
+    asked for, which is exactly enough for a test to check that nginx would have
+    been handed a URL for the one object a ticket actually opens.
+    """
+
+    def __init__(self) -> None:
+        self.objects: dict[str, bytes] = {}
+
+    def put(self, key: str, path: Path) -> None:
+        self.objects[key] = path.read_bytes()
+
+    def put_bytes(self, key: str, data: bytes) -> None:
+        self.objects[key] = data
+
+    def remove(self, key: str) -> None:
+        self.objects.pop(key, None)
+
+    def remove_prefix(self, prefix: str) -> None:
+        for key in [k for k in self.objects if k.startswith(prefix)]:
+            del self.objects[key]
+
+    def exists(self, key: str) -> bool:
+        return key in self.objects
+
+    def list_prefixes(self, prefix: str) -> list[str]:
+        tops = {
+            f"{prefix}{key[len(prefix):].split('/', 1)[0]}/"
+            for key in self.objects
+            if key.startswith(prefix)
+        }
+        return sorted(tops)
+
+    def get(self, key: str, path: Path) -> None:
+        path.write_bytes(self.objects[key])
+
+    def presign(self, key: str, expires_in: int, *, internal: bool = False) -> str:
+        return f"{SIGNED_BASE}/{key}?exp={expires_in}"
 
 
 @pytest.fixture
-def runtime(tmp_path: Path) -> Path:
-    root = tmp_path / "runtime"
-    root.mkdir()
-    return root
+def store() -> FakeStore:
+    return FakeStore()
 
 
 @pytest.fixture
@@ -55,8 +100,12 @@ async def client_redis() -> Any:
 
 @pytest.fixture
 def client() -> Iterator[TestClient]:
-    with TestClient(app) as test_client:
-        yield test_client
+    app.dependency_overrides[content_store] = FakeStore
+    try:
+        with TestClient(app) as test_client:
+            yield test_client
+    finally:
+        app.dependency_overrides.pop(content_store, None)
 
 
 def package(path: Path, entries: dict[str, bytes] | None = None) -> Path:
@@ -78,33 +127,35 @@ def package(path: Path, entries: dict[str, bytes] | None = None) -> Path:
 
 class TestDeployment:
     def test_a_package_is_laid_out_under_its_digest(
-        self, runtime: Path, tmp_path: Path
+        self, store: FakeStore, tmp_path: Path
     ) -> None:
-        report = deploy_package(runtime, package(tmp_path / "p.h5p"), DIGEST)
+        report = deploy_package(store, package(tmp_path / "p.h5p"), DIGEST)
 
         assert report.path == f"content/{DIGEST}"
-        assert (runtime / "content" / DIGEST / "h5p.json").is_file()
-        assert (runtime / "content" / DIGEST / "content" / "content.json").is_file()
-        assert is_deployed(runtime, DIGEST) is True
+        assert f"content/{DIGEST}/h5p.json" in store.objects
+        assert f"content/{DIGEST}/content/content.json" in store.objects
+        assert is_deployed(store, DIGEST) is True
 
     def test_redeploying_the_same_digest_replaces_it(
-        self, runtime: Path, tmp_path: Path
+        self, store: FakeStore, tmp_path: Path
     ) -> None:
-        """The digest names the folder, so this is idempotent by construction."""
-        deploy_package(runtime, package(tmp_path / "p.h5p"), DIGEST)
-        deploy_package(runtime, package(tmp_path / "p.h5p"), DIGEST)
+        """The digest names the prefix, so this is idempotent by construction."""
+        deploy_package(store, package(tmp_path / "p.h5p"), DIGEST)
+        deploy_package(store, package(tmp_path / "p.h5p"), DIGEST)
 
-        assert deployed_contents(runtime) == [DIGEST]
+        assert deployed_contents(store) == [DIGEST]
 
-    def test_two_contents_do_not_collide(self, runtime: Path, tmp_path: Path) -> None:
-        deploy_package(runtime, package(tmp_path / "un.h5p"), DIGEST)
-        deploy_package(runtime, package(tmp_path / "deux.h5p"), OTHER_DIGEST)
+    def test_two_contents_do_not_collide(
+        self, store: FakeStore, tmp_path: Path
+    ) -> None:
+        deploy_package(store, package(tmp_path / "un.h5p"), DIGEST)
+        deploy_package(store, package(tmp_path / "deux.h5p"), OTHER_DIGEST)
 
-        assert deployed_contents(runtime) == sorted([DIGEST, OTHER_DIGEST])
+        assert deployed_contents(store) == sorted([DIGEST, OTHER_DIGEST])
 
     @pytest.mark.parametrize("name", ["../evade.txt", "/etc/passwd"])
-    def test_an_entry_leaving_the_folder_is_refused(
-        self, runtime: Path, tmp_path: Path, name: str
+    def test_an_entry_leaving_the_prefix_is_refused(
+        self, store: FakeStore, tmp_path: Path, name: str
     ) -> None:
         """The same refusal as the inspection of 08.2, repeated where it writes.
 
@@ -114,46 +165,65 @@ class TestDeployment:
         archive = package(tmp_path / "hostile.h5p", {name: b"x"})
 
         with pytest.raises(DeploymentRefused):
-            deploy_package(runtime, archive, DIGEST)
+            deploy_package(store, archive, DIGEST)
 
     @pytest.mark.parametrize("digest", ["court", "../../etc", "a" * 63, "A" * 64 + "!"])
     def test_a_digest_that_is_not_one_is_refused(
-        self, runtime: Path, tmp_path: Path, digest: str
+        self, store: FakeStore, tmp_path: Path, digest: str
     ) -> None:
-        """It becomes a directory name, so it is checked before it is one."""
+        """It becomes part of an object key, so it is checked before it is one."""
         with pytest.raises(DeploymentRefused):
-            deploy_package(runtime, package(tmp_path / "p.h5p"), digest)
+            deploy_package(store, package(tmp_path / "p.h5p"), digest)
 
     def test_an_archive_without_a_manifest_leaves_nothing_behind(
-        self, runtime: Path, tmp_path: Path
+        self, store: FakeStore, tmp_path: Path
     ) -> None:
         empty = tmp_path / "vide.h5p"
         with zipfile.ZipFile(empty, "w") as archive:
             archive.writestr("content/content.json", "{}")
 
         with pytest.raises(DeploymentRefused):
-            deploy_package(runtime, empty, DIGEST)
-        assert deployed_contents(runtime) == []
+            deploy_package(store, empty, DIGEST)
+        assert deployed_contents(store) == []
 
     def test_libraries_are_laid_out_with_an_inventory_of_their_digests(
-        self, runtime: Path, tmp_path: Path
+        self, store: FakeStore, tmp_path: Path
     ) -> None:
         """ADR-012 asks for frozen artefacts; one nobody can name is not frozen."""
         prepared = tmp_path / "prepared"
         (prepared / "H5P.TrueFalse-1.8").mkdir(parents=True)
         (prepared / "H5P.TrueFalse-1.8" / "library.json").write_text("{}")
 
-        inventory = deploy_libraries(runtime, prepared)
+        inventory = deploy_libraries(store, prepared)
 
         assert "H5P.TrueFalse-1.8/library.json" in inventory
         assert len(inventory["H5P.TrueFalse-1.8/library.json"]) == 64
-        assert json.loads((runtime / "inventory.json").read_text()) == inventory
+        assert json.loads(store.objects["inventory.json"].decode("utf-8")) == inventory
+
+    def test_a_second_deployment_of_libraries_does_not_keep_the_first(
+        self, store: FakeStore, tmp_path: Path
+    ) -> None:
+        """`deploy_libraries` lays a whole tree out at once, unlike
+        `merge_libraries`: a library dropped from the prepared folder must not
+        survive in the bucket."""
+        first = tmp_path / "first"
+        (first / "H5P.Blanks-1.14").mkdir(parents=True)
+        (first / "H5P.Blanks-1.14" / "library.json").write_text("{}")
+        deploy_libraries(store, first)
+
+        second = tmp_path / "second"
+        (second / "H5P.TrueFalse-1.8").mkdir(parents=True)
+        (second / "H5P.TrueFalse-1.8" / "library.json").write_text("{}")
+        deploy_libraries(store, second)
+
+        assert not any(key.startswith("libraries/H5P.Blanks") for key in store.objects)
+        assert "libraries/H5P.TrueFalse-1.8/library.json" in store.objects
 
     def test_libraries_from_a_missing_directory_are_refused(
-        self, runtime: Path, tmp_path: Path
+        self, store: FakeStore, tmp_path: Path
     ) -> None:
         with pytest.raises(DeploymentRefused):
-            deploy_libraries(runtime, tmp_path / "absent")
+            deploy_libraries(store, tmp_path / "absent")
 
 
 class TestTickets:
@@ -214,6 +284,11 @@ class TestWhatTheOriginAsks:
     anything of its own, and every asset reached the origin unticketed. No test
     caught it because these tests wrote the URI by hand, and a hand writes the
     URI the design expects rather than the one the player produces.
+
+    An allowed request now also carries `X-Content-Url`, a link `FakeStore`
+    signs for the exact key it was asked about — the assertions below check
+    that key, not a real signature, the same way `FakeStore.presign` never
+    touches a real bucket.
     """
 
     async def test_a_valid_ticket_for_that_content_is_allowed(
@@ -227,12 +302,16 @@ class TestWhatTheOriginAsks:
         )
 
         assert response.status_code == 204
+        assert response.headers["x-content-url"] == (
+            f"{SIGNED_BASE}/content/{DIGEST}/h5p.json?exp=60"
+        )
         await revoke_ticket(client_redis, token)
 
     async def test_a_library_needs_only_a_valid_ticket(
         self, client: TestClient, client_redis: Any
     ) -> None:
-        """Libraries are shared by every content, so no digest is checked."""
+        """Libraries are shared by every content, so no digest is checked —
+        and the key signed carries no digest either."""
         token = await mint_ticket(client_redis, uuid.uuid4(), DIGEST)
 
         response = client.get(
@@ -241,6 +320,9 @@ class TestWhatTheOriginAsks:
         )
 
         assert response.status_code == 204
+        assert response.headers["x-content-url"] == (
+            f"{SIGNED_BASE}/libraries/H5P.TrueFalse-1.8/x.js?exp=60"
+        )
         await revoke_ticket(client_redis, token)
 
     async def test_a_deep_asset_path_is_allowed(
@@ -257,6 +339,9 @@ class TestWhatTheOriginAsks:
         )
 
         assert response.status_code == 204
+        assert response.headers["x-content-url"] == (
+            f"{SIGNED_BASE}/content/{DIGEST}/content/images/a.png?exp=60"
+        )
         await revoke_ticket(client_redis, token)
 
     async def test_a_ticket_for_another_content_is_refused(
@@ -271,6 +356,7 @@ class TestWhatTheOriginAsks:
         )
 
         assert response.status_code == 403
+        assert "x-content-url" not in response.headers
         await revoke_ticket(client_redis, token)
 
     def test_a_path_without_a_ticket_segment_is_refused(

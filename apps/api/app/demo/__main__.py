@@ -39,7 +39,6 @@ from app.attempts import service as attempts
 from app.catalog.registration import RegistrationRefused, register_package
 from app.catalog.storage import S3ObjectStore
 from app.content import deploy as runtime
-from app.core.config import settings
 from app.core.db import AsyncSessionFactory, sync_database_url
 from app.core.exceptions import ConflictException, NotFoundException
 from app.core.security import generate_family_code, hash_password, hash_pin
@@ -461,28 +460,29 @@ def _packages(spike: Path) -> list[str]:
     """Register the vetted package on the activities a demonstration opens.
 
     The archive is inspected and stored by the same code an operator would use,
-    then laid out for the content origin. If the object store or the runtime
-    volume is out of reach, the rest of the demonstration is still built and the
-    caller is told which activities will not play — a dataset that half exists
-    is more useful than a script that refuses to finish.
+    then laid out for the content origin. If either bucket is out of reach, the
+    rest of the demonstration is still built and the caller is told which
+    activities will not play — a dataset that half exists is more useful than a
+    script that refuses to finish.
     """
     archive = spike / PACKAGE_NAME
     if not archive.is_file():
         print(f"Paquet H5P introuvable : {archive}", file=sys.stderr)
         return []
 
-    root = Path(settings.CONTENT_RUNTIME_ROOT)
+    runtime_store = runtime.content_store()
     try:
         # The spike prepared the libraries under `runtime/content`; the deploy
         # helper names that tree `libraries`. Passing the path directly keeps the
         # rename in one place instead of copying the tree to rename a folder.
-        runtime.deploy_libraries(root, spike / "player" / "runtime" / "content")
-        runtime.deploy_player(root, spike / "player" / "runtime" / "player")
+        runtime.deploy_libraries(
+            runtime_store, spike / "player" / "runtime" / "content"
+        )
     except (runtime.DeploymentRefused, OSError) as refusal:
         print(f"Runtime de contenu non déployé : {refusal}", file=sys.stderr)
 
     engine = create_engine(sync_database_url())
-    store = S3ObjectStore()
+    packages_store = S3ObjectStore()
     packaged: list[str] = []
     try:
         for code in dataset.PLAYABLE:
@@ -490,7 +490,7 @@ def _packages(spike: Path) -> list[str]:
                 try:
                     report = register_package(
                         session,
-                        store,
+                        packages_store,
                         activity_code=code,
                         path=archive,
                         licence="MIT, paquet de démonstration H5P",
@@ -506,7 +506,7 @@ def _packages(spike: Path) -> list[str]:
                     print(f"  {code} : {error}", file=sys.stderr)
                     continue
             try:
-                runtime.deploy_package(root, archive, report.sha256)
+                runtime.deploy_package(runtime_store, archive, report.sha256)
             except (runtime.DeploymentRefused, OSError) as refusal:
                 print(f"  {code} : déploiement impossible, {refusal}", file=sys.stderr)
                 continue

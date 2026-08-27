@@ -15,10 +15,32 @@
 # is served, against a ticket the API minted for one child doing one activity.
 # The check is `auth_request`, so nginx never learns who anyone is; it asks and
 # obeys.
+#
+# **This origin no longer reads the deployed content from a local disk.** A
+# disk shared between this service and the API's is exactly the thing most
+# multi-service platforms (Render among them) refuse to offer — a persistent
+# disk there is reachable by one service only. The deployed content instead
+# lives in a private bucket, and what `_ticket` returns for an allowed request
+# is not just "yes": it is a URL, signed for that exact file, valid for a
+# minute. This location proxies to it and never sees the bucket's own
+# credentials. The player bundle is the one exception — it carries no ticket
+# and is useless without a content, so it ships baked into this image instead
+# (`infrastructure/nginx/Dockerfile`), and is still served from local disk.
 
 server {
     listen 80;
     server_name _;
+
+    # Needed because `proxy_pass` below targets a URL held in a variable —
+    # nginx cannot resolve that host at config-load time the way it resolves a
+    # literal one, so it is told where to ask instead. `NGINX_LOCAL_RESOLVERS`
+    # is not ours: it is the official nginx image's own entrypoint script
+    # (`15-local-resolvers.envsh`), which reads whatever nameserver the
+    # platform already put in `/etc/resolv.conf` and exports it before this
+    # template is rendered — Docker Compose's embedded DNS locally, whatever
+    # Render's private network provides there, and so on. One line that never
+    # needs a platform-specific value hardcoded into it.
+    resolver ${NGINX_LOCAL_RESOLVERS} valid=30s;
 
     # No cookie of this origin is ever set, and none of the application's can
     # arrive here: that is the whole point of the separation.
@@ -41,8 +63,10 @@ server {
     charset utf-8;
 
     # The API answers 204 when the ticket in the path opens what is being asked
-    # for, and 403 otherwise. nginx caches nothing of it: a ticket revoked when
-    # the child finishes must stop working at once.
+    # for, and 403 otherwise; a 204 also carries `X-Content-Url`, a signed link
+    # to the exact object requested. nginx caches nothing of it: a ticket
+    # revoked when the child finishes must stop working at once, and a new URL
+    # is minted on every single request.
     location = /_ticket {
         internal;
         proxy_pass http://api:8000/api/v1/internal/content-access;
@@ -56,8 +80,10 @@ server {
         proxy_set_header X-Original-URI $request_uri;
     }
 
-    # The player page and its bundle carry no content of their own, so they are
-    # served without a ticket; they are useless without one.
+    # The player page and its bundle carry no content of their own and need no
+    # ticket; they are baked into this image at build time, the same "frozen
+    # artefact" ADR-012's third condition asks of the libraries, just for
+    # something that never changes per deployment.
     location /player/ {
         try_files $uri =404;
     }
@@ -71,10 +97,14 @@ server {
     # anything of its own, and every asset arrived without a ticket. A path
     # prefix survives that joining by construction — the platform no longer has
     # to control every URL the player invents.
+    #
+    # Once the ticket is accepted, the request is not served from disk: it is
+    # forwarded to the signed URL `_ticket` handed back in `X-Content-Url`,
+    # captured here and used as the whole of what is proxied to.
     location ~ ^/t/[^/]+/(?:content|libraries)/ {
         auth_request /_ticket;
-        rewrite ^/t/[^/]+/(.*)$ /$1 break;
-        try_files $uri =404;
+        auth_request_set $content_url $upstream_http_x_content_url;
+        proxy_pass $content_url;
     }
 
     # The same trees without a ticket are not a different way in: they are not a
